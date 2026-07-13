@@ -238,6 +238,16 @@ export default function BenchmarksScreen() {
                 </View>
               </View>
 
+              <View style={styles.summaryBox}>
+                <Ionicons name="bulb-outline" size={20} color="#FBBF24" style={{ marginRight: 8, marginTop: 2 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.summaryTitle}>What does this mean?</Text>
+                  <Text style={styles.summaryText}>
+                    {getHumanReadableSummary(stats)}
+                  </Text>
+                </View>
+              </View>
+
               {chartData.length > 0 && (
                 <View style={styles.chartContainer}>
                   <Text style={styles.chartTitle}>Latency over Time (ms)</Text>
@@ -321,6 +331,37 @@ function getMethodColor(method: string) {
     case 'PATCH': return '#8B5CF6';
     default: return '#64748B';
   }
+}
+
+function getHumanReadableSummary(stats: any) {
+  if (!stats) return '';
+  
+  let health = '';
+  if (stats.error_rate === 0) {
+    health = "Flawless! Your endpoint successfully handled all requests without a single error.";
+  } else if (stats.error_rate < 5) {
+    health = `Mostly stable. Your endpoint had a small error rate of ${stats.error_rate.toFixed(1)}%.`;
+  } else {
+    health = `Struggling. Your endpoint failed ${stats.error_rate.toFixed(1)}% of the time under load.`;
+  }
+
+  let speed = '';
+  if (stats.avg_latency < 200) {
+    speed = "It is lightning fast, responding in an average of " + stats.avg_latency + "ms.";
+  } else if (stats.avg_latency < 800) {
+    speed = "Performance is decent with an average response time of " + stats.avg_latency + "ms.";
+  } else {
+    speed = "It is running quite slow, taking on average " + stats.avg_latency + "ms to respond.";
+  }
+
+  let consistency = '';
+  if (stats.p99_latency < stats.avg_latency * 2) {
+    consistency = "Consistency is excellent; even the slowest 1% of requests were handled efficiently.";
+  } else {
+    consistency = `However, consistency is an issue. While the average is ${stats.avg_latency}ms, some users experienced spikes up to ${stats.p99_latency}ms.`;
+  }
+
+  return `${health} ${speed} ${consistency}`;
 }
 
 const styles = StyleSheet.create({
@@ -451,6 +492,27 @@ const styles = StyleSheet.create({
     color: '#F1F5F9',
     fontSize: 18,
     fontWeight: '700',
+  },
+  summaryBox: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  summaryTitle: {
+    color: '#FBBF24',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  summaryText: {
+    color: '#F1F5F9',
+    fontSize: 13,
+    lineHeight: 20,
   },
   chartContainer: {
     marginTop: 16,

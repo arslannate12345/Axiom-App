@@ -16,7 +16,6 @@ import { KeyValueEditor } from '../../src/components/KeyValueEditor';
 import { BodyEditor } from '../../src/components/BodyEditor';
 import { ResponsePanel } from '../../src/components/ResponsePanel';
 import { SaveRequestModal } from '../../src/components/SaveRequestModal';
-import { HistoryPanel } from '../../src/components/HistoryPanel';
 import { executeRequest } from '../../src/services/networkService';
 import { useEnvironmentStore } from '../../src/stores/environmentStore';
 import { useCollectionsStore } from '../../src/stores/collectionsStore';
@@ -40,7 +39,6 @@ export default function ClientScreen() {
   const [response, setResponse] = useState<ResponseTiming | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
   const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const getActiveVariables = useEnvironmentStore((s) => s.getActiveVariables);
@@ -188,13 +186,6 @@ export default function ClientScreen() {
               <Ionicons name="bookmark-outline" size={16} color="#818CF8" />
               <Text style={styles.actionBtnText}>Add to Collection</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionBtn}
-              onPress={() => setShowHistory(!showHistory)}
-            >
-              <Ionicons name="time-outline" size={16} color="#818CF8" />
-              <Text style={styles.actionBtnText}>History</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Tab bar */}
@@ -248,13 +239,6 @@ export default function ClientScreen() {
 
           {/* Response */}
           <ResponsePanel response={response} error={error} />
-
-          {/* History */}
-          <HistoryPanel
-            visible={showHistory}
-            onClose={() => setShowHistory(false)}
-            onReplay={() => {}}
-          />
         </ScrollView>
       </View>
 
