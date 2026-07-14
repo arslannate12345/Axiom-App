@@ -74,6 +74,8 @@ export interface HistoryEntry {
   response_body: string | null;
   error_message: string | null;
   is_benchmark: boolean;
+  assertion_passed: boolean | null;
+  assertion_failures: string[];
   executed_at: string;
 }
 
@@ -104,6 +106,8 @@ export interface BenchmarkIteration {
   ttfb_ms: number | null;
   response_size: number | null;
   error: string | null;
+  assertion_passed: boolean | null;
+  assertion_failures: string[];
   executed_at: string;
 }
 

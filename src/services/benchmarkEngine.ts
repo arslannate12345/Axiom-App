@@ -4,7 +4,9 @@ import {
   insertBenchmarkIterations,
   updateBenchmarkRunStats,
 } from './dataService';
-import type { Request, EnvironmentVariable, BenchmarkIteration } from '../types/database';
+import { evaluateAssertions } from './assertionEngine';
+import type { Request, BenchmarkIteration } from '../types/database';
+import type { AssertionRow } from '../types/assertions';
 
 export interface BenchmarkProgress {
   total: number;
@@ -14,21 +16,24 @@ export interface BenchmarkProgress {
 
 export interface BenchmarkRunOptions {
   request: Request;
-  variables: EnvironmentVariable[];
+  variables: Record<string, string>;
   totalIterations: number;
   batchSize: number;
+  assertions?: AssertionRow[];
   onProgress?: (progress: BenchmarkProgress) => void;
   signal?: AbortSignal;
 }
 
 /**
  * Executes a single iteration of the benchmark.
+ * If assertions are provided, evaluates them against the response.
  */
 async function runSingleIteration(
   runId: string,
   iterationNum: number,
   request: Request,
-  variables: EnvironmentVariable[],
+  variables: Record<string, string>,
+  assertions?: AssertionRow[],
   signal?: AbortSignal
 ): Promise<Omit<BenchmarkIteration, 'id' | 'executed_at'>> {
   try {
@@ -46,6 +51,16 @@ async function runSingleIteration(
       30000 // 30s timeout
     );
 
+    // Evaluate assertions if configured
+    let assertionPassed: boolean | null = null;
+    let assertionFailures: string[] = [];
+
+    if (assertions && assertions.length > 0) {
+      const summary = evaluateAssertions(result, assertions);
+      assertionPassed = summary.passed;
+      assertionFailures = summary.failures;
+    }
+
     return {
       run_id: runId,
       iteration_num: iterationNum,
@@ -54,6 +69,8 @@ async function runSingleIteration(
       ttfb_ms: result.ttfb,
       response_size: result.size,
       error: null,
+      assertion_passed: assertionPassed,
+      assertion_failures: assertionFailures,
     };
   } catch (err) {
     const errorMsg = (err as RequestError).message ?? 'Unknown error';
@@ -65,6 +82,8 @@ async function runSingleIteration(
       ttfb_ms: null,
       response_size: null,
       error: errorMsg,
+      assertion_passed: null,
+      assertion_failures: [],
     };
   }
 }
@@ -86,6 +105,7 @@ export async function startBenchmarkRun({
   variables,
   totalIterations,
   batchSize,
+  assertions,
   onProgress,
   signal,
 }: BenchmarkRunOptions) {
@@ -108,7 +128,7 @@ export async function startBenchmarkRun({
 
     for (let j = 0; j < currentBatchSize; j++) {
       const iterationNum = i + j + 1;
-      batchPromises.push(runSingleIteration(runId, iterationNum, request, variables, signal));
+      batchPromises.push(runSingleIteration(runId, iterationNum, request, variables, assertions, signal));
     }
 
     // Wait for the entire batch to finish concurrently

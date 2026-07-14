@@ -11,6 +11,7 @@ import type {
   BenchmarkRun,
   BenchmarkIteration,
 } from '../types/database';
+import type { Assertion, AssertionOperator } from '../types/assertions';
 
 const SKIP_AUTH = process.env.EXPO_PUBLIC_SKIP_AUTH === 'true';
 const MOCK_USER_ID = '00000000-0000-0000-0000-000000000000';
@@ -257,6 +258,8 @@ export interface LogExecutionPayload {
   responseHeaders: Record<string, string>;
   responseBody: string | null;
   errorMessage: string | null;
+  assertionPassed?: boolean | null;
+  assertionFailures?: string[];
 }
 
 export async function logExecution(
@@ -280,6 +283,8 @@ export async function logExecution(
       response_headers: payload.responseHeaders,
       response_body: payload.responseBody,
       error_message: payload.errorMessage,
+      assertion_passed: payload.assertionPassed ?? null,
+      assertion_failures: payload.assertionFailures ?? [],
     })
     .select()
     .single();
@@ -389,5 +394,91 @@ export async function getBenchmarkRunsByRequestId(
     return [];
   }
   return data ?? [];
+}
+
+// ============================================================
+// ASSERTIONS
+// ============================================================
+
+export async function getAssertions(requestId: string): Promise<Assertion[]> {
+  const { data, error } = await supabase
+    .from('assertions')
+    .select('*')
+    .eq('request_id', requestId)
+    .order('sort_order', { ascending: true });
+
+  if (error) {
+    console.error('Failed to fetch assertions:', error.message);
+    return [];
+  }
+  return data ?? [];
+}
+
+export async function createAssertion(
+  requestId: string,
+  field: string,
+  operator: AssertionOperator,
+  expectedValue: string | null
+): Promise<Assertion | null> {
+  // Get the next sort_order
+  const existing = await getAssertions(requestId);
+  const nextOrder = existing.length > 0
+    ? Math.max(...existing.map((a) => a.sort_order)) + 1
+    : 0;
+
+  const { data, error } = await supabase
+    .from('assertions')
+    .insert({
+      request_id: requestId,
+      field,
+      operator,
+      expected_value: expectedValue,
+      sort_order: nextOrder,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Failed to create assertion:', error.message);
+    return null;
+  }
+  return data;
+}
+
+export async function updateAssertion(
+  id: string,
+  updates: { field?: string; operator?: AssertionOperator; expected_value?: string | null }
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('assertions')
+    .update(updates)
+    .eq('id', id);
+
+  if (error) {
+    console.error('Failed to update assertion:', error.message);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteAssertion(id: string): Promise<boolean> {
+  const { error } = await supabase.from('assertions').delete().eq('id', id);
+  if (error) {
+    console.error('Failed to delete assertion:', error.message);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteAllAssertions(requestId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('assertions')
+    .delete()
+    .eq('request_id', requestId);
+  if (error) {
+    console.error('Failed to delete assertions:', error.message);
+    return false;
+  }
+  return true;
 }
 

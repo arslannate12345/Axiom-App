@@ -20,10 +20,14 @@ import { executeRequest } from '../../src/services/networkService';
 import { useEnvironmentStore } from '../../src/stores/environmentStore';
 import { useCollectionsStore } from '../../src/stores/collectionsStore';
 import { useHistoryStore } from '../../src/stores/historyStore';
+import { AssertionEditor } from '../../src/components/AssertionEditor';
+import { getAssertions, createAssertion, deleteAllAssertions } from '../../src/services/dataService';
+import { evaluateAssertions } from '../../src/services/assertionEngine';
 import type { HttpMethod, BodyType, KeyValuePair } from '../../src/types/database';
 import type { ResponseTiming, RequestError } from '../../src/services/networkService';
+import type { AssertionRow, AssertionSummary } from '../../src/types/assertions';
 
-type Tab = 'params' | 'headers' | 'body';
+type Tab = 'params' | 'headers' | 'body' | 'tests';
 
 export default function ClientScreen() {
   const [method, setMethod] = useState<HttpMethod>('GET');
@@ -38,6 +42,8 @@ export default function ClientScreen() {
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<ResponseTiming | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [assertions, setAssertions] = useState<AssertionRow[]>([]);
+  const [assertionSummary, setAssertionSummary] = useState<AssertionSummary | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -68,6 +74,21 @@ export default function ClientScreen() {
       setCurrentRequestId(selectedRequest.id);
       setResponse(null);
       setError(null);
+      setAssertionSummary(null);
+
+      // Load assertions for this request
+      getAssertions(selectedRequest.id).then((savedAssertions) => {
+        setAssertions(
+          savedAssertions.map((a) => ({
+            id: a.id,
+            field: a.field,
+            operator: a.operator,
+            expected_value: a.expected_value ?? '',
+            enabled: true,
+          }))
+        );
+      });
+
       // Clear selection so navigating back doesn't reload
       setSelectedRequest(null);
     }
@@ -100,6 +121,15 @@ export default function ClientScreen() {
       );
       setResponse(result);
 
+      // Evaluate assertions if any exist
+      let summary: AssertionSummary | null = null;
+      if (assertions.filter(a => a.enabled).length > 0) {
+        summary = evaluateAssertions(result, assertions);
+        setAssertionSummary(summary);
+      } else {
+        setAssertionSummary(null);
+      }
+
       // Log to history
       logEntry({
         requestId: currentRequestId ?? undefined,
@@ -110,6 +140,8 @@ export default function ClientScreen() {
         responseHeaders: result.headers,
         responseBody: result.body,
         errorMessage: null,
+        assertionPassed: summary?.passed ?? null,
+        assertionFailures: summary?.failures ?? [],
       });
     } catch (err) {
       const reqErr = err as RequestError;
@@ -126,6 +158,8 @@ export default function ClientScreen() {
         responseHeaders: {},
         responseBody: null,
         errorMessage: errorMsg,
+        assertionPassed: null,
+        assertionFailures: [],
       });
     } finally {
       setLoading(false);
@@ -141,6 +175,7 @@ export default function ClientScreen() {
     { key: 'params', label: 'Params', count: params.filter((p) => p.enabled && p.key).length },
     { key: 'headers', label: 'Headers', count: headers.filter((h) => h.enabled && h.key).length },
     { key: 'body', label: 'Body' },
+    { key: 'tests', label: 'Tests', count: assertions.filter((a) => a.enabled).length },
   ];
 
   return (
@@ -235,10 +270,16 @@ export default function ClientScreen() {
                 onBodyChange={setBody}
               />
             )}
+            {activeTab === 'tests' && (
+              <AssertionEditor
+                assertions={assertions}
+                onChange={setAssertions}
+              />
+            )}
           </View>
 
           {/* Response */}
-          <ResponsePanel response={response} error={error} />
+          <ResponsePanel response={response} error={error} assertionSummary={assertionSummary} />
         </ScrollView>
       </View>
 
@@ -246,7 +287,14 @@ export default function ClientScreen() {
       <SaveRequestModal
         visible={showSaveModal}
         onClose={() => setShowSaveModal(false)}
-        onSaved={(id) => setCurrentRequestId(id)}
+        onSaved={async (id) => {
+          setCurrentRequestId(id);
+          // Save assertions associated with this request
+          await deleteAllAssertions(id);
+          for (const a of assertions) {
+            await createAssertion(id, a.field, a.operator, a.expected_value);
+          }
+        }}
         currentRequestId={currentRequestId}
         method={method}
         url={url}

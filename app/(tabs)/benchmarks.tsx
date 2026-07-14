@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AnimatedBackground } from '../../src/components/AnimatedBackground';
 import { useCollectionsStore } from '../../src/stores/collectionsStore';
 import { useEnvironmentStore } from '../../src/stores/environmentStore';
+import { getAssertions } from '../../src/services/dataService';
 import { startBenchmarkRun, BenchmarkProgress } from '../../src/services/benchmarkEngine';
 import type { Request } from '../../src/types/database';
 import { LineChart } from 'react-native-chart-kit';
@@ -72,11 +73,15 @@ export default function BenchmarksScreen() {
     abortRef.current = new AbortController();
 
     try {
+      // Fetch assertions configured for this request
+      const assertions = await getAssertions(selectedRequest.id);
+      
       const result = await startBenchmarkRun({
         request: selectedRequest,
         variables: getActiveVariables(),
         totalIterations: iterCount,
         batchSize: batchCount,
+        assertions,
         onProgress: setProgress,
         signal: abortRef.current.signal,
       });

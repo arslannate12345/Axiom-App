@@ -1,16 +1,19 @@
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { getStatusColor, getStatusLabel, formatBytes, formatMs } from '../services/networkService';
 import type { ResponseTiming } from '../services/networkService';
+import type { AssertionSummary } from '../types/assertions';
 
 interface Props {
   response: ResponseTiming | null;
   error: string | null;
+  assertionSummary?: AssertionSummary | null;
 }
 
-type ResponseTab = 'body' | 'headers';
+type ResponseTab = 'body' | 'headers' | 'assertions';
 
-export function ResponsePanel({ response, error }: Props) {
+export function ResponsePanel({ response, error, assertionSummary }: Props) {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<ResponseTab>('body');
 
@@ -94,9 +97,32 @@ export function ResponsePanel({ response, error }: Props) {
   }
 
   const isJson = typeof parsedBody === 'object' && parsedBody !== null;
+  const hasAssertions = assertionSummary && assertionSummary.total > 0;
 
   return (
     <View style={styles.container}>
+      {/* Assertion summary banner */}
+      {hasAssertions && (
+        <View style={[
+          styles.assertionBanner,
+          assertionSummary.passed ? styles.assertionBannerPass : styles.assertionBannerFail,
+        ]}>
+          <Ionicons
+            name={assertionSummary.passed ? 'checkmark-circle' : 'close-circle'}
+            size={18}
+            color={assertionSummary.passed ? '#22C55E' : '#EF4444'}
+          />
+          <Text style={[
+            styles.assertionBannerText,
+            assertionSummary.passed ? styles.assertionBannerTextPass : styles.assertionBannerTextFail,
+          ]}>
+            {assertionSummary.passed
+              ? `All ${assertionSummary.total} assertions passed`
+              : `${assertionSummary.failedCount}/${assertionSummary.total} assertions failed`}
+          </Text>
+        </View>
+      )}
+
       {/* Status & timing */}
       <View style={styles.metaRow}>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(response.status) }]}>
@@ -136,6 +162,20 @@ export function ResponsePanel({ response, error }: Props) {
             Headers ({Object.keys(response.headers).length})
           </Text>
         </TouchableOpacity>
+        {hasAssertions && (
+          <TouchableOpacity
+            style={[styles.responseTab, activeTab === 'assertions' && styles.responseTabActive]}
+            onPress={() => setActiveTab('assertions')}
+          >
+            <Text style={[
+              styles.responseTabText,
+              activeTab === 'assertions' && styles.responseTabTextActive,
+              !assertionSummary.passed && styles.responseTabTextFail,
+            ]}>
+              Tests ({assertionSummary.passedCount}/{assertionSummary.total})
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Tab content */}
@@ -158,7 +198,7 @@ export function ResponsePanel({ response, error }: Props) {
               </ScrollView>
             )}
           </ScrollView>
-        ) : (
+        ) : activeTab === 'headers' ? (
           <ScrollView style={styles.bodyScroll} nestedScrollEnabled>
             {Object.entries(response.headers).map(([key, value]) => (
               <View key={key} style={styles.headerRow}>
@@ -167,7 +207,35 @@ export function ResponsePanel({ response, error }: Props) {
               </View>
             ))}
           </ScrollView>
-        )}
+        ) : activeTab === 'assertions' && hasAssertions ? (
+          <ScrollView style={styles.bodyScroll} nestedScrollEnabled>
+            {assertionSummary.results.map((result, idx) => (
+              <View key={`result-${idx}`} style={[
+                styles.assertionRow,
+                result.passed ? styles.assertionRowPass : styles.assertionRowFail,
+              ]}>
+                <Ionicons
+                  name={result.passed ? 'checkmark-circle' : 'close-circle'}
+                  size={16}
+                  color={result.passed ? '#22C55E' : '#EF4444'}
+                />
+                <View style={styles.assertionRowContent}>
+                  <Text style={[
+                    styles.assertionRowText,
+                    result.passed ? styles.assertionRowTextPass : styles.assertionRowTextFail,
+                  ]}>
+                    {result.message}
+                  </Text>
+                  {result.actual_value && !result.passed && (
+                    <Text style={styles.assertionActualText}>
+                      Actual: {result.actual_value}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        ) : null}
       </View>
     </View>
   );
@@ -178,6 +246,70 @@ const styles = StyleSheet.create({
     marginTop: 16,
     flex: 1,
   },
+  // Assertion banner
+  assertionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+  },
+  assertionBannerPass: {
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    borderColor: 'rgba(34, 197, 94, 0.3)',
+  },
+  assertionBannerFail: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+  },
+  assertionBannerText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  assertionBannerTextPass: {
+    color: '#22C55E',
+  },
+  assertionBannerTextFail: {
+    color: '#EF4444',
+  },
+  // Assertion results
+  assertionRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2D3A4F',
+  },
+  assertionRowPass: {},
+  assertionRowFail: {},
+  assertionRowContent: {
+    flex: 1,
+  },
+  assertionRowText: {
+    fontSize: 13,
+    fontFamily: 'monospace',
+  },
+  assertionRowTextPass: {
+    color: '#86EFAC',
+  },
+  assertionRowTextFail: {
+    color: '#FCA5A5',
+  },
+  assertionActualText: {
+    fontSize: 12,
+    color: '#64748B',
+    fontFamily: 'monospace',
+    marginTop: 2,
+  },
+  responseTabTextFail: {
+    color: '#EF4444',
+  },
+  // Existing styles
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -322,3 +454,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
+

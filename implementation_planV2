@@ -1,0 +1,817 @@
+# Axiom v2 — Full Implementation Plan (Phases 1–9)
+
+> **Scope**: 9 phases, all on-device, extending the existing Expo + Supabase + Zustand architecture.
+> **Principle**: Extend, don't rewrite. Every phase builds on existing services.
+> **Estimated Total**: ~24–30 dev days across 9 iterations.
+
+---
+
+## Pre-Phase: Shared Dependencies & Navigation Restructure
+
+Before Phase 1, install shared libraries and restructure navigation for v2.
+
+### Install Shared Dependencies
+```bash
+npx expo install jsonpath-plus deep-diff expo-keep-awake
+```
+- **`jsonpath-plus`** — JSONPath evaluation for assertions (Phase 1), variable chaining (Phase 2), regression diffing (Phase 5), idempotency (Phase 9)
+- **`deep-diff`** — Structural JSON diff for regression (Phase 5), idempotency (Phase 9), environment matrix (Phase 3)
+- **`expo-keep-awake`** — Prevent screen sleep during soak tests (Phase 4)
+
+### Navigation Restructure
+
+#### [MODIFY] [_layout.tsx](file:///c:/Job/My%20Projects/Axiom/app/(tabs)/_layout.tsx)
+Restructure from 6 tabs to 5 tabs to accommodate v2 features:
+
+| v1 Tab | v2 Tab | Contents |
+|--------|--------|----------|
+| Client | **Client** | Request Builder + Tests tab (Phase 1) |
+| Collections | **Collections** | Collection list, Runner (Phase 2), Env Matrix (Phase 3) |
+| History | *Removed as tab* | Moved into Collections/Client as a panel |
+| Variables | *Merged into Collections* | Environment management within Collections |
+| Benchmarks | **Benchmarks** | Fixed/Stress/Spike/Soak (Phase 4) + Fuzz Testing (Phase 6) |
+| Profile | **Profile** | Auth, settings |
+| — | **Testing** *(NEW)* | Regression (Phase 5), Security (Phase 7), Chaos (Phase 8), Idempotency (Phase 9) |
+
+#### [NEW] `app/(tabs)/testing.tsx`
+New tab screen serving as the hub for Phases 5, 7, 8, and 9.
+
+---
+
+## Phase 1 — Assertions Engine
+**Unlocks**: Functional Testing
+**Estimate**: 2–3 days
+
+### Schema Changes
+
+#### [MODIFY] [schema.sql](file:///c:/Job/My%20Projects/Axiom/supabase/schema.sql)
+Add the `assertions` table and extend `history` + `benchmark_iterations`:
+
+```sql
+-- New table: assertions per request
+CREATE TABLE assertions (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  request_id      UUID NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
+  field           TEXT NOT NULL,        -- 'status', 'body.data.id', 'header.content-type', 'totalTime'
+  operator        TEXT NOT NULL,        -- 'equals', 'contains', 'exists', 'matchesRegex', 'lessThan', 'greaterThan', 'jsonPathEquals'
+  expected_value  TEXT,                 -- stringified expected value
+  sort_order      INTEGER NOT NULL DEFAULT 0,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_assertions_request_id ON assertions(request_id);
+ALTER TABLE assertions ENABLE ROW LEVEL SECURITY;
+-- RLS policy: same pattern as requests table (join through collections → workspaces)
+
+-- Extend history table
+ALTER TABLE history ADD COLUMN assertion_passed BOOLEAN;
+ALTER TABLE history ADD COLUMN assertion_failures JSONB DEFAULT '[]';
+
+-- Extend benchmark_iterations table
+ALTER TABLE benchmark_iterations ADD COLUMN assertion_passed BOOLEAN;
+ALTER TABLE benchmark_iterations ADD COLUMN assertion_failures JSONB DEFAULT '[]';
+```
+
+### New Files
+
+#### [NEW] `src/types/assertions.ts`
+```typescript
+export type AssertionOperator =
+  | 'equals' | 'notEquals' | 'contains' | 'notContains'
+  | 'exists' | 'notExists' | 'matchesRegex'
+  | 'lessThan' | 'greaterThan'
+  | 'jsonPathEquals';
+
+export interface Assertion {
+  id: string;
+  request_id: string;
+  field: string;           // 'status', 'body.data.token', 'header.x-rate-limit', 'totalTime'
+  operator: AssertionOperator;
+  expected_value: string | null;
+  sort_order: number;
+}
+
+export interface AssertionResult {
+  assertion: Assertion;
+  passed: boolean;
+  actual_value: string | null;
+  message: string;         // Human-readable: "Expected status equals 200, got 500"
+}
+
+export interface AssertionSummary {
+  passed: boolean;         // true if ALL assertions passed
+  results: AssertionResult[];
+  failures: string[];      // Short failure messages array
+}
+```
+
+#### [NEW] `src/services/assertionEngine.ts`
+Core evaluation logic:
+- `evaluateAssertions(response: ResponseTiming, assertions: Assertion[]): AssertionSummary`
+- Extract field value from response using JSONPath (`jsonpath-plus`) for body fields, direct access for `status`, `totalTime`, `ttfb`, `size`, `headers.*`
+- Evaluate each operator against the expected value
+- Return a summary with per-assertion pass/fail
+
+### Modified Files
+
+#### [MODIFY] [benchmarkEngine.ts](file:///c:/Job/My%20Projects/Axiom/src/services/benchmarkEngine.ts)
+- Import `evaluateAssertions` from `assertionEngine.ts`
+- In `runSingleIteration()` (line ~27–69): after `executeRequest()` resolves successfully, call `evaluateAssertions(result, assertions)` and include `assertion_passed` and `assertion_failures` in the returned iteration object
+- Add `assertions: Assertion[]` parameter to `BenchmarkRunOptions`
+
+#### [MODIFY] [dataService.ts](file:///c:/Job/My%20Projects/Axiom/src/services/dataService.ts)
+Add CRUD functions:
+- `getAssertions(requestId: string): Promise<Assertion[]>`
+- `createAssertion(requestId, field, operator, expectedValue): Promise<Assertion | null>`
+- `updateAssertion(id, updates): Promise<boolean>`
+- `deleteAssertion(id): Promise<boolean>`
+- Update `logExecution()` to include `assertion_passed` and `assertion_failures`
+
+#### [MODIFY] [database.ts](file:///c:/Job/My%20Projects/Axiom/src/types/database.ts)
+- Add `assertion_passed` and `assertion_failures` fields to `HistoryEntry` and `BenchmarkIteration` interfaces
+
+### UI Components
+
+#### [NEW] `src/components/AssertionEditor.tsx`
+- Reuses the `KeyValueEditor` pattern (already used for headers/params)
+- Each row: field input, operator dropdown, expected value input, delete button
+- Add button at bottom to add new assertion
+- Operator dropdown shows: equals, contains, exists, matchesRegex, lessThan, greaterThan, jsonPathEquals
+
+#### [MODIFY] `app/(tabs)/client.tsx`
+- Add a **"Tests"** tab alongside Headers/Params/Body in the request editor section
+- This tab renders `<AssertionEditor>` for the current request
+- After request execution, display assertion results in the response panel (green ✓ / red ✗ per assertion)
+
+#### [MODIFY] `src/components/ResponsePanel.tsx`
+- Add an "Assertions" section at the top of the response that shows pass/fail per assertion when assertions exist for the request
+
+### Verification
+- Create a saved request with assertions (status equals 200, body.data exists)
+- Execute the request → verify assertions evaluate and results display
+- Run a benchmark → verify each iteration includes assertion pass/fail
+- Test edge cases: invalid JSONPath, regex operator, numeric comparisons
+
+---
+
+## Phase 2 — Collection Runner & Variable Chaining
+**Unlocks**: End-to-End / Workflow Testing
+**Depends on**: Phase 1
+**Estimate**: 3–4 days
+
+### Schema Changes
+
+```sql
+-- Collection runs (mirrors benchmark_runs pattern)
+CREATE TABLE collection_runs (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  collection_id   UUID NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
+  user_id         UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  environment_id  UUID REFERENCES environments(id) ON DELETE SET NULL,
+  total_steps     INTEGER NOT NULL,
+  passed_steps    INTEGER DEFAULT 0,
+  failed_steps    INTEGER DEFAULT 0,
+  total_duration  INTEGER,              -- ms
+  status          TEXT NOT NULL DEFAULT 'running',  -- 'running', 'completed', 'failed', 'cancelled'
+  started_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completed_at    TIMESTAMPTZ
+);
+
+-- Per-step results
+CREATE TABLE collection_run_steps (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  run_id          UUID NOT NULL REFERENCES collection_runs(id) ON DELETE CASCADE,
+  request_id      UUID NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
+  step_order      INTEGER NOT NULL,
+  status_code     INTEGER,
+  latency_ms      INTEGER,
+  response_body   TEXT,
+  assertion_passed BOOLEAN,
+  assertion_failures JSONB DEFAULT '[]',
+  extracted_variables JSONB DEFAULT '{}',  -- variables extracted from this step
+  error           TEXT,
+  executed_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+```
+
+### New Files
+
+#### [NEW] `src/types/runner.ts`
+```typescript
+export interface VariableExtraction {
+  id: string;
+  request_id: string;
+  variable_name: string;   // e.g. 'authToken'
+  json_path: string;       // e.g. '$.data.token'
+  sort_order: number;
+}
+
+export interface CollectionRun { /* mirrors schema */ }
+export interface CollectionRunStep { /* mirrors schema */ }
+
+export type RunStatus = 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
+
+export interface RunnerStepState {
+  request: Request;
+  status: RunStatus;
+  result?: CollectionRunStep;
+}
+```
+
+#### [NEW] `src/services/collectionRunner.ts`
+Core runner logic:
+- `runCollection(collectionId, environmentId, options)`: 
+  1. Fetch all requests for the collection (ordered by `sort_order`)
+  2. Create a `collection_runs` record
+  3. Loop sequentially through requests:
+     - Interpolate variables (including any extracted from previous steps)
+     - Call `executeRequest()`
+     - Run `evaluateAssertions()` on the response
+     - Execute variable extractions (JSONPath on response body → write to runtime variable context)
+     - Insert `collection_run_steps` record
+     - Report progress via callback
+  4. Update run summary
+
+#### [NEW] `src/stores/runnerStore.ts`
+Zustand store managing:
+- Current run state (steps, progress, active step index)
+- Live variable context (accumulated extractions)
+- Run history list
+
+### Schema Addition for Variable Extractions
+
+```sql
+-- Variable extraction rules per request (for chaining)
+CREATE TABLE variable_extractions (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  request_id      UUID NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
+  variable_name   TEXT NOT NULL,
+  json_path       TEXT NOT NULL,
+  sort_order      INTEGER NOT NULL DEFAULT 0,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+```
+
+### Modified Files
+
+#### [MODIFY] [dataService.ts](file:///c:/Job/My%20Projects/Axiom/src/services/dataService.ts)
+- Add CRUD for `collection_runs`, `collection_run_steps`, `variable_extractions`
+- `getVariableExtractions(requestId)`
+- `createCollectionRun(collectionId, environmentId, totalSteps)`
+- `insertRunStep(step)`
+- `updateCollectionRun(runId, stats)`
+- `getCollectionRuns(collectionId, limit)`
+
+### UI Components
+
+#### [NEW] `src/components/CollectionRunnerView.tsx`
+- Step list showing each request with status indicator (pending → running → pass/fail)
+- Per-step latency and assertion result
+- Variable extraction indicators (shows which variables were captured)
+- Overall run summary at bottom (X/Y passed, total time)
+- Cancel button during execution
+
+#### [NEW] `src/components/VariableExtractionEditor.tsx`
+- Per-request config: variable name + JSONPath expression
+- "Add Extraction" button
+- Preview of last extracted value
+
+#### [MODIFY] `app/(tabs)/collections.tsx`
+- Add "Run Collection" button (play icon) on each collection card
+- Tapping opens the `CollectionRunnerView` as a modal or stacked screen
+
+### Verification
+- Create a 3-step collection: POST /login → GET /profile (using `{{token}}`) → DELETE /session
+- Configure variable extraction: extract `$.data.token` as `token` from step 1
+- Run the collection → verify chaining works, assertions evaluate per step
+- Cancel mid-run → verify cleanup
+
+---
+
+## Phase 3 — Environment Matrix Testing
+**Unlocks**: Cross-Environment Regression
+**Depends on**: Phase 2
+**Estimate**: 2 days
+
+### New Files
+
+#### [NEW] `src/services/matrixRunner.ts`
+- `runMatrix(collectionId, environmentIds[]): Promise<MatrixResult>`
+  - For each environment, call `runCollection()` from Phase 2
+  - Collect all results into a matrix structure
+  - Use `deep-diff` to compute per-step diffs across environments
+  - Return structured comparison data
+
+#### [NEW] `src/types/matrix.ts`
+```typescript
+export interface MatrixResult {
+  environments: Environment[];
+  steps: MatrixStepComparison[];
+  summary: MatrixSummary;
+}
+
+export interface MatrixStepComparison {
+  request: Request;
+  results: Record<string, CollectionRunStep>;  // envId → step result
+  mismatches: MatrixMismatch[];
+}
+
+export interface MatrixMismatch {
+  field: string;           // 'status_code', 'body.data.role'
+  values: Record<string, string>;  // envId → value
+}
+
+export interface MatrixSummary {
+  perEnvironment: Record<string, { passed: number; failed: number; total: number }>;
+  totalMismatches: number;
+}
+```
+
+### Schema Changes
+
+```sql
+CREATE TABLE matrix_runs (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  collection_id   UUID NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
+  user_id         UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  environment_ids JSONB NOT NULL,        -- array of env UUIDs
+  total_mismatches INTEGER DEFAULT 0,
+  started_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completed_at    TIMESTAMPTZ
+);
+```
+
+### UI Components
+
+#### [NEW] `src/components/EnvironmentMatrixView.tsx`
+- Environment selector chips (toggle on/off)
+- Side-by-side comparison table: Step × Environment grid
+- Per-cell: status code + latency + pass/fail icon
+- Integrity summary with per-environment progress bars
+- Mismatch alert card with "View Detailed Diff" expansion
+
+#### [MODIFY] `app/(tabs)/collections.tsx`
+- Add "Matrix Test" option alongside "Run Collection" on collection cards
+- Opens EnvironmentMatrixView
+
+### Verification
+- Create 2+ environments with different base URLs
+- Run matrix → verify comparison table shows correct per-environment results
+- Introduce a deliberate mismatch → verify red highlighting and mismatch count
+
+---
+
+## Phase 4 — Stress / Spike / Soak Modes
+**Unlocks**: Advanced Performance Testing
+**Depends on**: Phase 1 (assertions in benchmark iterations)
+**Estimate**: 2–3 days
+
+### Modified Files
+
+#### [MODIFY] [benchmarkEngine.ts](file:///c:/Job/My%20Projects/Axiom/src/services/benchmarkEngine.ts)
+Add `mode` to `BenchmarkRunOptions`:
+
+```typescript
+export interface BenchmarkRunOptions {
+  // ... existing fields
+  mode: 'fixed' | 'stress' | 'spike' | 'soak';
+  stressConfig?: { maxBatchSize: number; errorThreshold: number };
+  spikeConfig?: { spikeBatchSize: number; spikeAtIteration: number };
+  soakConfig?: { durationMinutes: number; intervalMs: number };
+}
+```
+
+Modify the batch execution loop:
+- **Fixed** (existing): unchanged
+- **Stress**: increment `batchSize` each iteration; stop when error rate exceeds threshold; report breaking point
+- **Spike**: insert one oversized batch at the configured iteration; track recovery latency in subsequent batches
+- **Soak**: use `setInterval` instead of tight loop; lower batch size; run for configured duration; use `expo-keep-awake`
+
+#### [MODIFY] [schema.sql](file:///c:/Job/My%20Projects/Axiom/supabase/schema.sql)
+```sql
+ALTER TABLE benchmark_runs ADD COLUMN mode TEXT NOT NULL DEFAULT 'fixed';
+ALTER TABLE benchmark_runs ADD COLUMN breaking_point_batch INTEGER;  -- stress mode
+ALTER TABLE benchmark_runs ADD COLUMN spike_recovery_ms INTEGER;      -- spike mode
+```
+
+### UI Changes
+
+#### [MODIFY] `app/(tabs)/benchmarks.tsx`
+- Add segmented control at top: **Fixed | Stress | Spike | Soak**
+- Conditionally show mode-specific config fields:
+  - Stress: max batch size, error threshold %
+  - Spike: spike size, spike-at iteration
+  - Soak: duration (minutes), interval (ms)
+- Results display adapts per mode:
+  - Stress: shows "Breaking point: batch size X"
+  - Spike: shows "Recovery time: Xms"
+  - Soak: shows duration and stability metrics
+
+### Verification
+- Run each mode and verify correct batch-size progression
+- Stress: verify it stops at error threshold
+- Soak: verify expo-keep-awake prevents suspension
+- All modes: verify existing percentile reporting still works
+
+---
+
+## Phase 5 — Regression & Contract Testing
+**Unlocks**: Schema / Baseline Diffing
+**Depends on**: Phase 1 (assertion engine), Phase 2 (runner)
+**Estimate**: 4–5 days
+
+### New Files
+
+#### [NEW] `src/services/diffEngine.ts`
+Core structural diff logic:
+- `structuralDiff(baseline: any, current: any, options?): DiffResult`
+  - Uses `deep-diff` library for deep comparison
+  - Handles key reordering tolerance (sort keys before comparing)
+  - Whitespace normalization option
+  - Returns added/removed/changed fields with paths
+
+#### [NEW] `src/services/contractEngine.ts`
+- `inferSchema(responseBody: any): JSONSchema` — auto-generate a JSON Schema from a response
+- `validateContract(response: any, schema: JSONSchema): ContractResult` — validate response shape against schema
+- Add `matchesBaseline` and `matchesSchema` as new assertion operator types in Phase 1's assertion engine
+
+#### [NEW] `src/types/regression.ts`
+```typescript
+export interface Baseline {
+  id: string;
+  request_id: string;
+  response_body: string;
+  response_status: number;
+  pinned_at: string;
+  user_id: string;
+}
+
+export interface DiffResult {
+  identical: boolean;
+  changes: DiffChange[];
+}
+
+export interface DiffChange {
+  path: string;          // 'data.users[0].email'
+  type: 'added' | 'removed' | 'changed';
+  lhs?: any;             // baseline value
+  rhs?: any;             // current value
+}
+
+export interface ContractResult {
+  valid: boolean;
+  errors: ContractError[];
+}
+```
+
+### Schema Changes
+
+```sql
+CREATE TABLE baselines (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  request_id      UUID NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
+  user_id         UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  response_body   TEXT NOT NULL,
+  response_status INTEGER,
+  json_schema     JSONB,               -- auto-inferred or user-provided schema
+  pinned_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(request_id)                   -- one baseline per request
+);
+```
+
+### UI Components
+
+#### [NEW] `src/components/DiffView.tsx`
+- Structural diff visualization with color-coded lines
+- Green: added fields, Red: removed, Yellow: changed (with old → new values)
+- Collapsible nested object paths
+- "Update Baseline" button to pin current response as new golden baseline
+
+#### [NEW] `src/components/ContractEditor.tsx`
+- View/edit the JSON Schema for a request
+- "Auto-infer from last response" button
+- Manual schema editing with validation
+
+#### [NEW] `app/(tabs)/testing.tsx`
+- New tab screen with sub-navigation: **Regression | Security | Chaos | Idempotency**
+- Regression sub-tab shows list of requests with baselines, diff status
+
+#### [MODIFY] `src/components/ResponsePanel.tsx`
+- Add "Pin as Baseline" action button in response panel
+- If a baseline exists, show a quick diff indicator (✓ matches / ✗ X changes detected)
+
+### Verification
+- Pin a baseline → re-run request → verify diff shows correctly
+- Modify API response (change a field) → verify diff highlights the change
+- Auto-infer schema → validate contract against a response with a missing field
+- Update baseline → verify old baseline replaced
+
+---
+
+## Phase 6 — Fuzz & Negative Testing
+**Unlocks**: Input Robustness Testing
+**Depends on**: Phase 1 (assertions), Phase 4 (batching pattern)
+**Estimate**: 3–4 days
+
+### New Files
+
+#### [NEW] `src/services/fuzzEngine.ts`
+```typescript
+export type MutationType = 
+  | 'null' | 'wrongType' | 'oversizedString' | 'emptyString' 
+  | 'unicodeEdge' | 'missingField';
+
+export interface FuzzConfig {
+  request: Request;
+  strategies: MutationType[];
+  iterationsPerStrategy: number;
+  expectedBehavior: 'reject_4xx' | 'accept_2xx' | 'any_non_5xx';
+}
+
+export interface FuzzResult {
+  strategy: MutationType;
+  iterations: FuzzIteration[];
+  summary: { passed: number; failed_5xx: number; failed_timeout: number; total: number };
+}
+```
+
+Core logic:
+- `mutatePayload(body: string, strategy: MutationType): string` — apply one mutation
+- `runFuzzTest(config: FuzzConfig, onProgress): Promise<FuzzResult[]>` — batch-execute mutated requests (reuse `benchmarkEngine` batching pattern), group results by strategy
+
+#### [NEW] `src/services/mutationStrategies.ts`
+Individual mutation implementations:
+- `nullInjection(body, fieldPath)` — set a random field to `null`
+- `wrongType(body, fieldPath)` — replace string with number, number with string, etc.
+- `oversizedString(body, fieldPath)` — replace value with a 10,000+ char string
+- `emptyString(body, fieldPath)` — replace value with `""`
+- `unicodeEdge(body, fieldPath)` — inject emoji, zero-width chars, RTL marks
+- `missingField(body, fieldPath)` — delete a required field
+
+### Schema Changes
+
+```sql
+CREATE TABLE fuzz_runs (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  request_id      UUID NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
+  user_id         UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  strategies      JSONB NOT NULL,
+  iterations_per  INTEGER NOT NULL,
+  total_5xx       INTEGER DEFAULT 0,
+  total_timeouts  INTEGER DEFAULT 0,
+  started_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completed_at    TIMESTAMPTZ
+);
+```
+
+### UI Components
+
+#### [NEW] `src/components/FuzzTestView.tsx`
+- Target request card
+- Mutation strategy toggleable pills
+- Iterations per strategy input
+- Expected behavior selector
+- Results grouped by strategy with pass/fail badges
+- "Run Fuzz Test" CTA
+
+#### [MODIFY] `app/(tabs)/benchmarks.tsx`
+- Add a secondary section or sub-tab: "Fuzz Testing" accessible from the Benchmarks screen
+- Or: accessible via a "Fuzz" action button on any saved POST/PUT/PATCH request
+
+### Verification
+- Fuzz a POST endpoint → verify mutations are applied correctly
+- Verify 5xx responses are flagged, 4xx are treated as passes
+- Test with an API that properly validates → expect all passes
+- Test with a fragile API → expect 5xx results to surface
+
+---
+
+## Phase 7 — Security Smoke Testing
+**Unlocks**: Header / TLS / Auth-Boundary Checks
+**Depends on**: Phase 1 (assertion engine)
+**Estimate**: 2–3 days
+
+### New Files
+
+#### [NEW] `src/services/securityEngine.ts`
+Three check types:
+
+1. **Header Hygiene**: inspect response headers for missing security headers
+   ```typescript
+   const REQUIRED_HEADERS = [
+     'strict-transport-security',
+     'x-content-type-options', 
+     'content-security-policy',
+     'x-frame-options',
+   ];
+   ```
+
+2. **TLS Enforcement**: take the request URL, replace `https://` with `http://`, fire it, assert response is either a failure or a 301/302 redirect to HTTPS
+
+3. **Auth Boundary**: take a saved request, strip the `Authorization` header, fire it, assert response is 401 or 403 (not 200)
+
+Each check returns:
+```typescript
+export interface SecurityCheckResult {
+  type: 'header_hygiene' | 'tls_enforcement' | 'auth_boundary';
+  passed: boolean;
+  details: string;
+  severity: 'critical' | 'warning' | 'info';
+}
+```
+
+### UI Components
+
+#### [NEW] `src/components/SecurityTestView.tsx`
+- List of check types with toggles
+- Run button
+- Results: traffic-light indicators per check (green/yellow/red)
+- Expandable detail cards showing what was checked and what failed
+- Framing copy: "QA checks for your own APIs"
+
+#### [MODIFY] `app/(tabs)/testing.tsx`
+- Security sub-tab renders `SecurityTestView`
+
+### Verification
+- Run against an API with proper security headers → all green
+- Run against an API missing HSTS → verify header hygiene flags it
+- Strip auth header → verify 401/403 assertion works
+- Test http:// enforcement with an API that redirects → verify pass
+
+---
+
+## Phase 8 — Network Condition (Chaos) Testing
+**Unlocks**: Resilience / Timeout Testing
+**Depends on**: Phase 1 (assertions)
+**Estimate**: 2 days
+
+### New Files
+
+#### [NEW] `src/services/chaosEngine.ts`
+```typescript
+export interface ChaosConfig {
+  request: Request;
+  delayMs: number;              // artificial delay before request fires
+  abortPercentage: number;      // 0-100: chance of random abort
+  iterations: number;
+  timeoutValidation: boolean;   // verify client-under-test respects timeout
+}
+
+export interface ChaosResult {
+  iterations: ChaosIteration[];
+  summary: {
+    totalDelayed: number;
+    totalAborted: number;
+    totalCompleted: number;
+    avgDelayedLatency: number;
+    timeoutRespected: boolean;
+  };
+}
+```
+
+Core logic:
+- Wrap `executeRequest()` with:
+  - Pre-request delay: `await sleep(config.delayMs)` before calling fetch
+  - Random abort: roll a random number, if below threshold, abort via `AbortController` before response completes
+  - Timeout validation: set a deliberately long delay + the request's timeout, verify the request aborts correctly
+
+### UI Components
+
+#### [NEW] `src/components/ChaosTestView.tsx`
+- Delay injection slider (0–10000ms)
+- Abort percentage slider (0–100%)
+- Iterations input
+- Timeout validation toggle
+- Results showing: how many completed, how many aborted, avg latency with delay, timeout behavior
+
+#### [MODIFY] `app/(tabs)/testing.tsx`
+- Chaos sub-tab renders `ChaosTestView`
+
+### Verification
+- Set 2000ms delay → verify requests take ~2000ms longer
+- Set 50% abort → verify roughly half the iterations show as aborted
+- Enable timeout validation with a 1s timeout + 5s delay → verify timeout fires correctly
+
+---
+
+## Phase 9 — Idempotency Testing
+**Unlocks**: Side-Effect Consistency Testing
+**Depends on**: Phase 1 (assertions), Phase 5 (diff engine)
+**Estimate**: 1–2 days
+
+### New Files
+
+#### [NEW] `src/services/idempotencyEngine.ts`
+```typescript
+export interface IdempotencyConfig {
+  request: Request;
+  repeatCount: number;          // default 2
+  ignoredFields: string[];      // fields expected to differ: ['id', 'created_at', 'updated_at']
+  variables: Record<string, string>;
+}
+
+export interface IdempotencyResult {
+  responses: ResponseTiming[];
+  diff: DiffResult;             // from diffEngine.ts (Phase 5)
+  verdict: 'idempotent' | 'side_effect_detected' | 'error';
+  unexpectedChanges: DiffChange[];  // changes NOT in ignoredFields
+}
+```
+
+Core logic:
+- Fire the request N times in sequence
+- Use `structuralDiff()` from Phase 5's diff engine to compare response 1 vs response 2
+- Filter out ignored fields
+- If any remaining diffs exist → `side_effect_detected`
+
+### UI Components
+
+#### [NEW] `src/components/IdempotencyTestView.tsx`
+- Target request card (only show for POST/PUT/PATCH)
+- Repeat count selector
+- Ignored fields: tag chips with remove button + "Add Field" input
+- Response comparison: stacked response cards with status + timing
+- Diff analysis: line-by-line with ✓ (identical), ⚠ (ignored diff), ✗ (unexpected diff)
+- Verdict badge: green "IDEMPOTENT" or amber "POTENTIAL SIDE EFFECT DETECTED"
+
+#### [MODIFY] `app/(tabs)/testing.tsx`
+- Idempotency sub-tab renders `IdempotencyTestView`
+
+### Verification
+- Test against a truly idempotent PUT endpoint → expect green verdict
+- Test against a POST that creates a new record each time → expect side-effect detection on `id` field (if not ignored)
+- Add `id` to ignored fields → verify it's filtered out and verdict changes
+
+---
+
+## File Change Summary
+
+### New Files (22 files)
+
+| File | Phase | Type |
+|------|-------|------|
+| `src/types/assertions.ts` | 1 | Types |
+| `src/services/assertionEngine.ts` | 1 | Service |
+| `src/components/AssertionEditor.tsx` | 1 | Component |
+| `src/types/runner.ts` | 2 | Types |
+| `src/services/collectionRunner.ts` | 2 | Service |
+| `src/stores/runnerStore.ts` | 2 | Store |
+| `src/components/CollectionRunnerView.tsx` | 2 | Component |
+| `src/components/VariableExtractionEditor.tsx` | 2 | Component |
+| `src/types/matrix.ts` | 3 | Types |
+| `src/services/matrixRunner.ts` | 3 | Service |
+| `src/components/EnvironmentMatrixView.tsx` | 3 | Component |
+| `src/types/regression.ts` | 5 | Types |
+| `src/services/diffEngine.ts` | 5 | Service |
+| `src/services/contractEngine.ts` | 5 | Service |
+| `src/components/DiffView.tsx` | 5 | Component |
+| `src/components/ContractEditor.tsx` | 5 | Component |
+| `src/services/fuzzEngine.ts` | 6 | Service |
+| `src/services/mutationStrategies.ts` | 6 | Service |
+| `src/components/FuzzTestView.tsx` | 6 | Component |
+| `src/services/securityEngine.ts` | 7 | Service |
+| `src/components/SecurityTestView.tsx` | 7 | Component |
+| `src/services/chaosEngine.ts` | 8 | Service |
+| `src/components/ChaosTestView.tsx` | 8 | Component |
+| `src/services/idempotencyEngine.ts` | 9 | Service |
+| `src/components/IdempotencyTestView.tsx` | 9 | Component |
+| `app/(tabs)/testing.tsx` | 5+ | Screen |
+
+### Modified Files (8 files)
+
+| File | Phases |
+|------|--------|
+| `supabase/schema.sql` | 1, 2, 3, 4, 5, 6 |
+| `src/types/database.ts` | 1, 2, 4 |
+| `src/services/dataService.ts` | 1, 2, 3, 5, 6 |
+| `src/services/benchmarkEngine.ts` | 1, 4 |
+| `src/components/ResponsePanel.tsx` | 1, 5 |
+| `app/(tabs)/client.tsx` | 1 |
+| `app/(tabs)/collections.tsx` | 2, 3 |
+| `app/(tabs)/benchmarks.tsx` | 4, 6 |
+| `app/(tabs)/_layout.tsx` | Pre-phase |
+
+---
+
+## Verification Plan
+
+### Per-Phase Testing
+Each phase has its own verification checklist (detailed above). Run after completing each phase before moving to the next.
+
+### Integration Testing
+After Phase 5, run an end-to-end test:
+1. Create a collection with 3 requests
+2. Add assertions to each request (Phase 1)
+3. Configure variable chaining (Phase 2)
+4. Run the collection → verify all assertions pass and variables chain
+5. Pin baselines (Phase 5) → re-run → verify no regression
+
+### Full Suite Validation (after Phase 9)
+1. Run the app with `expo start --android` / `--ios`
+2. Execute each testing type and verify results display correctly
+3. Verify Supabase data persistence (check tables for correct data)
+4. Test cancellation/abort flows for all long-running operations
+5. Verify navigation between all screens works correctly
+
+> [!IMPORTANT]
+> **Development approach**: Build each phase as a complete, testable iteration. Don't start Phase N+1 until Phase N is verified. This matches the dependency chain — Phase 2 literally can't work without Phase 1's assertion engine.

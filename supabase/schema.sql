@@ -187,6 +187,8 @@ CREATE TABLE history (
   response_body    TEXT,
   error_message    TEXT,
   is_benchmark     BOOLEAN NOT NULL DEFAULT false,
+  assertion_passed BOOLEAN,
+  assertion_failures JSONB DEFAULT '[]',
   executed_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -244,6 +246,8 @@ CREATE TABLE benchmark_iterations (
   ttfb_ms       INTEGER,
   response_size INTEGER,
   error         TEXT,
+  assertion_passed BOOLEAN,
+  assertion_failures JSONB DEFAULT '[]',
   executed_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -298,3 +302,41 @@ CREATE TRIGGER update_environments_updated_at
 CREATE TRIGGER update_environment_variables_updated_at
   BEFORE UPDATE ON environment_variables
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================
+-- ASSERTIONS
+-- ============================================================
+CREATE TABLE assertions (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  request_id      UUID NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
+  field           TEXT NOT NULL,
+  operator        TEXT NOT NULL,
+  expected_value  TEXT,
+  sort_order      INTEGER NOT NULL DEFAULT 0,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_assertions_request_id ON assertions(request_id);
+
+ALTER TABLE assertions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage assertions for own requests"
+  ON assertions FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM requests
+      JOIN collections ON collections.id = requests.collection_id
+      JOIN workspaces ON workspaces.id = collections.workspace_id
+      WHERE requests.id = assertions.request_id
+      AND workspaces.user_id = auth.uid()
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM requests
+      JOIN collections ON collections.id = requests.collection_id
+      JOIN workspaces ON workspaces.id = collections.workspace_id
+      WHERE requests.id = assertions.request_id
+      AND workspaces.user_id = auth.uid()
+    )
+  );
