@@ -52,8 +52,8 @@ export function ResponsePanel({ response, error, assertionSummary }: Props) {
         typeof value === 'string' ? `"${value}"` : String(value ?? 'null');
       return (
         <View key={path} style={[styles.jsonRow, { paddingLeft: indent }]}>
-          {key ? <Text style={styles.jsonKey}>{key}: </Text> : null}
-          <Text style={styles.jsonValue}>{displayValue}</Text>
+          {key ? <Text style={styles.jsonKey} selectable>{key}: </Text> : null}
+          <Text style={styles.jsonValue} selectable>{displayValue}</Text>
         </View>
       );
     }

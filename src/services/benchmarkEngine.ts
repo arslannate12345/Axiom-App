@@ -17,8 +17,15 @@ export interface BenchmarkProgress {
 export interface BenchmarkRunOptions {
   request: Request;
   variables: Record<string, string>;
-  totalIterations: number;
-  batchSize: number;
+  mode: 'fixed' | 'ramp' | 'spike' | 'soak';
+  totalIterations?: number; // Used in fixed, spike
+  batchSize?: number; // Used in fixed, soak
+  durationMs?: number; // Used in ramp, soak
+  startBatchSize?: number; // Used in ramp
+  endBatchSize?: number; // Used in ramp
+  baseBatchSize?: number; // Used in spike
+  spikeBatchSize?: number; // Used in spike
+  spikeTimeMs?: number; // Used in spike
   assertions?: AssertionRow[];
   onProgress?: (progress: BenchmarkProgress) => void;
   signal?: AbortSignal;
@@ -103,52 +110,96 @@ function calculatePercentile(sortedList: number[], percentile: number): number |
 export async function startBenchmarkRun({
   request,
   variables,
-  totalIterations,
-  batchSize,
+  mode,
+  totalIterations = 0,
+  batchSize = 1,
+  durationMs = 0,
+  startBatchSize = 1,
+  endBatchSize = 1,
+  baseBatchSize = 1,
+  spikeBatchSize = 1,
+  spikeTimeMs = 0,
   assertions,
   onProgress,
   signal,
 }: BenchmarkRunOptions) {
   // 1. Create run record
-  const run = await createBenchmarkRun(request.id, totalIterations, batchSize);
+  const run = await createBenchmarkRun(request.id, totalIterations || durationMs, batchSize || startBatchSize);
   if (!run) throw new Error('Failed to create benchmark run in database.');
 
   const runId = run.id;
   const startTime = Date.now();
   
   let completed = 0;
+  let batchIndex = 0;
   const allIterations: Omit<BenchmarkIteration, 'id' | 'executed_at'>[] = [];
 
-  // 2. Batch Execution Loop
-  for (let i = 0; i < totalIterations; i += batchSize) {
+  // 2. Loop condition based on mode
+  const isTimeBased = mode === 'ramp' || mode === 'soak';
+
+  while (true) {
     if (signal?.aborted) break;
 
-    const batchPromises: Promise<Omit<BenchmarkIteration, 'id' | 'executed_at'>>[] = [];
-    const currentBatchSize = Math.min(batchSize, totalIterations - i);
+    const elapsedMs = Date.now() - startTime;
 
+    // Check termination conditions
+    if (isTimeBased) {
+      if (elapsedMs >= durationMs) break;
+    } else {
+      if (completed >= totalIterations) break;
+    }
+
+    // Determine current batch size based on mode
+    let currentBatchSize = 1;
+    if (mode === 'fixed') {
+      currentBatchSize = Math.min(batchSize, totalIterations - completed);
+    } else if (mode === 'soak') {
+      currentBatchSize = batchSize;
+    } else if (mode === 'ramp') {
+      const progress = Math.min(1, elapsedMs / durationMs);
+      currentBatchSize = Math.floor(startBatchSize + (endBatchSize - startBatchSize) * progress);
+      currentBatchSize = Math.max(1, currentBatchSize);
+    } else if (mode === 'spike') {
+      const isSpike = elapsedMs >= spikeTimeMs && elapsedMs <= spikeTimeMs + 10000; // 10 second spike duration
+      currentBatchSize = isSpike ? spikeBatchSize : baseBatchSize;
+      currentBatchSize = Math.min(currentBatchSize, totalIterations - completed);
+    }
+
+    if (currentBatchSize <= 0) break;
+
+    const batchPromises: Promise<Omit<BenchmarkIteration, 'id' | 'executed_at'>>[] = [];
     for (let j = 0; j < currentBatchSize; j++) {
-      const iterationNum = i + j + 1;
+      const iterationNum = completed + j + 1;
       batchPromises.push(runSingleIteration(runId, iterationNum, request, variables, assertions, signal));
     }
 
-    // Wait for the entire batch to finish concurrently
     const batchResults = await Promise.all(batchPromises);
     
-    // Store batch results in DB
-    await insertBenchmarkIterations(batchResults);
+    // Sampling for soak mode to protect DB health
+    if (mode === 'soak') {
+      // Save only the first iteration of each batch as a sample
+      if (batchResults.length > 0) {
+        await insertBenchmarkIterations([batchResults[0]]);
+      }
+    } else {
+      // For all other modes, save all iterations to generate accurate charts
+      await insertBenchmarkIterations(batchResults);
+    }
     
-    // Track in memory for final stats calculation
     allIterations.push(...batchResults);
-    
     completed += currentBatchSize;
+    batchIndex++;
     
     if (onProgress) {
       onProgress({
-        total: totalIterations,
-        completed,
-        currentBatch: Math.floor(i / batchSize) + 1,
+        total: isTimeBased ? durationMs : totalIterations,
+        completed: isTimeBased ? elapsedMs : completed,
+        currentBatch: batchIndex,
       });
     }
+
+    // Brief yield to event loop to avoid completely locking JS thread on fast responses
+    await new Promise(r => setTimeout(r, 10));
   }
 
   const endTime = Date.now();

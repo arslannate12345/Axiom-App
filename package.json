@@ -10,6 +10,7 @@
     "expo": "~54.0.35",
     "expo-constants": "~18.0.13",
     "expo-dev-client": "~6.0.21",
+    "expo-keep-awake": "^57.0.0",
     "expo-linking": "~8.0.12",
     "expo-router": "~6.0.24",
     "expo-splash-screen": "~31.0.13",

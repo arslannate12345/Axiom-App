@@ -19,6 +19,7 @@ import { getAssertions } from '../../src/services/dataService';
 import { startBenchmarkRun, BenchmarkProgress } from '../../src/services/benchmarkEngine';
 import type { Request } from '../../src/types/database';
 import { LineChart } from 'react-native-chart-kit';
+import { useKeepAwake } from 'expo-keep-awake';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -27,11 +28,26 @@ export default function BenchmarksScreen() {
   const getActiveVariables = useEnvironmentStore((s) => s.getActiveVariables);
 
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
+  const [mode, setMode] = useState<'fixed' | 'ramp' | 'spike' | 'soak'>('fixed');
+  
+  // Mode parameters
   const [iterations, setIterations] = useState('50');
   const [batchSize, setBatchSize] = useState('5');
+  const [durationSecs, setDurationSecs] = useState('60');
+  const [startBatchSize, setStartBatchSize] = useState('1');
+  const [endBatchSize, setEndBatchSize] = useState('20');
+  const [spikeBatchSize, setSpikeBatchSize] = useState('50');
+  const [spikeTimeSecs, setSpikeTimeSecs] = useState('30');
+  
   const [showSelector, setShowSelector] = useState(false);
+  const [showGraphModal, setShowGraphModal] = useState(false);
 
   const [isRunning, setIsRunning] = useState(false);
+  
+  // Conditionally keep device awake if soak mode is running
+  if (isRunning && mode === 'soak') {
+    useKeepAwake();
+  }
   const [progress, setProgress] = useState<BenchmarkProgress | null>(null);
   const [stats, setStats] = useState<any | null>(null);
   const [chartData, setChartData] = useState<number[]>([]);
@@ -79,8 +95,15 @@ export default function BenchmarksScreen() {
       const result = await startBenchmarkRun({
         request: selectedRequest,
         variables: getActiveVariables(),
+        mode,
         totalIterations: iterCount,
         batchSize: batchCount,
+        durationMs: parseInt(durationSecs, 10) * 1000 || 60000,
+        startBatchSize: parseInt(startBatchSize, 10) || 1,
+        endBatchSize: parseInt(endBatchSize, 10) || 20,
+        baseBatchSize: batchCount,
+        spikeBatchSize: parseInt(spikeBatchSize, 10) || 50,
+        spikeTimeMs: parseInt(spikeTimeSecs, 10) * 1000 || 30000,
         assertions: assertions.map(a => ({
           id: a.id,
           field: a.field,
@@ -99,7 +122,19 @@ export default function BenchmarksScreen() {
         .filter(i => i.latency_ms !== null)
         .map(i => i.latency_ms as number);
       
-      setChartData(latencies);
+      const maxPoints = 50;
+      let sampledLatencies = latencies;
+      if (latencies.length > maxPoints) {
+        const chunkSize = Math.ceil(latencies.length / maxPoints);
+        sampledLatencies = [];
+        for (let i = 0; i < latencies.length; i += chunkSize) {
+          const chunk = latencies.slice(i, i + chunkSize);
+          const avg = chunk.reduce((sum, val) => sum + val, 0) / chunk.length;
+          sampledLatencies.push(Math.round(avg));
+        }
+      }
+      
+      setChartData(sampledLatencies);
 
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Benchmark failed');
@@ -157,28 +192,104 @@ export default function BenchmarksScreen() {
               <Ionicons name="chevron-down" size={16} color="#94A3B8" />
             </TouchableOpacity>
 
-            <View style={styles.row}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Total Iterations</Text>
-                <TextInput
-                  style={styles.input}
-                  value={iterations}
-                  onChangeText={setIterations}
-                  keyboardType="numeric"
-                  editable={!isRunning}
-                />
-              </View>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Concurrency (Batch Size)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={batchSize}
-                  onChangeText={setBatchSize}
-                  keyboardType="numeric"
-                  editable={!isRunning}
-                />
-              </View>
+            <View style={styles.modeSelector}>
+              {(['fixed', 'ramp', 'spike', 'soak'] as const).map(m => (
+                <TouchableOpacity
+                  key={m}
+                  style={[styles.modeBtn, mode === m && styles.modeBtnActive]}
+                  onPress={() => setMode(m)}
+                  disabled={isRunning}
+                >
+                  <Text style={[styles.modeBtnText, mode === m && styles.modeBtnTextActive]}>
+                    {m.charAt(0).toUpperCase() + m.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
+
+            {mode === 'fixed' && (
+              <View style={styles.row}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Total Iterations</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={iterations}
+                    onChangeText={setIterations}
+                    keyboardType="numeric"
+                    editable={!isRunning}
+                  />
+                </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Batch Size</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={batchSize}
+                    onChangeText={setBatchSize}
+                    keyboardType="numeric"
+                    editable={!isRunning}
+                  />
+                </View>
+              </View>
+            )}
+
+            {mode === 'ramp' && (
+              <>
+                <View style={styles.row}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Duration (sec)</Text>
+                    <TextInput style={styles.input} value={durationSecs} onChangeText={setDurationSecs} keyboardType="numeric" editable={!isRunning} />
+                  </View>
+                </View>
+                <View style={styles.row}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Start Batch Size</Text>
+                    <TextInput style={styles.input} value={startBatchSize} onChangeText={setStartBatchSize} keyboardType="numeric" editable={!isRunning} />
+                  </View>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>End Batch Size</Text>
+                    <TextInput style={styles.input} value={endBatchSize} onChangeText={setEndBatchSize} keyboardType="numeric" editable={!isRunning} />
+                  </View>
+                </View>
+              </>
+            )}
+
+            {mode === 'spike' && (
+              <>
+                <View style={styles.row}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Total Iterations</Text>
+                    <TextInput style={styles.input} value={iterations} onChangeText={setIterations} keyboardType="numeric" editable={!isRunning} />
+                  </View>
+                </View>
+                <View style={styles.row}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Base Batch Size</Text>
+                    <TextInput style={styles.input} value={batchSize} onChangeText={setBatchSize} keyboardType="numeric" editable={!isRunning} />
+                  </View>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Spike Batch Size</Text>
+                    <TextInput style={styles.input} value={spikeBatchSize} onChangeText={setSpikeBatchSize} keyboardType="numeric" editable={!isRunning} />
+                  </View>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Spike Start (sec)</Text>
+                    <TextInput style={styles.input} value={spikeTimeSecs} onChangeText={setSpikeTimeSecs} keyboardType="numeric" editable={!isRunning} />
+                  </View>
+                </View>
+              </>
+            )}
+
+            {mode === 'soak' && (
+              <View style={styles.row}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Duration (sec)</Text>
+                  <TextInput style={styles.input} value={durationSecs} onChangeText={setDurationSecs} keyboardType="numeric" editable={!isRunning} />
+                </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Batch Size</Text>
+                  <TextInput style={styles.input} value={batchSize} onChangeText={setBatchSize} keyboardType="numeric" editable={!isRunning} />
+                </View>
+              </View>
+            )}
 
             <TouchableOpacity
               style={[
@@ -217,7 +328,9 @@ export default function BenchmarksScreen() {
                   />
                 </View>
                 <Text style={styles.progressText}>
-                  {progress.completed} / {progress.total} requests completed
+                  {mode === 'ramp' || mode === 'soak' 
+                    ? `${Math.floor(progress.completed / 1000)} / ${progress.total / 1000} secs`
+                    : `${progress.completed} / ${progress.total} requests completed`}
                 </Text>
               </View>
             </View>
@@ -230,21 +343,33 @@ export default function BenchmarksScreen() {
               
               <View style={styles.statsGrid}>
                 <View style={styles.statBox}>
-                  <Text style={styles.statLabel}>Avg Latency</Text>
+                  <Text style={styles.statLabel}>Fastest Request</Text>
+                  <Text style={styles.statValue}>{stats.min_latency} ms</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statLabel}>Slowest Request</Text>
+                  <Text style={styles.statValue}>{stats.max_latency} ms</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statLabel}>Average Speed</Text>
                   <Text style={styles.statValue}>{stats.avg_latency} ms</Text>
                 </View>
                 <View style={styles.statBox}>
-                  <Text style={styles.statLabel}>P95 Latency</Text>
+                  <Text style={styles.statLabel}>Typical Speed</Text>
+                  <Text style={styles.statValue}>{stats.p50_latency} ms</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statLabel}>Slowest 5%</Text>
                   <Text style={styles.statValue}>{stats.p95_latency} ms</Text>
                 </View>
                 <View style={styles.statBox}>
-                  <Text style={styles.statLabel}>P99 Latency</Text>
+                  <Text style={styles.statLabel}>Worst Case</Text>
                   <Text style={styles.statValue}>{stats.p99_latency} ms</Text>
                 </View>
                 <View style={styles.statBox}>
-                  <Text style={styles.statLabel}>Error Rate</Text>
-                  <Text style={[styles.statValue, stats.error_rate > 0 && { color: '#EF4444' }]}>
-                    {stats.error_rate.toFixed(1)}%
+                  <Text style={styles.statLabel}>Reliability / Failures</Text>
+                  <Text style={[styles.statValue, stats.error_rate > 0 && { color: '#EF4444' }, stats.error_rate === 0 && { color: '#10B981' }]}>
+                    {stats.error_rate.toFixed(1)}% Failure Rate
                   </Text>
                 </View>
               </View>
@@ -260,41 +385,13 @@ export default function BenchmarksScreen() {
               </View>
 
               {chartData.length > 0 && (
-                <View style={styles.chartContainer}>
-                  <Text style={styles.chartTitle}>Latency over Time (ms)</Text>
-                  <LineChart
-                    data={{
-                      labels: chartData.map((_, i) => `${i + 1}`),
-                      datasets: [{ data: chartData }],
-                    }}
-                    width={screenWidth - 64} // padding adjustments
-                    height={220}
-                    withDots={false}
-                    withInnerLines={false}
-                    yAxisSuffix="ms"
-                    yAxisInterval={1}
-                    chartConfig={{
-                      backgroundColor: 'transparent',
-                      backgroundGradientFrom: 'transparent',
-                      backgroundGradientTo: 'transparent',
-                      decimalPlaces: 0,
-                      color: (opacity = 1) => `rgba(99, 102, 241, ${opacity})`,
-                      labelColor: (opacity = 1) => `rgba(148, 163, 184, ${opacity})`,
-                      style: {
-                        borderRadius: 16,
-                      },
-                      propsForDots: {
-                        r: "0",
-                      }
-                    }}
-                    bezier
-                    style={{
-                      marginVertical: 8,
-                      borderRadius: 16,
-                      marginLeft: -16,
-                    }}
-                  />
-                </View>
+                <TouchableOpacity
+                  style={styles.viewGraphBtn}
+                  onPress={() => setShowGraphModal(true)}
+                >
+                  <Ionicons name="bar-chart" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+                  <Text style={styles.viewGraphBtnText}>View Detailed Graph</Text>
+                </TouchableOpacity>
               )}
             </View>
           )}
@@ -329,6 +426,64 @@ export default function BenchmarksScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Graph Modal */}
+      <Modal
+        visible={showGraphModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowGraphModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { height: '80%' }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Latency Analysis (ms)</Text>
+              <TouchableOpacity onPress={() => setShowGraphModal(false)}>
+                <Ionicons name="close" size={24} color="#94A3B8" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.graphModalBody}>
+              <Text style={styles.graphInstruction}>
+                The graph below shows the latency curve. X-axis labels are hidden to prevent clutter.
+              </Text>
+              <LineChart
+                data={{
+                  labels: chartData.map(() => ''), // Hide X-axis labels
+                  datasets: [{ data: chartData }],
+                }}
+                width={screenWidth - 32} // Use more width
+                height={Dimensions.get('window').height * 0.5} // Taller chart
+                withDots={true}
+                withInnerLines={true}
+                yAxisSuffix="ms"
+                chartConfig={{
+                  backgroundColor: '#0F172A',
+                  backgroundGradientFrom: '#0F172A',
+                  backgroundGradientTo: '#1E293B',
+                  decimalPlaces: 0,
+                  color: (opacity = 1) => `rgba(99, 102, 241, ${opacity})`,
+                  labelColor: (opacity = 1) => `rgba(148, 163, 184, ${opacity})`,
+                  style: {
+                    borderRadius: 16,
+                  },
+                  propsForDots: {
+                    r: "4",
+                    strokeWidth: "2",
+                    stroke: "#818CF8"
+                  }
+                }}
+                bezier
+                formatXLabel={() => ''} // explicitly hide x labels
+                style={{
+                  marginVertical: 8,
+                  borderRadius: 16,
+                  alignSelf: 'center',
+                }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </AnimatedBackground>
   );
 }
@@ -349,9 +504,9 @@ function getHumanReadableSummary(stats: any) {
   
   let health = '';
   if (stats.error_rate === 0) {
-    health = "Flawless! Your endpoint successfully handled all requests without a single error.";
+    health = "Flawless! Your server successfully handled all requests without a single network error. This means every request made a full round trip and received a valid HTTP response (even if that response was an HTTP error like a 404/500, it didn't completely timeout or crash).";
   } else if (stats.error_rate < 5) {
-    health = `Mostly stable. Your endpoint had a small error rate of ${stats.error_rate.toFixed(1)}%.`;
+    health = `Mostly stable. Your endpoint experienced network failures on ${stats.error_rate.toFixed(1)}% of requests (e.g. timeouts or connection drops).`;
   } else {
     health = `Struggling. Your endpoint failed ${stats.error_rate.toFixed(1)}% of the time under load.`;
   }
@@ -366,10 +521,15 @@ function getHumanReadableSummary(stats: any) {
   }
 
   let consistency = '';
-  if (stats.p99_latency < stats.avg_latency * 2) {
-    consistency = "Consistency is excellent; even the slowest 1% of requests were handled efficiently.";
-  } else {
-    consistency = `However, consistency is an issue. While the average is ${stats.avg_latency}ms, some users experienced spikes up to ${stats.p99_latency}ms.`;
+  if (stats.p95_latency && stats.p50_latency) {
+    const diff = stats.p95_latency - stats.p50_latency;
+    if (diff < 100) {
+      consistency = "It is also highly consistent; even your slowest 5% of requests felt as fast as the typical request.";
+    } else if (diff < 500) {
+      consistency = "Consistency is okay, but 5% of your users (the slow ones) are experiencing some noticeable delay.";
+    } else {
+      consistency = "However, it is very inconsistent. The slowest 5% of requests take significantly longer than the typical request, meaning some users are having a terrible experience under this load.";
+    }
   }
 
   return `${health} ${speed} ${consistency}`;
@@ -422,6 +582,32 @@ const styles = StyleSheet.create({
   requestSelectorPlaceholder: {
     color: '#64748B',
     fontSize: 14,
+  },
+  modeSelector: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+    borderRadius: 8,
+    padding: 4,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  modeBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 6,
+  },
+  modeBtnActive: {
+    backgroundColor: '#6366F1',
+  },
+  modeBtnText: {
+    color: '#94A3B8',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  modeBtnTextActive: {
+    color: '#FFFFFF',
   },
   row: {
     flexDirection: 'row',
@@ -599,5 +785,29 @@ const styles = StyleSheet.create({
     color: '#64748B',
     textAlign: 'center',
     marginTop: 32,
+  },
+  viewGraphBtn: {
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#3B82F6',
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  viewGraphBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  graphModalBody: {
+    padding: 16,
+    flex: 1,
+  },
+  graphInstruction: {
+    color: '#94A3B8',
+    fontSize: 13,
+    marginBottom: 16,
+    textAlign: 'center',
   },
 });
