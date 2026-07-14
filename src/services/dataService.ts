@@ -12,6 +12,7 @@ import type {
   BenchmarkIteration,
 } from '../types/database';
 import type { Assertion, AssertionOperator } from '../types/assertions';
+import type { VariableExtraction, CollectionRun, CollectionRunStep } from '../types/runner';
 
 const SKIP_AUTH = process.env.EXPO_PUBLIC_SKIP_AUTH === 'true';
 const MOCK_USER_ID = '00000000-0000-0000-0000-000000000000';
@@ -161,7 +162,8 @@ export async function getRequests(collectionId: string): Promise<Request[]> {
     .from('requests')
     .select('*')
     .eq('collection_id', collectionId)
-    .order('sort_order', { ascending: true });
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
 
   if (error) {
     console.error('Failed to fetch requests:', error.message);
@@ -318,6 +320,15 @@ export async function clearHistory(): Promise<boolean> {
 
   if (error) {
     console.error('Failed to clear history:', error.message);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteHistoryEntry(id: string): Promise<boolean> {
+  const { error } = await supabase.from('history').delete().eq('id', id);
+  if (error) {
+    console.error('Failed to delete history entry:', error.message);
     return false;
   }
   return true;
@@ -481,4 +492,114 @@ export async function deleteAllAssertions(requestId: string): Promise<boolean> {
   }
   return true;
 }
+
+// ============================================================
+// VARIABLE EXTRACTIONS (Phase 2)
+// ============================================================
+
+export async function getVariableExtractions(requestId: string): Promise<VariableExtraction[]> {
+  const { data, error } = await supabase
+    .from('variable_extractions')
+    .select('*')
+    .eq('request_id', requestId)
+    .order('sort_order', { ascending: true });
+
+  if (error) {
+    console.error('Failed to get variable extractions:', error.message);
+    return [];
+  }
+  return data || [];
+}
+
+export async function createVariableExtraction(
+  requestId: string,
+  variableName: string,
+  jsonPath: string
+): Promise<VariableExtraction | null> {
+  const { data, error } = await supabase
+    .from('variable_extractions')
+    .insert({
+      request_id: requestId,
+      variable_name: variableName,
+      json_path: jsonPath,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Failed to create variable extraction:', error.message);
+    return null;
+  }
+  return data;
+}
+
+export async function deleteAllVariableExtractions(requestId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('variable_extractions')
+    .delete()
+    .eq('request_id', requestId);
+
+  if (error) {
+    console.error('Failed to delete variable extractions:', error.message);
+    return false;
+  }
+  return true;
+}
+
+// ============================================================
+// COLLECTION RUNS (Phase 2)
+// ============================================================
+
+export async function createCollectionRun(
+  collectionId: string,
+  environmentId: string | null,
+  totalSteps: number
+): Promise<CollectionRun | null> {
+  const { data, error } = await supabase
+    .from('collection_runs')
+    .insert({
+      collection_id: collectionId,
+      user_id: getUserId(),
+      environment_id: environmentId === 'global-env-id' ? null : environmentId,
+      total_steps: totalSteps,
+      status: 'running',
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Failed to create collection run:', error.message);
+    return null;
+  }
+  return data;
+}
+
+export async function insertCollectionRunStep(
+  step: Omit<CollectionRunStep, 'id' | 'executed_at'>
+): Promise<boolean> {
+  const { error } = await supabase.from('collection_run_steps').insert(step);
+
+  if (error) {
+    console.error('Failed to insert collection run step:', error.message);
+    return false;
+  }
+  return true;
+}
+
+export async function updateCollectionRun(
+  runId: string,
+  stats: Partial<CollectionRun>
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('collection_runs')
+    .update(stats)
+    .eq('id', runId);
+
+  if (error) {
+    console.error('Failed to update collection run:', error.message);
+    return false;
+  }
+  return true;
+}
+
 

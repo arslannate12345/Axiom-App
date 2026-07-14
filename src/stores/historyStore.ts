@@ -9,6 +9,7 @@ interface HistoryState {
 
   loadHistory: (limit?: number) => Promise<void>;
   logEntry: (payload: LogExecutionPayload) => Promise<void>;
+  removeEntry: (id: string) => Promise<void>;
   clearHistory: () => Promise<void>;
 }
 
@@ -27,6 +28,15 @@ export const useHistoryStore = create<HistoryState>((set) => ({
     if (entry) {
       set((state) => ({
         entries: [entry, ...state.entries].slice(0, 100), // Keep last 100
+      }));
+    }
+  },
+
+  removeEntry: async (id: string) => {
+    const success = await dataService.deleteHistoryEntry(id);
+    if (success) {
+      set((state) => ({
+        entries: state.entries.filter(e => e.id !== id),
       }));
     }
   },

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useEffect, useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { AnimatedBackground } from '../../src/components/AnimatedBackground';
@@ -7,7 +7,7 @@ import { useCollectionsStore } from '../../src/stores/collectionsStore';
 import type { HistoryEntry } from '../../src/types/database';
 
 export default function HistoryScreen() {
-  const { entries, isLoading, loadHistory, clearHistory } = useHistoryStore();
+  const { entries, isLoading, loadHistory, clearHistory, removeEntry } = useHistoryStore();
   const { requests } = useCollectionsStore();
 
   useEffect(() => {
@@ -24,8 +24,24 @@ export default function HistoryScreen() {
     const name = requestDetails?.name || 'Unknown Request';
     const isError = !item.status_code || item.status_code >= 400;
 
+    const confirmDelete = () => {
+      Alert.alert(
+        'Delete Request',
+        'Are you sure you want to remove this request from your history?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', style: 'destructive', onPress: () => removeEntry(item.id) },
+        ]
+      );
+    };
+
     return (
-      <View style={styles.historyCard}>
+      <TouchableOpacity 
+        style={styles.historyCard} 
+        onLongPress={confirmDelete}
+        delayLongPress={500}
+        activeOpacity={0.8}
+      >
         <View style={styles.historyHeader}>
           <View style={[styles.methodBadge, { backgroundColor: getMethodColor(method) }]}>
             <Text style={styles.methodText}>{method}</Text>
@@ -54,7 +70,7 @@ export default function HistoryScreen() {
             </View>
           )}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 

@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import type { KeyValuePair } from '../types/database';
 
 interface Props {
@@ -6,6 +6,7 @@ interface Props {
   onChange: (pairs: KeyValuePair[]) => void;
   keyPlaceholder?: string;
   valuePlaceholder?: string;
+  suggestedKeys?: string[];
 }
 
 export function KeyValueEditor({
@@ -13,6 +14,7 @@ export function KeyValueEditor({
   onChange,
   keyPlaceholder = 'Key',
   valuePlaceholder = 'Value',
+  suggestedKeys,
 }: Props) {
   const updatePair = (index: number, field: 'key' | 'value' | 'enabled', val: string | boolean) => {
     const updated = [...pairs];
@@ -64,6 +66,20 @@ export function KeyValueEditor({
       <TouchableOpacity style={styles.addBtn} onPress={addPair}>
         <Text style={styles.addBtnText}>+ Add</Text>
       </TouchableOpacity>
+
+      {suggestedKeys && suggestedKeys.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.suggestionsContainer}>
+          {suggestedKeys.map((s) => (
+            <TouchableOpacity 
+              key={s} 
+              style={styles.suggestionChip}
+              onPress={() => onChange([...pairs, { key: s, value: '', enabled: true }])}
+            >
+              <Text style={styles.suggestionText}>+ {s}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -138,5 +154,23 @@ const styles = StyleSheet.create({
     color: '#6366F1',
     fontSize: 14,
     fontWeight: '600',
+  },
+  suggestionsContainer: {
+    flexDirection: 'row',
+    marginTop: 12,
+  },
+  suggestionChip: {
+    backgroundColor: '#1E293B',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  suggestionText: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '500',
   },
 });

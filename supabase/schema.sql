@@ -340,3 +340,106 @@ CREATE POLICY "Users can manage assertions for own requests"
       AND workspaces.user_id = auth.uid()
     )
   );
+
+-- ============================================================
+-- VARIABLE EXTRACTIONS (Phase 2)
+-- ============================================================
+CREATE TABLE variable_extractions (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  request_id      UUID NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
+  variable_name   TEXT NOT NULL,
+  json_path       TEXT NOT NULL,
+  sort_order      INTEGER NOT NULL DEFAULT 0,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_variable_extractions_request_id ON variable_extractions(request_id);
+
+ALTER TABLE variable_extractions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage variable extractions for own requests"
+  ON variable_extractions FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM requests
+      JOIN collections ON collections.id = requests.collection_id
+      JOIN workspaces ON workspaces.id = collections.workspace_id
+      WHERE requests.id = variable_extractions.request_id
+      AND workspaces.user_id = auth.uid()
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM requests
+      JOIN collections ON collections.id = requests.collection_id
+      JOIN workspaces ON workspaces.id = collections.workspace_id
+      WHERE requests.id = variable_extractions.request_id
+      AND workspaces.user_id = auth.uid()
+    )
+  );
+
+-- ============================================================
+-- COLLECTION RUNS (Phase 2)
+-- ============================================================
+CREATE TABLE collection_runs (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  collection_id   UUID NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
+  user_id         UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  environment_id  UUID REFERENCES environments(id) ON DELETE SET NULL,
+  total_steps     INTEGER NOT NULL,
+  passed_steps    INTEGER DEFAULT 0,
+  failed_steps    INTEGER DEFAULT 0,
+  total_duration  INTEGER,
+  status          TEXT NOT NULL DEFAULT 'running',
+  started_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completed_at    TIMESTAMPTZ
+);
+
+CREATE INDEX idx_collection_runs_collection_id ON collection_runs(collection_id);
+CREATE INDEX idx_collection_runs_user_id ON collection_runs(user_id);
+
+ALTER TABLE collection_runs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage own collection runs"
+  ON collection_runs FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- ============================================================
+-- COLLECTION RUN STEPS (Phase 2)
+-- ============================================================
+CREATE TABLE collection_run_steps (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  run_id          UUID NOT NULL REFERENCES collection_runs(id) ON DELETE CASCADE,
+  request_id      UUID NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
+  step_order      INTEGER NOT NULL,
+  status_code     INTEGER,
+  latency_ms      INTEGER,
+  response_body   TEXT,
+  assertion_passed BOOLEAN,
+  assertion_failures JSONB DEFAULT '[]',
+  extracted_variables JSONB DEFAULT '{}',
+  error           TEXT,
+  executed_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_collection_run_steps_run_id ON collection_run_steps(run_id);
+
+ALTER TABLE collection_run_steps ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage own collection run steps"
+  ON collection_run_steps FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM collection_runs
+      WHERE collection_runs.id = collection_run_steps.run_id
+      AND collection_runs.user_id = auth.uid()
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM collection_runs
+      WHERE collection_runs.id = collection_run_steps.run_id
+      AND collection_runs.user_id = auth.uid()
+    )
+  );

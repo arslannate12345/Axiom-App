@@ -15,7 +15,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { AnimatedBackground } from '../../src/components/AnimatedBackground';
+import { CollectionRunnerView } from '../../src/components/CollectionRunnerView';
 import { useCollectionsStore } from '../../src/stores/collectionsStore';
+import { useRunnerStore } from '../../src/stores/runnerStore';
 import type { Collection, Request as ApiRequest } from '../../src/types/database';
 
 const METHOD_COLORS: Record<string, string> = {
@@ -48,6 +50,8 @@ export default function CollectionsScreen() {
     deleteCollection,
     deleteRequest,
   } = useCollectionsStore();
+
+  const { openRunner } = useRunnerStore();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createType, setCreateType] = useState<'workspace' | 'collection' | null>(null);
@@ -141,6 +145,7 @@ export default function CollectionsScreen() {
 
   return (
     <AnimatedBackground>
+      <CollectionRunnerView />
       <View style={styles.container}>
         {/* Workspace Pills */}
         <ScrollView
@@ -231,10 +236,11 @@ export default function CollectionsScreen() {
                 isExpanded,
                 data,
                 colRequestsCount: colRequests.length,
+                colRequests,
               };
             })}
             keyExtractor={(item) => item.id}
-            renderSectionHeader={({ section: { collection, isExpanded, colRequestsCount } }) => (
+            renderSectionHeader={({ section: { collection, isExpanded, colRequestsCount, colRequests } }) => (
               <View style={[styles.collectionBlock, { borderBottomLeftRadius: isExpanded ? 0 : 12, borderBottomRightRadius: isExpanded ? 0 : 12, marginBottom: isExpanded ? 0 : 8 }]}>
                 <TouchableOpacity
                   style={styles.collectionHeader}
@@ -256,9 +262,20 @@ export default function CollectionsScreen() {
                   </View>
                   <View style={styles.collectionRight}>
                     {colRequestsCount > 0 && (
-                      <View style={styles.countChip}>
-                        <Text style={styles.countChipText}>{colRequestsCount}</Text>
-                      </View>
+                      <>
+                        <TouchableOpacity
+                          style={styles.runBtn}
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            openRunner(collection.id, colRequests);
+                          }}
+                        >
+                          <Ionicons name="play" size={16} color="#6366F1" />
+                        </TouchableOpacity>
+                        <View style={styles.countChip}>
+                          <Text style={styles.countChipText}>{colRequestsCount}</Text>
+                        </View>
+                      </>
                     )}
                   </View>
                 </TouchableOpacity>
@@ -492,12 +509,20 @@ const styles = StyleSheet.create({
   collectionRight: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   collectionName: {
     fontSize: 15,
     fontWeight: '600',
     color: '#E2E8F0',
     flex: 1,
+  },
+  runBtn: {
+    padding: 6,
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   countChip: {
     backgroundColor: '#6366F1',

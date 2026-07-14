@@ -26,7 +26,7 @@ interface CollectionsState {
   createCollection: (workspaceId: string, name: string) => Promise<Collection | null>;
   deleteCollection: (id: string, workspaceId: string) => Promise<boolean>;
   saveRequest: (payload: SaveRequestPayload) => Promise<Request | null>;
-  updateRequest: (id: string, payload: Partial<SaveRequestPayload>, collectionId: string) => Promise<boolean>;
+  updateRequest: (id: string, payload: Partial<SaveRequestPayload>, collectionId?: string) => Promise<boolean>;
   deleteRequest: (id: string, collectionId: string) => Promise<boolean>;
 }
 
@@ -163,11 +163,15 @@ export const useCollectionsStore = create<CollectionsState>((set, get) => ({
   updateRequest: async (id, payload, collectionId) => {
     const success = await dataService.updateRequest(id, payload);
     if (success) {
-      // Reload requests for the collection to get fresh data
-      const reqs = await dataService.getRequests(collectionId);
-      set((state) => ({
-        requests: { ...state.requests, [collectionId]: reqs },
-      }));
+      const state = get();
+      const colId = collectionId ?? Object.keys(state.requests).find(cid => state.requests[cid].some(r => r.id === id));
+      if (colId) {
+        // Reload requests for the collection to get fresh data
+        const reqs = await dataService.getRequests(colId);
+        set((state) => ({
+          requests: { ...state.requests, [colId]: reqs },
+        }));
+      }
     }
     return success;
   },

@@ -81,7 +81,13 @@ export default function BenchmarksScreen() {
         variables: getActiveVariables(),
         totalIterations: iterCount,
         batchSize: batchCount,
-        assertions,
+        assertions: assertions.map(a => ({
+          id: a.id,
+          field: a.field,
+          operator: a.operator,
+          expected_value: a.expected_value ?? '',
+          enabled: true
+        })),
         onProgress: setProgress,
         signal: abortRef.current.signal,
       });

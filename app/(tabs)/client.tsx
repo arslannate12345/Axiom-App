@@ -21,13 +21,22 @@ import { useEnvironmentStore } from '../../src/stores/environmentStore';
 import { useCollectionsStore } from '../../src/stores/collectionsStore';
 import { useHistoryStore } from '../../src/stores/historyStore';
 import { AssertionEditor } from '../../src/components/AssertionEditor';
-import { getAssertions, createAssertion, deleteAllAssertions } from '../../src/services/dataService';
+import { VariableExtractionEditor } from '../../src/components/VariableExtractionEditor';
+import {
+  getAssertions,
+  createAssertion,
+  deleteAllAssertions,
+  getVariableExtractions,
+  createVariableExtraction,
+  deleteAllVariableExtractions,
+} from '../../src/services/dataService';
 import { evaluateAssertions } from '../../src/services/assertionEngine';
 import type { HttpMethod, BodyType, KeyValuePair } from '../../src/types/database';
 import type { ResponseTiming, RequestError } from '../../src/services/networkService';
 import type { AssertionRow, AssertionSummary } from '../../src/types/assertions';
+import type { VariableExtractionRow } from '../../src/components/VariableExtractionEditor';
 
-type Tab = 'params' | 'headers' | 'body' | 'tests';
+type Tab = 'params' | 'headers' | 'body' | 'tests' | 'extractions';
 
 export default function ClientScreen() {
   const [method, setMethod] = useState<HttpMethod>('GET');
@@ -43,6 +52,7 @@ export default function ClientScreen() {
   const [response, setResponse] = useState<ResponseTiming | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [assertions, setAssertions] = useState<AssertionRow[]>([]);
+  const [extractions, setExtractions] = useState<VariableExtractionRow[]>([]);
   const [assertionSummary, setAssertionSummary] = useState<AssertionSummary | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
@@ -89,10 +99,35 @@ export default function ClientScreen() {
         );
       });
 
+      // Load extractions for this request
+      getVariableExtractions(selectedRequest.id).then((savedExtractions) => {
+        setExtractions(
+          savedExtractions.map((e) => ({
+            variable_name: e.variable_name,
+            json_path: e.json_path,
+            enabled: true,
+          }))
+        );
+      });
+
       // Clear selection so navigating back doesn't reload
       setSelectedRequest(null);
     }
   }, [selectedRequest]);
+
+  const handleResetForm = () => {
+    setMethod('GET');
+    setUrl('');
+    setParams([]);
+    setHeaders([{ key: 'Content-Type', value: 'application/json', enabled: true }]);
+    setBodyType('none');
+    setBody('');
+    setAssertions([]);
+    setExtractions([]);
+    setResponse(null);
+    setAssertionSummary(null);
+    setCurrentRequestId(null);
+  };
 
   const handleSend = async () => {
     if (!url.trim()) return;
@@ -176,6 +211,7 @@ export default function ClientScreen() {
     { key: 'headers', label: 'Headers', count: headers.filter((h) => h.enabled && h.key).length },
     { key: 'body', label: 'Body' },
     { key: 'tests', label: 'Tests', count: assertions.filter((a) => a.enabled).length },
+    { key: 'extractions', label: 'Extractions', count: extractions.filter((e) => e.enabled).length },
   ];
 
   return (
@@ -213,35 +249,83 @@ export default function ClientScreen() {
           </View>
 
           {/* Action bar */}
-          <View style={styles.actionBar}>
-            <TouchableOpacity
-              style={styles.actionBtn}
-              onPress={() => setShowSaveModal(true)}
-            >
-              <Ionicons name="bookmark-outline" size={16} color="#818CF8" />
-              <Text style={styles.actionBtnText}>Add to Collection</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.actionBarScroll} contentContainerStyle={styles.actionBar}>
+            {currentRequestId ? (
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={async () => {
+                  const { updateRequest } = useCollectionsStore.getState();
+                  const updated = await updateRequest(currentRequestId, {
+                    method,
+                    url,
+                    headers,
+                    query_params: params,
+                    body_type: bodyType,
+                    body: body,
+                  });
+                  if (updated) {
+                    await deleteAllAssertions(currentRequestId);
+                    for (const a of assertions) {
+                      await createAssertion(currentRequestId, a.field, a.operator, a.expected_value);
+                    }
+                    await deleteAllVariableExtractions(currentRequestId);
+                    for (const e of extractions) {
+                      await createVariableExtraction(currentRequestId, e.variable_name, e.json_path);
+                    }
+                    alert('Request updated successfully');
+                  }
+                }}
+              >
+                <Ionicons name="save-outline" size={16} color="#818CF8" />
+                <Text style={styles.actionBtnText}>Update Request</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={() => setShowSaveModal(true)}
+              >
+                <Ionicons name="bookmark-outline" size={16} color="#818CF8" />
+                <Text style={styles.actionBtnText}>Add to Collection</Text>
+              </TouchableOpacity>
+            )}
+            
+            {currentRequestId && (
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={() => setShowSaveModal(true)}
+              >
+                <Ionicons name="copy-outline" size={16} color="#818CF8" />
+                <Text style={styles.actionBtnText}>Save as Copy</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity style={styles.actionBtn} onPress={handleResetForm}>
+              <Ionicons name="refresh-outline" size={16} color="#818CF8" />
+              <Text style={styles.actionBtnText}>Refresh</Text>
             </TouchableOpacity>
-          </View>
+          </ScrollView>
 
           {/* Tab bar */}
-          <View style={styles.tabBar}>
-            {TABS.map((tab) => (
-              <TouchableOpacity
-                key={tab.key}
-                style={[styles.tab, activeTab === tab.key && styles.tabActive]}
-                onPress={() => setActiveTab(tab.key)}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeTab === tab.key && styles.tabTextActive,
-                  ]}
+          <View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabBar} contentContainerStyle={{ paddingRight: 20 }}>
+              {TABS.map((tab) => (
+                <TouchableOpacity
+                  key={tab.key}
+                  style={[styles.tab, activeTab === tab.key && styles.tabActive]}
+                  onPress={() => setActiveTab(tab.key)}
                 >
-                  {tab.label}
-                  {tab.count !== undefined && tab.count > 0 ? ` (${tab.count})` : ''}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={[
+                      styles.tabText,
+                      activeTab === tab.key && styles.tabTextActive,
+                    ]}
+                  >
+                    {tab.label}
+                    {tab.count !== undefined && tab.count > 0 ? ` (${tab.count})` : ''}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
 
           {/* Tab content */}
@@ -258,8 +342,9 @@ export default function ClientScreen() {
               <KeyValueEditor
                 pairs={headers}
                 onChange={setHeaders}
-                keyPlaceholder="Header"
-                valuePlaceholder="Value"
+                keyPlaceholder="Header (e.g. Authorization)"
+                valuePlaceholder="Value (e.g. Bearer token)"
+                suggestedKeys={['Authorization', 'Content-Type', 'Accept', 'User-Agent']}
               />
             )}
             {activeTab === 'body' && (
@@ -276,6 +361,12 @@ export default function ClientScreen() {
                 onChange={setAssertions}
               />
             )}
+            {activeTab === 'extractions' && (
+              <VariableExtractionEditor
+                extractions={extractions}
+                onChange={setExtractions}
+              />
+            )}
           </View>
 
           {/* Response */}
@@ -288,12 +379,18 @@ export default function ClientScreen() {
         visible={showSaveModal}
         onClose={() => setShowSaveModal(false)}
         onSaved={async (id) => {
-          setCurrentRequestId(id);
           // Save assertions associated with this request
           await deleteAllAssertions(id);
           for (const a of assertions) {
             await createAssertion(id, a.field, a.operator, a.expected_value);
           }
+          // Save extractions associated with this request
+          await deleteAllVariableExtractions(id);
+          for (const e of extractions) {
+            await createVariableExtraction(id, e.variable_name, e.json_path);
+          }
+          // Reset the form so the user can enter the next request in the flow
+          handleResetForm();
         }}
         currentRequestId={currentRequestId}
         method={method}
@@ -346,10 +443,12 @@ const styles = StyleSheet.create({
   sendBtnCancel: {
     backgroundColor: '#EF4444',
   },
+  actionBarScroll: {
+    marginTop: 10,
+  },
   actionBar: {
     flexDirection: 'row',
     gap: 8,
-    marginTop: 10,
   },
   actionBtn: {
     flexDirection: 'row',

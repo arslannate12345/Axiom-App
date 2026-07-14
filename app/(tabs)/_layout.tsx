@@ -1,6 +1,6 @@
-import { Tabs, Redirect } from 'expo-router';
+import { Tabs, Redirect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useAuthStore } from '../../src/stores/authStore';
 
 function TabBarBackground() {
@@ -79,6 +79,11 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="send" size={size - 2} color={color} />
           ),
+          headerRight: () => (
+            <TouchableOpacity onPress={() => router.push('/profile')} style={{ marginRight: 16 }}>
+              <Ionicons name="person-circle" size={28} color="#818CF8" />
+            </TouchableOpacity>
+          ),
         }}
       />
       <Tabs.Screen
@@ -121,6 +126,7 @@ export default function TabsLayout() {
         name="profile"
         options={{
           title: 'Profile',
+          href: null,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size - 2} color={color} />
           ),
