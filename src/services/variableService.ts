@@ -13,7 +13,7 @@ export function interpolateHeaders(
   variables: Record<string, string>
 ): Record<string, string> {
   const result: Record<string, string> = {};
-  for (const h of headers) {
+  for (const h of headers || []) {
     if (!h.enabled || !h.key.trim()) continue;
     result[h.key.trim()] = interpolateVariables(h.value, variables);
   }
@@ -25,7 +25,7 @@ export function buildQueryString(
   variables: Record<string, string>
 ): string {
   const parts: string[] = [];
-  for (const p of params) {
+  for (const p of params || []) {
     if (!p.enabled || !p.key.trim()) continue;
     const key = encodeURIComponent(interpolateVariables(p.key, variables));
     const value = encodeURIComponent(interpolateVariables(p.value, variables));

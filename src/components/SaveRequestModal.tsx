@@ -64,7 +64,16 @@ export function SaveRequestModal({
     if (visible) {
       loadWorkspaces();
       setSelectedWorkspaceId(activeWorkspaceId);
-      setRequestName(url ? `${method} ${new URL(url).pathname}` : '');
+      let pathName = '';
+      if (url) {
+        try {
+          pathName = new URL(url).pathname;
+        } catch {
+          // Fallback if URL is unparseable (e.g. contains unresolved variables like {{baseUrl}})
+          pathName = url;
+        }
+      }
+      setRequestName(url ? `${method} ${pathName}` : '');
     }
   }, [visible]);
 

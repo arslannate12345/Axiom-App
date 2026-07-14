@@ -41,6 +41,14 @@ export async function executeRequest(
   const interpolatedUrl = interpolateVariables(config.url, variables);
   const queryString = buildQueryString(config.queryParams, variables);
   const fullUrl = queryString ? `${interpolatedUrl}?${queryString}` : interpolatedUrl;
+  
+  if (!fullUrl.match(/^https?:\/\//i)) {
+    throw {
+      message: `Invalid URL: "${fullUrl}". Ensure it starts with http:// or https:// and variables are resolved.`,
+      isNetworkError: true,
+    } satisfies RequestError;
+  }
+
   const headers = interpolateHeaders(config.headers, variables);
   const body = buildBody(config.bodyType, config.body, variables);
 

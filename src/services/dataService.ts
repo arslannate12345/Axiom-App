@@ -10,6 +10,8 @@ import type {
   BodyType,
   BenchmarkRun,
   BenchmarkIteration,
+  Environment,
+  EnvironmentVariable,
 } from '../types/database';
 import type { Assertion, AssertionOperator } from '../types/assertions';
 import type { VariableExtraction, CollectionRun, CollectionRunStep } from '../types/runner';
@@ -152,6 +154,104 @@ export async function deleteCollection(id: string): Promise<boolean> {
   }
   return true;
 }
+
+// ============================================================
+// ENVIRONMENTS
+// ============================================================
+
+export async function getEnvironments(workspaceId: string): Promise<Environment[]> {
+  const { data, error } = await supabase
+    .from('environments')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .order('created_at', { ascending: true });
+    
+  if (error) {
+    console.error('Failed to fetch environments:', error.message);
+    return [];
+  }
+  return data ?? [];
+}
+
+export async function createEnvironment(workspaceId: string, name: string): Promise<Environment | null> {
+  const { data, error } = await supabase
+    .from('environments')
+    .insert({ workspace_id: workspaceId, name })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Failed to create environment:', error.message);
+    return null;
+  }
+  return data;
+}
+
+export async function updateEnvironment(id: string, name: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('environments')
+    .update({ name })
+    .eq('id', id);
+  if (error) {
+    console.error('Failed to update environment:', error.message);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteEnvironment(id: string): Promise<boolean> {
+  const { error } = await supabase.from('environments').delete().eq('id', id);
+  if (error) {
+    console.error('Failed to delete environment:', error.message);
+    return false;
+  }
+  return true;
+}
+
+export async function getEnvironmentVariables(environmentId: string): Promise<EnvironmentVariable[]> {
+  const { data, error } = await supabase
+    .from('environment_variables')
+    .select('*')
+    .eq('environment_id', environmentId)
+    .order('created_at', { ascending: true });
+  
+  if (error) {
+    console.error('Failed to fetch environment variables:', error.message);
+    return [];
+  }
+  return data ?? [];
+}
+
+export async function upsertEnvironmentVariable(
+  environmentId: string,
+  key: string,
+  value: string,
+  isSecret: boolean = false,
+  id?: string
+): Promise<EnvironmentVariable | null> {
+  let query;
+  if (id && !id.startsWith('temp-')) {
+    query = supabase.from('environment_variables').update({ key, value, is_secret: isSecret }).eq('id', id).select().single();
+  } else {
+    query = supabase.from('environment_variables').insert({ environment_id: environmentId, key, value, is_secret: isSecret }).select().single();
+  }
+  const { data, error } = await query;
+  if (error) {
+    console.error('Failed to upsert env var:', error.message);
+    return null;
+  }
+  return data;
+}
+
+export async function deleteEnvironmentVariable(id: string): Promise<boolean> {
+  const { error } = await supabase.from('environment_variables').delete().eq('id', id);
+  if (error) {
+    console.error('Failed to delete env var:', error.message);
+    return false;
+  }
+  return true;
+}
+
 
 // ============================================================
 // REQUESTS

@@ -58,6 +58,7 @@ export default function ClientScreen() {
   const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const getActiveVariables = useEnvironmentStore((s) => s.getActiveVariables);
+  const { environments, activeEnvironmentId, setActiveEnvironment } = useEnvironmentStore();
 
   // Load selected request from collections
   const { selectedRequest, setSelectedRequest } = useCollectionsStore();
@@ -223,6 +224,29 @@ export default function ClientScreen() {
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled
         >
+          {/* Environment Picker */}
+          <View style={styles.envBar}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.envBarContent}>
+              {environments.map(env => (
+                <TouchableOpacity
+                  key={env.id}
+                  style={[styles.envChip, activeEnvironmentId === env.id && styles.envChipActive]}
+                  onPress={() => setActiveEnvironment(env.id)}
+                >
+                  <Ionicons 
+                    name={env.name === 'Global' ? 'globe-outline' : 'server-outline'} 
+                    size={14} 
+                    color={activeEnvironmentId === env.id ? '#818CF8' : '#64748B'} 
+                    style={{marginRight: 4}} 
+                  />
+                  <Text style={[styles.envChipText, activeEnvironmentId === env.id && styles.envChipTextActive]}>
+                    {env.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
           {/* Request bar */}
           <View style={styles.requestBar}>
             <MethodSelector method={method} onSelect={setMethod} />
@@ -412,8 +436,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 12,
+    padding: 16,
     paddingBottom: 40,
+  },
+  envBar: {
+    marginBottom: 12,
+  },
+  envBarContent: {
+    gap: 8,
+  },
+  envChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  envChipActive: {
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+    borderColor: '#6366F1',
+  },
+  envChipText: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  envChipTextActive: {
+    color: '#818CF8',
   },
   requestBar: {
     flexDirection: 'row',

@@ -143,7 +143,7 @@ export async function runCollection({
     } catch (err) {
       // Hard failure (e.g., network error, invalid URL)
       failedSteps++;
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorMessage = (err as any)?.message || (err instanceof Error ? err.message : 'Unknown error');
       
       const errorStep: Omit<CollectionRunStep, 'id' | 'executed_at'> = {
         run_id: runId,

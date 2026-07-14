@@ -15,9 +15,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { AnimatedBackground } from '../../src/components/AnimatedBackground';
-import { CollectionRunnerView } from '../../src/components/CollectionRunnerView';
 import { useCollectionsStore } from '../../src/stores/collectionsStore';
 import { useRunnerStore } from '../../src/stores/runnerStore';
+import { useEnvironmentStore } from '../../src/stores/environmentStore';
+import { CollectionRunnerView } from '../../src/components/CollectionRunnerView';
+import { MatrixRunnerView } from '../../src/components/MatrixRunnerView';
 import type { Collection, Request as ApiRequest } from '../../src/types/database';
 
 const METHOD_COLORS: Record<string, string> = {
@@ -57,6 +59,7 @@ export default function CollectionsScreen() {
   const [createType, setCreateType] = useState<'workspace' | 'collection' | null>(null);
   const [newName, setNewName] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [matrixCollectionId, setMatrixCollectionId] = useState<string | null>(null);
 
   useEffect(() => {
     loadWorkspaces();
@@ -65,6 +68,7 @@ export default function CollectionsScreen() {
   useEffect(() => {
     if (activeWorkspaceId) {
       loadCollections(activeWorkspaceId);
+      useEnvironmentStore.getState().loadEnvironments(activeWorkspaceId);
     }
   }, [activeWorkspaceId]);
 
@@ -267,6 +271,15 @@ export default function CollectionsScreen() {
                           style={styles.runBtn}
                           onPress={(e) => {
                             e.stopPropagation();
+                            setMatrixCollectionId(collection.id);
+                          }}
+                        >
+                          <Ionicons name="apps-outline" size={16} color="#6366F1" />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.runBtn}
+                          onPress={(e) => {
+                            e.stopPropagation();
                             openRunner(collection.id, colRequests);
                           }}
                         >
@@ -401,6 +414,11 @@ export default function CollectionsScreen() {
             </View>
           </TouchableOpacity>
         </Modal>
+        <CollectionRunnerView />
+        <MatrixRunnerView 
+          collectionId={matrixCollectionId} 
+          onClose={() => setMatrixCollectionId(null)} 
+        />
       </View>
     </AnimatedBackground>
   );
