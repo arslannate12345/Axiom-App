@@ -1,7 +1,6 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useEffect, useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { AnimatedBackground } from '../../src/components/AnimatedBackground';
 import { useHistoryStore } from '../../src/stores/historyStore';
 import { useCollectionsStore } from '../../src/stores/collectionsStore';
 import type { HistoryEntry } from '../../src/types/database';
@@ -75,8 +74,7 @@ export default function HistoryScreen() {
   };
 
   return (
-    <AnimatedBackground>
-      <View style={styles.container}>
+    <View style={styles.container}>
         <View style={styles.headerRow}>
           <Text style={styles.title}>History</Text>
           <TouchableOpacity onPress={() => clearHistory()} style={styles.clearBtn}>
@@ -105,7 +103,6 @@ export default function HistoryScreen() {
           />
         )}
       </View>
-    </AnimatedBackground>
   );
 }
 

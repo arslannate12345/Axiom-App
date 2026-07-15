@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { useState, useRef, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { AnimatedBackground } from '../../src/components/AnimatedBackground';
 import { MethodSelector } from '../../src/components/MethodSelector';
 import { KeyValueEditor } from '../../src/components/KeyValueEditor';
 import { BodyEditor } from '../../src/components/BodyEditor';
@@ -58,11 +57,13 @@ export default function ClientScreen() {
   const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const getActiveVariables = useEnvironmentStore((s) => s.getActiveVariables);
-  const { environments, activeEnvironmentId, setActiveEnvironment } = useEnvironmentStore();
-
-  // Load selected request from collections
-  const { selectedRequest, setSelectedRequest } = useCollectionsStore();
-  const { logEntry } = useHistoryStore();
+  const environments = useEnvironmentStore((s) => s.environments);
+  const activeEnvironmentId = useEnvironmentStore((s) => s.activeEnvironmentId);
+  const setActiveEnvironment = useEnvironmentStore((s) => s.setActiveEnvironment);
+  const activeWorkspaceId = useCollectionsStore((s) => s.activeWorkspaceId);
+  const selectedRequest = useCollectionsStore((s) => s.selectedRequest);
+  const setSelectedRequest = useCollectionsStore((s) => s.setSelectedRequest);
+  const logEntry = useHistoryStore((s) => s.logEntry);
 
   useEffect(() => {
     if (selectedRequest) {
@@ -216,187 +217,185 @@ export default function ClientScreen() {
   ];
 
   return (
-    <AnimatedBackground>
-      <View style={styles.container}>
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          nestedScrollEnabled
-        >
-          {/* Environment Picker */}
-          <View style={styles.envBar}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.envBarContent}>
-              {environments.map(env => (
-                <TouchableOpacity
-                  key={env.id}
-                  style={[styles.envChip, activeEnvironmentId === env.id && styles.envChipActive]}
-                  onPress={() => setActiveEnvironment(env.id)}
-                >
-                  <Ionicons 
-                    name={env.name === 'Global' ? 'globe-outline' : 'server-outline'} 
-                    size={14} 
-                    color={activeEnvironmentId === env.id ? '#818CF8' : '#64748B'} 
-                    style={{marginRight: 4}} 
-                  />
-                  <Text style={[styles.envChipText, activeEnvironmentId === env.id && styles.envChipTextActive]}>
-                    {env.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-
-          {/* Request bar */}
-          <View style={styles.requestBar}>
-            <MethodSelector method={method} onSelect={setMethod} />
-            <TextInput
-              style={styles.urlInput}
-              placeholder="https://api.example.com/endpoint"
-              placeholderTextColor="#475569"
-              value={url}
-              onChangeText={setUrl}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="url"
-            />
-            <TouchableOpacity
-              style={[styles.sendBtn, loading && styles.sendBtnCancel]}
-              onPress={loading ? handleCancel : handleSend}
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Ionicons name="send" size={18} color="#FFFFFF" />
-              )}
-            </TouchableOpacity>
-          </View>
-
-          {/* Action bar */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.actionBarScroll} contentContainerStyle={styles.actionBar}>
-            {currentRequestId ? (
+    <View style={styles.container}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
+      >
+        {/* Environment Picker */}
+        <View style={styles.envBar}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.envBarContent}>
+            {environments.map(env => (
               <TouchableOpacity
-                style={styles.actionBtn}
-                onPress={async () => {
-                  const { updateRequest } = useCollectionsStore.getState();
-                  const updated = await updateRequest(currentRequestId, {
-                    method,
-                    url,
-                    headers,
-                    query_params: params,
-                    body_type: bodyType,
-                    body: body,
-                  });
-                  if (updated) {
-                    await deleteAllAssertions(currentRequestId);
-                    for (const a of assertions) {
-                      await createAssertion(currentRequestId, a.field, a.operator, a.expected_value);
-                    }
-                    await deleteAllVariableExtractions(currentRequestId);
-                    for (const e of extractions) {
-                      await createVariableExtraction(currentRequestId, e.variable_name, e.json_path);
-                    }
-                    alert('Request updated successfully');
-                  }
-                }}
+                key={env.id}
+                style={[styles.envChip, activeEnvironmentId === env.id && styles.envChipActive]}
+                onPress={() => setActiveEnvironment(env.id)}
               >
-                <Ionicons name="save-outline" size={16} color="#818CF8" />
-                <Text style={styles.actionBtnText}>Update Request</Text>
+                <Ionicons 
+                  name={env.name === 'Global' ? 'globe-outline' : 'server-outline'} 
+                  size={14} 
+                  color={activeEnvironmentId === env.id ? '#818CF8' : '#64748B'} 
+                  style={{marginRight: 4}} 
+                />
+                <Text style={[styles.envChipText, activeEnvironmentId === env.id && styles.envChipTextActive]}>
+                  {env.name}
+                </Text>
               </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={styles.actionBtn}
-                onPress={() => setShowSaveModal(true)}
-              >
-                <Ionicons name="bookmark-outline" size={16} color="#818CF8" />
-                <Text style={styles.actionBtnText}>Add to Collection</Text>
-              </TouchableOpacity>
-            )}
-            
-            {currentRequestId && (
-              <TouchableOpacity
-                style={styles.actionBtn}
-                onPress={() => setShowSaveModal(true)}
-              >
-                <Ionicons name="copy-outline" size={16} color="#818CF8" />
-                <Text style={styles.actionBtnText}>Save as Copy</Text>
-              </TouchableOpacity>
-            )}
-
-            <TouchableOpacity style={styles.actionBtn} onPress={handleResetForm}>
-              <Ionicons name="refresh-outline" size={16} color="#818CF8" />
-              <Text style={styles.actionBtnText}>Refresh</Text>
-            </TouchableOpacity>
+            ))}
           </ScrollView>
+        </View>
 
-          {/* Tab bar */}
-          <View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabBar} contentContainerStyle={{ paddingRight: 20 }}>
-              {TABS.map((tab) => (
-                <TouchableOpacity
-                  key={tab.key}
-                  style={[styles.tab, activeTab === tab.key && styles.tabActive]}
-                  onPress={() => setActiveTab(tab.key)}
-                >
-                  <Text
-                    style={[
-                      styles.tabText,
-                      activeTab === tab.key && styles.tabTextActive,
-                    ]}
-                  >
-                    {tab.label}
-                    {tab.count !== undefined && tab.count > 0 ? ` (${tab.count})` : ''}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
+        {/* Request bar */}
+        <View style={styles.requestBar}>
+          <MethodSelector method={method} onSelect={setMethod} />
+          <TextInput
+            style={styles.urlInput}
+            placeholder="https://api.example.com/endpoint"
+            placeholderTextColor="#475569"
+            value={url}
+            onChangeText={setUrl}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="url"
+          />
+          <TouchableOpacity
+            style={[styles.sendBtn, loading && styles.sendBtnCancel]}
+            onPress={loading ? handleCancel : handleSend}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Ionicons name="send" size={18} color="#FFFFFF" />
+            )}
+          </TouchableOpacity>
+        </View>
 
-          {/* Tab content */}
-          <View style={styles.tabContent}>
-            {activeTab === 'params' && (
-              <KeyValueEditor
-                pairs={params}
-                onChange={setParams}
-                keyPlaceholder="Parameter"
-                valuePlaceholder="Value"
-              />
-            )}
-            {activeTab === 'headers' && (
-              <KeyValueEditor
-                pairs={headers}
-                onChange={setHeaders}
-                keyPlaceholder="Header (e.g. Authorization)"
-                valuePlaceholder="Value (e.g. Bearer token)"
-                suggestedKeys={['Authorization', 'Content-Type', 'Accept', 'User-Agent']}
-              />
-            )}
-            {activeTab === 'body' && (
-              <BodyEditor
-                bodyType={bodyType}
-                body={body}
-                onBodyTypeChange={setBodyType}
-                onBodyChange={setBody}
-              />
-            )}
-            {activeTab === 'tests' && (
-              <AssertionEditor
-                assertions={assertions}
-                onChange={setAssertions}
-              />
-            )}
-            {activeTab === 'extractions' && (
-              <VariableExtractionEditor
-                extractions={extractions}
-                onChange={setExtractions}
-              />
-            )}
-          </View>
+        {/* Action bar */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.actionBarScroll} contentContainerStyle={styles.actionBar}>
+          {currentRequestId ? (
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={async () => {
+                const { updateRequest } = useCollectionsStore.getState();
+                const updated = await updateRequest(currentRequestId, {
+                  method,
+                  url,
+                  headers,
+                  query_params: params,
+                  body_type: bodyType,
+                  body: body,
+                });
+                if (updated) {
+                  await deleteAllAssertions(currentRequestId);
+                  for (const a of assertions) {
+                    await createAssertion(currentRequestId, a.field, a.operator, a.expected_value);
+                  }
+                  await deleteAllVariableExtractions(currentRequestId);
+                  for (const e of extractions) {
+                    await createVariableExtraction(currentRequestId, e.variable_name, e.json_path);
+                  }
+                  alert('Request updated successfully');
+                }
+              }}
+            >
+              <Ionicons name="save-outline" size={16} color="#818CF8" />
+              <Text style={styles.actionBtnText}>Update Request</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => setShowSaveModal(true)}
+            >
+              <Ionicons name="bookmark-outline" size={16} color="#818CF8" />
+              <Text style={styles.actionBtnText}>Add to Collection</Text>
+            </TouchableOpacity>
+          )}
+          
+          {currentRequestId && (
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => setShowSaveModal(true)}
+            >
+              <Ionicons name="copy-outline" size={16} color="#818CF8" />
+              <Text style={styles.actionBtnText}>Save as Copy</Text>
+            </TouchableOpacity>
+          )}
 
-          {/* Response */}
-          <ResponsePanel response={response} error={error} assertionSummary={assertionSummary} />
+          <TouchableOpacity style={styles.actionBtn} onPress={handleResetForm}>
+            <Ionicons name="refresh-outline" size={16} color="#818CF8" />
+            <Text style={styles.actionBtnText}>Refresh</Text>
+          </TouchableOpacity>
         </ScrollView>
-      </View>
+
+        {/* Tab bar */}
+        <View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabBar} contentContainerStyle={{ paddingRight: 20 }}>
+            {TABS.map((tab) => (
+              <TouchableOpacity
+                key={tab.key}
+                style={[styles.tab, activeTab === tab.key && styles.tabActive]}
+                onPress={() => setActiveTab(tab.key)}
+              >
+                <Text
+                  style={[
+                    styles.tabText,
+                    activeTab === tab.key && styles.tabTextActive,
+                  ]}
+                >
+                  {tab.label}
+                  {tab.count !== undefined && tab.count > 0 ? ` (${tab.count})` : ''}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Tab content */}
+        <View style={styles.tabContent}>
+          {activeTab === 'params' && (
+            <KeyValueEditor
+              pairs={params}
+              onChange={setParams}
+              keyPlaceholder="Parameter"
+              valuePlaceholder="Value"
+            />
+          )}
+          {activeTab === 'headers' && (
+            <KeyValueEditor
+              pairs={headers}
+              onChange={setHeaders}
+              keyPlaceholder="Header (e.g. Authorization)"
+              valuePlaceholder="Value (e.g. Bearer token)"
+              suggestedKeys={['Authorization', 'Content-Type', 'Accept', 'User-Agent']}
+            />
+          )}
+          {activeTab === 'body' && (
+            <BodyEditor
+              bodyType={bodyType}
+              body={body}
+              onBodyTypeChange={setBodyType}
+              onBodyChange={setBody}
+            />
+          )}
+          {activeTab === 'tests' && (
+            <AssertionEditor
+              assertions={assertions}
+              onChange={setAssertions}
+            />
+          )}
+          {activeTab === 'extractions' && (
+            <VariableExtractionEditor
+              extractions={extractions}
+              onChange={setExtractions}
+            />
+          )}
+        </View>
+
+        {/* Response */}
+        <ResponsePanel response={response} error={error} assertionSummary={assertionSummary} />
+      </ScrollView>
 
       {/* Save Modal */}
       <SaveRequestModal
@@ -424,7 +423,7 @@ export default function ClientScreen() {
         bodyType={bodyType}
         body={body}
       />
-    </AnimatedBackground>
+    </View>
   );
 }
 

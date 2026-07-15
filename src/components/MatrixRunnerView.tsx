@@ -10,7 +10,6 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { AnimatedBackground } from './AnimatedBackground';
 import { useEnvironmentStore } from '../stores/environmentStore';
 import { useCollectionsStore } from '../stores/collectionsStore';
 import { runCollection } from '../services/collectionRunner';
@@ -131,7 +130,6 @@ export function MatrixRunnerView({ collectionId, onClose }: MatrixRunnerViewProp
   return (
     <Modal visible={!!collectionId} animationType="slide" transparent>
       <View style={styles.modalOverlay}>
-        <AnimatedBackground>
           <View style={styles.container}>
             <View style={styles.headerRow}>
               <View>
@@ -242,7 +240,6 @@ export function MatrixRunnerView({ collectionId, onClose }: MatrixRunnerViewProp
               </View>
             )}
           </View>
-        </AnimatedBackground>
       </View>
     </Modal>
   );

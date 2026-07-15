@@ -3,6 +3,15 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { useAuthStore } from '../src/stores/authStore';
 import { View, ActivityIndicator } from 'react-native';
+import { ThemeProvider, DarkTheme, Theme } from '@react-navigation/native';
+
+const TransparentTheme: Theme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: 'transparent',
+  },
+};
 
 export default function RootLayout() {
   const { isLoading, isAuthenticated, initializeAuth } = useAuthStore();
@@ -20,7 +29,7 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <ThemeProvider value={TransparentTheme}>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -29,6 +38,6 @@ export default function RootLayout() {
           animation: 'fade',
         }}
       />
-    </>
+    </ThemeProvider>
   );
 }

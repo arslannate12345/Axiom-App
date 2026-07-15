@@ -7,6 +7,8 @@
     "@react-navigation/bottom-tabs": "^7.1.0",
     "@react-navigation/native": "^7.1.8",
     "@supabase/supabase-js": "^2.110.2",
+    "ajv": "^8.20.0",
+    "deep-diff": "^1.0.2",
     "expo": "~54.0.35",
     "expo-constants": "~18.0.13",
     "expo-dev-client": "~6.0.21",
@@ -27,11 +29,14 @@
     "react-native-screens": "~4.16.0",
     "react-native-svg": "15.12.1",
     "react-native-url-polyfill": "^3.0.0",
+    "to-json-schema": "^0.2.5",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@expo/vector-icons": "^15.0.3",
+    "@types/deep-diff": "^1.0.5",
     "@types/react": "~19.1.0",
+    "@types/to-json-schema": "^0.2.4",
     "typescript": "~5.9.2"
   },
   "scripts": {

@@ -2,6 +2,7 @@ import { Tabs, Redirect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useAuthStore } from '../../src/stores/authStore';
+import { AnimatedBackground } from '../../src/components/AnimatedBackground';
 
 function TabBarBackground() {
   return (
@@ -39,8 +40,10 @@ export default function TabsLayout() {
   }
 
   return (
-    <Tabs
-      screenOptions={{
+    <AnimatedBackground>
+      <Tabs
+        sceneContainerStyle={{ backgroundColor: 'transparent' }}
+        screenOptions={{
         headerStyle: {
           backgroundColor: '#0F172A',
           elevation: 0,
@@ -114,11 +117,11 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="benchmarks"
+        name="tests"
         options={{
-          title: 'Benchmarks',
+          title: 'Tests',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="speedometer" size={size - 2} color={color} />
+            <Ionicons name="flask" size={size - 2} color={color} />
           ),
         }}
       />
@@ -132,7 +135,8 @@ export default function TabsLayout() {
           ),
         }}
       />
-    </Tabs>
+      </Tabs>
+    </AnimatedBackground>
   );
 }
 

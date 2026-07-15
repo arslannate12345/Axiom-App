@@ -12,19 +12,23 @@ import {
 } from 'react-native';
 import { useState, useRef, useMemo, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { AnimatedBackground } from '../../src/components/AnimatedBackground';
-import { useCollectionsStore } from '../../src/stores/collectionsStore';
-import { useEnvironmentStore } from '../../src/stores/environmentStore';
-import { getAssertions } from '../../src/services/dataService';
-import { startBenchmarkRun, BenchmarkProgress } from '../../src/services/benchmarkEngine';
-import type { Request } from '../../src/types/database';
+import { AnimatedBackground } from '../AnimatedBackground';
+import { useCollectionsStore } from '../../stores/collectionsStore';
+import { useEnvironmentStore } from '../../stores/environmentStore';
+import { getAssertions } from '../../services/dataService';
+import { startBenchmarkRun, BenchmarkProgress } from '../../services/benchmarkEngine';
+import type { Request } from '../../types/database';
 import { LineChart } from 'react-native-chart-kit';
 import { useKeepAwake } from 'expo-keep-awake';
 
 const screenWidth = Dimensions.get('window').width;
 
-export default function BenchmarksScreen() {
-  const { requests, activeWorkspaceId, collections, loadCollections, loadRequests } = useCollectionsStore();
+export function BenchmarkSuite() {
+  const requests = useCollectionsStore((s) => s.requests);
+  const activeWorkspaceId = useCollectionsStore((s) => s.activeWorkspaceId);
+  const collections = useCollectionsStore((s) => s.collections);
+  const loadCollections = useCollectionsStore((s) => s.loadCollections);
+  const loadRequests = useCollectionsStore((s) => s.loadRequests);
   const getActiveVariables = useEnvironmentStore((s) => s.getActiveVariables);
 
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
@@ -173,7 +177,7 @@ export default function BenchmarksScreen() {
   );
 
   return (
-    <AnimatedBackground>
+    <>
       <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Configuration Card */}
@@ -484,7 +488,7 @@ export default function BenchmarksScreen() {
           </View>
         </View>
       </Modal>
-    </AnimatedBackground>
+    </>
   );
 }
 

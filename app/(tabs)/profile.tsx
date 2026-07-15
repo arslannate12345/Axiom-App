@@ -1,7 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { AnimatedBackground } from '../../src/components/AnimatedBackground';
 import { useAuthStore } from '../../src/stores/authStore';
 import { router } from 'expo-router';
 
@@ -35,8 +34,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <AnimatedBackground>
-      <View style={styles.container}>
+    <View style={styles.container}>
         <View style={styles.header}>
           <View style={styles.avatarContainer}>
             <Ionicons name="person" size={48} color="#6366F1" />
@@ -86,7 +84,6 @@ export default function ProfileScreen() {
           )}
         </TouchableOpacity>
       </View>
-    </AnimatedBackground>
   );
 }
 

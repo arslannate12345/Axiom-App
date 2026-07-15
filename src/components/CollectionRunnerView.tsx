@@ -13,7 +13,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRunnerStore } from '../stores/runnerStore';
 import { useEnvironmentStore } from '../stores/environmentStore';
 import { runCollection } from '../services/collectionRunner';
-import { AnimatedBackground } from './AnimatedBackground';
 
 export function CollectionRunnerView() {
   const {
@@ -99,7 +98,7 @@ export function CollectionRunnerView() {
 
   return (
     <Modal visible={isOpen} animationType="slide">
-      <AnimatedBackground>
+      <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Collection Runner</Text>
           <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
@@ -200,7 +199,7 @@ export function CollectionRunnerView() {
             </View>
           ))}
         </ScrollView>
-      </AnimatedBackground>
+      </View>
     </Modal>
   );
 }
@@ -217,6 +216,10 @@ function getMethodColor(method: string) {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0F172A',
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

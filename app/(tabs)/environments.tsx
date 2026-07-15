@@ -1,7 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, Platform } from 'react-native';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { AnimatedBackground } from '../../src/components/AnimatedBackground';
 import { useEnvironmentStore } from '../../src/stores/environmentStore';
 import { useCollectionsStore } from '../../src/stores/collectionsStore';
 import * as dataService from '../../src/services/dataService';
@@ -82,8 +81,7 @@ export default function EnvironmentsScreen() {
   };
 
   return (
-    <AnimatedBackground>
-      <View style={styles.container}>
+    <View style={styles.container}>
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             <Text style={styles.title} numberOfLines={1}>Environments</Text>
@@ -195,7 +193,6 @@ export default function EnvironmentsScreen() {
           )}
         </ScrollView>
       </View>
-    </AnimatedBackground>
   );
 }
 
