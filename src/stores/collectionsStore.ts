@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Workspace, Collection, Request } from '../types/database';
 import * as dataService from '../services/dataService';
 import type { SaveRequestPayload } from '../services/dataService';
@@ -30,8 +32,10 @@ interface CollectionsState {
   deleteRequest: (id: string, collectionId: string) => Promise<boolean>;
 }
 
-export const useCollectionsStore = create<CollectionsState>((set, get) => ({
-  workspaces: [],
+export const useCollectionsStore = create<CollectionsState>()(
+  persist(
+    (set, get) => ({
+      workspaces: [],
   collections: {},
   requests: {},
   activeWorkspaceId: null,
@@ -190,4 +194,16 @@ export const useCollectionsStore = create<CollectionsState>((set, get) => ({
     }
     return success;
   },
-}));
+}),
+    {
+      name: 'collections-storage',
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({
+        workspaces: state.workspaces,
+        collections: state.collections,
+        requests: state.requests,
+        activeWorkspaceId: state.activeWorkspaceId,
+      }), // Ignore expandedCollections (Set) and isLoading
+    }
+  )
+);

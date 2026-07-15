@@ -4,8 +4,10 @@ import { BenchmarkSuite } from '../../src/components/tests/BenchmarkSuite';
 import { RegressionSuite } from '../../src/components/tests/RegressionSuite';
 import { FuzzSuite } from '../../src/components/tests/FuzzSuite';
 import { SecuritySuite } from '../../src/components/tests/SecuritySuite';
+import { ChaosSuite } from '../../src/components/tests/ChaosSuite';
+import { IdempotencySuite } from '../../src/components/tests/IdempotencySuite';
 
-type TestSuite = 'benchmarks' | 'contracts' | 'fuzzing' | 'security';
+type TestSuite = 'benchmarks' | 'contracts' | 'fuzzing' | 'security' | 'chaos' | 'idempotency';
 
 export default function TestsScreen() {
   const [activeSuite, setActiveSuite] = useState<TestSuite>('benchmarks');
@@ -50,6 +52,24 @@ export default function TestsScreen() {
                 Security
               </Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.tabBtn, activeSuite === 'chaos' && styles.tabBtnActive]}
+              onPress={() => setActiveSuite('chaos')}
+            >
+              <Text style={[styles.tabText, activeSuite === 'chaos' && styles.tabTextActive]}>
+                Chaos
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.tabBtn, activeSuite === 'idempotency' && styles.tabBtnActive]}
+              onPress={() => setActiveSuite('idempotency')}
+            >
+              <Text style={[styles.tabText, activeSuite === 'idempotency' && styles.tabTextActive]}>
+                Idempotency
+              </Text>
+            </TouchableOpacity>
           </ScrollView>
         </View>
 
@@ -59,6 +79,8 @@ export default function TestsScreen() {
           {activeSuite === 'contracts' && <RegressionSuite />}
           {activeSuite === 'fuzzing' && <FuzzSuite />}
           {activeSuite === 'security' && <SecuritySuite />}
+          {activeSuite === 'chaos' && <ChaosSuite />}
+          {activeSuite === 'idempotency' && <IdempotencySuite />}
         </View>
       </View>
   );
