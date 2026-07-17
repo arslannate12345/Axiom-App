@@ -4,7 +4,6 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { ResponseTiming } from '@/lib/api';
 import { getStatusColor, getStatusLabel, formatBytes, formatMs } from '@/lib/api';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 
 const MonacoEditor = dynamic(
@@ -104,88 +103,104 @@ export function ResponsePanel({ response, error, isLoading }: ResponsePanelProps
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-        <TabsList className="justify-start border-b border-[#334155] bg-transparent rounded-none px-4 shrink-0 h-9">
-          <TabsTrigger
-            value="body"
-            className="text-xs data-[state=active]:text-[#6366F1] data-[state=active]:border-b-2 data-[state=active]:border-[#6366F1] rounded-none px-3 py-2 text-[#94A3B8]"
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex border-b border-[#334155] px-4 shrink-0 h-9">
+          <button
+            onClick={() => setActiveTab('body')}
+            className={`text-xs px-3 h-full flex items-center transition-colors ${
+              activeTab === 'body'
+                ? 'text-[#6366F1] border-b-2 border-[#6366F1]'
+                : 'text-[#94A3B8] hover:text-[#e4e1ed]'
+            }`}
           >
             Body
-          </TabsTrigger>
-          <TabsTrigger
-            value="headers"
-            className="text-xs data-[state=active]:text-[#6366F1] data-[state=active]:border-b-2 data-[state=active]:border-[#6366F1] rounded-none px-3 py-2 text-[#94A3B8]"
+          </button>
+          <button
+            onClick={() => setActiveTab('headers')}
+            className={`text-xs px-3 h-full flex items-center transition-colors ${
+              activeTab === 'headers'
+                ? 'text-[#6366F1] border-b-2 border-[#6366F1]'
+                : 'text-[#94A3B8] hover:text-[#e4e1ed]'
+            }`}
           >
             Headers
-          </TabsTrigger>
-        </TabsList>
+          </button>
+        </div>
 
-        <TabsContent value="body" className="flex-1 min-h-0 m-0 p-0">
-          <div className="h-full">
-            {(() => {
-              try {
-                const parsed = JSON.parse(response.body);
-                return (
-                  <MonacoEditor
-                    language="json"
-                    value={JSON.stringify(parsed, null, 2)}
-                    theme="vs-dark"
-                    options={{
-                      readOnly: true,
-                      minimap: { enabled: false },
-                      fontSize: 12,
-                      fontFamily: 'JetBrains Mono, monospace',
-                      lineNumbers: 'on',
-                      scrollBeyondLastLine: false,
-                      wordWrap: 'on',
-                      automaticLayout: true,
-                      padding: { top: 8, bottom: 8 },
-                    }}
-                  />
-                );
-              } catch {
-                return (
-                  <MonacoEditor
-                    language="plaintext"
-                    value={response.body}
-                    theme="vs-dark"
-                    options={{
-                      readOnly: true,
-                      minimap: { enabled: false },
-                      fontSize: 12,
-                      fontFamily: 'JetBrains Mono, monospace',
-                      lineNumbers: 'on',
-                      scrollBeyondLastLine: false,
-                      wordWrap: 'on',
-                      automaticLayout: true,
-                      padding: { top: 8, bottom: 8 },
-                    }}
-                  />
-                );
-              }
-            })()}
+        {/* Body tab */}
+        {activeTab === 'body' && (
+          <div className="flex-1 min-h-0">
+            <div className="w-full h-full">
+              {(() => {
+                try {
+                  const parsed = JSON.parse(response.body);
+                  return (
+                    <MonacoEditor
+                      language="json"
+                      value={JSON.stringify(parsed, null, 2)}
+                      theme="vs-dark"
+                      height="100%"
+                      options={{
+                        readOnly: true,
+                        minimap: { enabled: false },
+                        fontSize: 12,
+                        fontFamily: 'JetBrains Mono, monospace',
+                        lineNumbers: 'on',
+                        scrollBeyondLastLine: false,
+                        wordWrap: 'on',
+                        automaticLayout: true,
+                        padding: { top: 8, bottom: 8 },
+                      }}
+                    />
+                  );
+                } catch {
+                  return (
+                    <MonacoEditor
+                      language="plaintext"
+                      value={response.body}
+                      theme="vs-dark"
+                      height="100%"
+                      options={{
+                        readOnly: true,
+                        minimap: { enabled: false },
+                        fontSize: 12,
+                        fontFamily: 'JetBrains Mono, monospace',
+                        lineNumbers: 'on',
+                        scrollBeyondLastLine: false,
+                        wordWrap: 'on',
+                        automaticLayout: true,
+                        padding: { top: 8, bottom: 8 },
+                      }}
+                    />
+                  );
+                }
+              })()}
+            </div>
           </div>
-        </TabsContent>
+        )}
 
-        <TabsContent value="headers" className="flex-1 m-0 p-0 overflow-auto">
-          <div className="p-4 space-y-1">
-            {Object.entries(response.headers).map(([key, value]) => (
-              <div
-                key={key}
-                className="flex justify-between py-1.5 px-2 rounded text-[11px] hover:bg-[#1E293B] transition-colors"
-              >
-                <span className="text-[#93C5FD] font-mono font-medium">{key}</span>
-                <span className="text-[#94A3B8] font-mono ml-4 text-right break-all max-w-[60%]">
-                  {value}
-                </span>
-              </div>
-            ))}
-            {Object.keys(response.headers).length === 0 && (
-              <p className="text-xs text-[#475569] text-center py-8">No response headers</p>
-            )}
+        {/* Headers tab */}
+        {activeTab === 'headers' && (
+          <div className="flex-1 min-h-0 overflow-auto p-4">
+            <div className="space-y-1">
+              {Object.entries(response.headers).map(([key, value]) => (
+                <div
+                  key={key}
+                  className="flex justify-between py-1.5 px-2 rounded text-[11px] hover:bg-[#1E293B] transition-colors"
+                >
+                  <span className="text-[#93C5FD] font-mono font-medium">{key}</span>
+                  <span className="text-[#94A3B8] font-mono ml-4 text-right break-all max-w-[60%]">
+                    {value}
+                  </span>
+                </div>
+              ))}
+              {Object.keys(response.headers).length === 0 && (
+                <p className="text-xs text-[#475569] text-center py-8">No response headers</p>
+              )}
+            </div>
           </div>
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
     </div>
   );
 }

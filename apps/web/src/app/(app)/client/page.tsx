@@ -169,7 +169,7 @@ export default function ClientPage() {
       {/* Split panes */}
       <div className="flex-1 flex flex-col min-h-0">
         {/* Request builder (top) */}
-        <div className="flex-[1.2] flex flex-col min-h-[200px] border-b border-[#334155]">
+        <div className="flex-1 flex flex-col min-h-[160px] border-b border-[#334155]">
           <Tabs value={activeSubTab} onValueChange={(v) => setActiveSubTab(v as SubTab)} className="flex-1 flex flex-col min-h-0">
             <TabsList className="justify-start border-b border-[#334155] bg-transparent rounded-none px-4 shrink-0 h-9">
               <TabsTrigger value="params" className="text-xs data-[state=active]:text-[#6366F1] data-[state=active]:border-b-2 data-[state=active]:border-[#6366F1] rounded-none px-3 py-2 text-[#94A3B8]">
@@ -220,7 +220,7 @@ export default function ClientPage() {
         </div>
 
         {/* Response viewer (bottom) */}
-        <div className="flex-1 flex flex-col min-h-[200px] bg-[#0F172A]">
+        <div className="flex-1 flex flex-col min-h-[160px] bg-[#0F172A]">
           <ResponsePanel response={response} error={error} isLoading={isLoading} />
         </div>
       </div>
