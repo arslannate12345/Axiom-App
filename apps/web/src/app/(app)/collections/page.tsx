@@ -12,6 +12,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { CollectionRunnerView } from '@/components/collections/CollectionRunnerView';
 import { toast } from 'sonner';
 import * as service from '@/lib/supabase-service';
 import type { Workspace, Collection, RequestRecord } from '@/lib/supabase-service';
@@ -37,6 +38,7 @@ export default function CollectionsPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [createType, setCreateType] = useState<'workspace' | 'collection'>('workspace');
   const [newName, setNewName] = useState('');
+  const [showRunner, setShowRunner] = useState(false);
 
   useEffect(() => {
     loadWorkspaces();
@@ -232,6 +234,13 @@ export default function CollectionsPage() {
               collection={selectedCollection}
               workspaceName={workspaces.find((w) => w.id === activeWorkspaceId)?.name}
               stat={collectionStat}
+              onRunCollection={() => {
+                if (selectedCollection && requests[selectedCollection.id]) {
+                  setShowRunner(true);
+                } else {
+                  toast.error('Expand the collection to load requests first');
+                }
+              }}
             />
           </div>
         ) : (
@@ -268,6 +277,22 @@ export default function CollectionsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Collection Runner */}
+      {selectedCollection && (
+        <CollectionRunnerView
+          open={showRunner}
+          onOpenChange={setShowRunner}
+          collectionName={selectedCollection.name}
+          steps={(requests[selectedCollection.id] || []).map((req) => ({
+            requestId: req.id,
+            method: req.method,
+            name: req.name,
+            url: req.url,
+            status: 'pending' as const,
+          }))}
+        />
+      )}
     </div>
   );
 }
@@ -278,10 +303,12 @@ function CollectionDashboard({
   collection,
   workspaceName,
   stat: _stat,
+  onRunCollection,
 }: {
   collection: Collection | null;
   workspaceName?: string;
   stat: { requestCount: number } | null;
+  onRunCollection?: () => void;
 }) {
   if (!collection) {
     return (
@@ -333,7 +360,7 @@ function CollectionDashboard({
           </Button>
           <Button
             className="h-8 px-4 text-xs bg-[#6366F1] hover:bg-[#4F46E5] text-white"
-            onClick={() => toast.info('Coming in M2')}
+            onClick={onRunCollection}
           >
             <span className="material-symbols-outlined text-[14px] mr-1">play_arrow</span>
             Run Collection
