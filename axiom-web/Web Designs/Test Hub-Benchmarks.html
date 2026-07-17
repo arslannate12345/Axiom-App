@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Axiom Workbench | Benchmarks Suite</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary": "#1000a9",
+                    "surface-dim": "#13131b",
+                    "secondary-fixed": "#e0e0ff",
+                    "on-primary-container": "#0d0096",
+                    "secondary-container": "#2f3aa3",
+                    "on-secondary-fixed": "#000767",
+                    "surface-container": "#1f1f27",
+                    "on-tertiary-fixed": "#301400",
+                    "tertiary-fixed-dim": "#ffb783",
+                    "outline": "#908fa0",
+                    "on-tertiary": "#4f2500",
+                    "on-primary-fixed": "#07006c",
+                    "on-error": "#690005",
+                    "background": "#13131b",
+                    "tertiary-fixed": "#ffdcc5",
+                    "inverse-surface": "#e4e1ed",
+                    "tertiary-container": "#d97721",
+                    "on-tertiary-container": "#452000",
+                    "primary-fixed-dim": "#c0c1ff",
+                    "on-background": "#e4e1ed",
+                    "surface": "#13131b",
+                    "secondary": "#bdc2ff",
+                    "surface-tint": "#c0c1ff",
+                    "primary-container": "#8083ff",
+                    "error": "#ffb4ab",
+                    "secondary-fixed-dim": "#bdc2ff",
+                    "surface-container-lowest": "#0d0d15",
+                    "on-error-container": "#ffdad6",
+                    "primary": "#c0c1ff",
+                    "surface-bright": "#393841",
+                    "surface-variant": "#34343d",
+                    "on-surface-variant": "#c7c4d7",
+                    "on-primary-fixed-variant": "#2f2ebe",
+                    "on-secondary": "#131e8c",
+                    "on-secondary-fixed-variant": "#2f3aa3",
+                    "on-tertiary-fixed-variant": "#703700",
+                    "tertiary": "#ffb783",
+                    "surface-container-low": "#1b1b23",
+                    "on-surface": "#e4e1ed",
+                    "inverse-primary": "#494bd6",
+                    "surface-container-high": "#292932",
+                    "error-container": "#93000a",
+                    "surface-container-highest": "#34343d",
+                    "on-secondary-container": "#a8afff",
+                    "primary-fixed": "#e1e0ff",
+                    "outline-variant": "#464554",
+                    "inverse-on-surface": "#303038"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "unit": "4px",
+                    "list-item-height": "32px",
+                    "element-gap": "8px",
+                    "input-height-sm": "28px",
+                    "container-padding": "16px"
+            },
+            "fontFamily": {
+                    "label-md": ["Inter"],
+                    "code-sm": ["JetBrains Mono"],
+                    "code-md": ["JetBrains Mono"],
+                    "body-md": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "body-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "code-sm": ["12px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "code-md": ["13px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0F172A;
+            color: #e4e1ed;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+        .surface-panel {
+            background-color: #1E293B;
+            border: 1px solid #334155;
+        }
+        .sidebar-active {
+            background-color: rgba(47, 58, 163, 0.5);
+            border-right: 2px solid #c0c1ff;
+            color: #a8afff;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+            font-size: 18px;
+        }
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0F172A;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 2px;
+        }
+        .chart-grid {
+            stroke: #334155;
+            stroke-dasharray: 4;
+        }
+    </style>
+</head>
+<body class="h-screen w-full flex overflow-hidden">
+<!-- SideNavBar (Semantic Shell) -->
+<aside class="fixed left-0 top-0 h-full w-[260px] bg-surface-container border-r border-outline-variant flex flex-col py-4 z-50">
+<div class="px-6 mb-8">
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-surface">Axiom</h1>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">V1.2.0-stable</p>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Client -->
+<div class="flex items-center px-6 py-2 cursor-pointer text-on-surface-variant hover:bg-surface-variant/50 transition-colors duration-150">
+<span class="material-symbols-outlined mr-3">api</span>
+<span class="font-body-sm text-body-sm">Client</span>
+</div>
+<!-- Collections -->
+<div class="flex items-center px-6 py-2 cursor-pointer text-on-surface-variant hover:bg-surface-variant/50 transition-colors duration-150">
+<span class="material-symbols-outlined mr-3">folder_open</span>
+<span class="font-body-sm text-body-sm">Collections</span>
+</div>
+<!-- Environments -->
+<div class="flex items-center px-6 py-2 cursor-pointer text-on-surface-variant hover:bg-surface-variant/50 transition-colors duration-150">
+<span class="material-symbols-outlined mr-3">settings_input_component</span>
+<span class="font-body-sm text-body-sm">Environments</span>
+</div>
+<!-- Tests (ACTIVE) -->
+<div class="flex items-center px-6 py-2 cursor-pointer bg-secondary-container/50 text-on-secondary-container font-medium border-r-2 border-primary">
+<span class="material-symbols-outlined mr-3">checklist</span>
+<span class="font-body-sm text-body-sm">Tests</span>
+</div>
+<!-- History -->
+<div class="flex items-center px-6 py-2 cursor-pointer text-on-surface-variant hover:bg-surface-variant/50 transition-colors duration-150">
+<span class="material-symbols-outlined mr-3">history</span>
+<span class="font-body-sm text-body-sm">History</span>
+</div>
+</nav>
+<div class="mt-auto px-6 space-y-4">
+<button class="w-full bg-primary py-2 px-4 rounded text-on-primary font-label-md text-label-md font-bold uppercase tracking-wide active:scale-95 transition-transform">
+                New Request
+            </button>
+<div class="pt-4 border-t border-outline-variant">
+<div class="flex items-center py-2 cursor-pointer text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined mr-3">settings</span>
+<span class="font-body-sm text-body-sm">Settings</span>
+</div>
+<div class="flex items-center py-2 cursor-pointer text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined mr-3">help_outline</span>
+<span class="font-body-sm text-body-sm">Support</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Workspace Container -->
+<main class="ml-[260px] flex-1 flex flex-col h-full bg-background relative">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center h-[48px] px-6 w-full bg-surface border-b border-outline-variant">
+<div class="flex items-center gap-6">
+<span class="font-headline-sm text-headline-sm font-black text-primary">Axiom Workbench</span>
+<nav class="flex gap-4 h-full">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors flex items-center" href="#">Main Workspace</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors flex items-center" href="#">Team Library</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors flex items-center" href="#">Analytics</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<input class="bg-surface-container-lowest border border-outline-variant rounded px-3 py-1 text-label-md text-on-surface focus:border-primary focus:ring-0 w-64 transition-all" placeholder="Search benchmarks..." type="text"/>
+<span class="material-symbols-outlined absolute right-2 top-1.5 text-on-surface-variant text-[16px]">search</span>
+</div>
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">cloud_done</span>
+</div>
+<div class="h-8 w-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-xs">
+                    JD
+                </div>
+</div>
+</header>
+<!-- Sub-navigation Tabs -->
+<div class="px-6 pt-4 flex gap-8 border-b border-outline-variant/30">
+<button class="pb-3 px-1 font-label-md text-label-md text-primary border-b-2 border-primary">Benchmarks</button>
+<button class="pb-3 px-1 font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors">Contracts &amp; Regression</button>
+<button class="pb-3 px-1 font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors">Fuzzing</button>
+<button class="pb-3 px-1 font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors">Security</button>
+<button class="pb-3 px-1 font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors">Chaos</button>
+<button class="pb-3 px-1 font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors">Idempotency</button>
+</div>
+<!-- Main Content Area: Benchmarks View -->
+<div class="flex-1 flex overflow-hidden p-6 gap-6">
+<!-- Left Column: Configuration (30%) -->
+<div class="w-[320px] flex flex-col gap-4">
+<div class="surface-panel p-5 rounded-lg flex flex-col h-full">
+<h2 class="text-on-surface font-headline-sm text-headline-sm mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined">tune</span>
+                        Configuration
+                    </h2>
+<div class="space-y-6 flex-1">
+<!-- Iterations -->
+<div>
+<label class="block text-on-surface-variant font-label-md text-label-md mb-2 uppercase tracking-wider">Iterations</label>
+<input class="w-full bg-background border border-outline-variant rounded px-3 py-2 text-code-md code-font text-on-surface focus:border-primary focus:ring-0" type="number" value="1000"/>
+<p class="text-[10px] text-on-surface-variant mt-1">Total requests per scenario batch.</p>
+</div>
+<!-- Concurrency -->
+<div>
+<label class="block text-on-surface-variant font-label-md text-label-md mb-2 uppercase tracking-wider">Concurrency</label>
+<input class="w-full bg-background border border-outline-variant rounded px-3 py-2 text-code-md code-font text-on-surface focus:border-primary focus:ring-0" type="number" value="50"/>
+<p class="text-[10px] text-on-surface-variant mt-1">Simultaneous workers/threads.</p>
+</div>
+<!-- Ramp Pattern Selector -->
+<div>
+<label class="block text-on-surface-variant font-label-md text-label-md mb-3 uppercase tracking-wider">Ramp Pattern</label>
+<div class="grid grid-cols-2 gap-2">
+<button class="py-2 border border-primary text-primary bg-primary/10 rounded font-label-md text-label-md transition-colors">Load</button>
+<button class="py-2 border border-outline-variant text-on-surface-variant hover:border-on-surface-variant rounded font-label-md text-label-md transition-colors">Stress</button>
+<button class="py-2 border border-outline-variant text-on-surface-variant hover:border-on-surface-variant rounded font-label-md text-label-md transition-colors">Spike</button>
+<button class="py-2 border border-outline-variant text-on-surface-variant hover:border-on-surface-variant rounded font-label-md text-label-md transition-colors">Soak</button>
+</div>
+</div>
+<!-- Target URL -->
+<div>
+<label class="block text-on-surface-variant font-label-md text-label-md mb-2 uppercase tracking-wider">Target Endpoint</label>
+<div class="flex">
+<span class="bg-surface-container px-3 py-2 border border-r-0 border-outline-variant rounded-l text-code-sm code-font text-on-surface-variant">POST</span>
+<input class="flex-1 bg-background border border-outline-variant rounded-r px-3 py-2 text-code-sm code-font text-on-surface focus:border-primary focus:ring-0" type="text" value="https://api.axiom.tech/v1/ingest"/>
+</div>
+</div>
+</div>
+<div class="mt-auto pt-6">
+<button class="w-full bg-[#6366F1] hover:bg-[#4F46E5] text-white py-3 rounded font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined">play_arrow</span>
+                            Start Benchmark
+                        </button>
+</div>
+</div>
+</div>
+<!-- Right Column: Results (70%) -->
+<div class="flex-1 flex flex-col gap-6 overflow-hidden">
+<!-- Top Row: Stat Cards -->
+<div class="grid grid-cols-4 gap-4">
+<div class="surface-panel p-4 rounded-lg">
+<p class="text-on-surface-variant font-label-md text-label-md uppercase mb-1">p50 Latency</p>
+<div class="flex items-end gap-2">
+<span class="text-2xl font-bold text-on-surface code-font">142</span>
+<span class="text-on-surface-variant text-sm mb-1">ms</span>
+</div>
+<div class="mt-2 text-[10px] text-emerald-500 flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">trending_down</span> -12ms vs last run
+                        </div>
+</div>
+<div class="surface-panel p-4 rounded-lg">
+<p class="text-on-surface-variant font-label-md text-label-md uppercase mb-1">p95 Latency</p>
+<div class="flex items-end gap-2">
+<span class="text-2xl font-bold text-on-surface code-font">218</span>
+<span class="text-on-surface-variant text-sm mb-1">ms</span>
+</div>
+<div class="mt-2 text-[10px] text-on-surface-variant flex items-center gap-1">
+                            Stable threshold
+                        </div>
+</div>
+<div class="surface-panel p-4 rounded-lg border-l-2 border-primary">
+<p class="text-on-surface-variant font-label-md text-label-md uppercase mb-1">p99 Latency</p>
+<div class="flex items-end gap-2">
+<span class="text-2xl font-bold text-on-surface code-font">345</span>
+<span class="text-on-surface-variant text-sm mb-1">ms</span>
+</div>
+<div class="mt-2 text-[10px] text-error flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">trending_up</span> +42ms (degradation)
+                        </div>
+</div>
+<div class="surface-panel p-4 rounded-lg">
+<p class="text-on-surface-variant font-label-md text-label-md uppercase mb-1">Throughput</p>
+<div class="flex items-end gap-2">
+<span class="text-2xl font-bold text-primary code-font">1.2k</span>
+<span class="text-on-surface-variant text-sm mb-1">req/s</span>
+</div>
+<div class="mt-2 text-[10px] text-on-surface-variant flex items-center gap-1">
+                            Peak: 1.45k req/s
+                        </div>
+</div>
+</div>
+<!-- Middle Row: Latency Chart -->
+<div class="surface-panel flex-1 rounded-lg p-6 relative flex flex-col">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-on-surface font-label-md text-label-md uppercase tracking-widest">Real-time Latency Distribution (ms)</h3>
+<div class="flex gap-4">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 bg-[#6366F1] rounded-full"></div>
+<span class="text-[10px] text-on-surface-variant uppercase">Response Time</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 bg-primary-container rounded-full"></div>
+<span class="text-[10px] text-on-surface-variant uppercase">Average</span>
+</div>
+</div>
+</div>
+<div class="flex-1 relative">
+<!-- SVG Chart Simulation -->
+<svg class="w-full h-full" preserveaspectratio="none">
+<!-- Grid Lines -->
+<line class="chart-grid" x1="0" x2="100%" y1="20%" y2="20%"></line>
+<line class="chart-grid" x1="0" x2="100%" y1="40%" y2="40%"></line>
+<line class="chart-grid" x1="0" x2="100%" y1="60%" y2="60%"></line>
+<line class="chart-grid" x1="0" x2="100%" y1="80%" y2="80%"></line>
+<!-- Area Gradient -->
+<defs>
+<lineargradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#6366F1" stop-opacity="0.3"></stop>
+<stop offset="100%" stop-color="#6366F1" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<!-- Path -->
+<path d="M0,150 Q50,140 100,160 T200,130 T300,170 T400,140 T500,155 T600,120 T700,145 T800,135 T900,165 T1000,150 L1000,300 L0,300 Z" fill="url(#chartGradient)"></path>
+<path d="M0,150 Q50,140 100,160 T200,130 T300,170 T400,140 T500,155 T600,120 T700,145 T800,135 T900,165 T1000,150" fill="none" stroke="#6366F1" stroke-width="2.5"></path>
+<!-- Interactive Data Point -->
+<circle cx="600" cy="120" fill="#6366F1" r="4" stroke="#1E293B" stroke-width="2"></circle>
+</svg>
+<!-- Y-Axis Labels -->
+<div class="absolute left-0 top-0 h-full flex flex-col justify-between py-2 text-[10px] text-on-surface-variant font-mono">
+<span>400ms</span>
+<span>300ms</span>
+<span>200ms</span>
+<span>100ms</span>
+<span>0ms</span>
+</div>
+</div>
+</div>
+<!-- Bottom Row: Iterations Table -->
+<div class="surface-panel h-64 rounded-lg flex flex-col">
+<div class="px-4 py-3 border-b border-outline-variant flex justify-between items-center bg-surface-container-low/50">
+<h3 class="text-on-surface font-label-md text-label-md uppercase">Recent Iterations</h3>
+<div class="flex gap-2">
+<span class="text-[10px] text-on-surface-variant px-2 py-0.5 border border-outline-variant rounded">Filter: All</span>
+<span class="text-[10px] text-on-surface-variant px-2 py-0.5 border border-outline-variant rounded">Export CSV</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar">
+<table class="w-full text-left">
+<thead class="sticky top-0 bg-[#1E293B] shadow-sm">
+<tr class="text-[11px] font-bold text-on-surface-variant uppercase border-b border-outline-variant">
+<th class="px-4 py-3">Iteration ID</th>
+<th class="px-4 py-3">Timestamp</th>
+<th class="px-4 py-3">Latency</th>
+<th class="px-4 py-3">Payload Size</th>
+<th class="px-4 py-3">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30 text-body-sm">
+<tr class="hover:bg-surface-variant/50 transition-colors group">
+<td class="px-4 py-3 code-font text-primary">#AX-9942</td>
+<td class="px-4 py-3 text-on-surface-variant">2023-10-24 14:02:11.452</td>
+<td class="px-4 py-3 code-font">145ms</td>
+<td class="px-4 py-3 text-on-surface-variant">1.2 KB</td>
+<td class="px-4 py-3">
+<span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase">Pass</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-variant/50 transition-colors">
+<td class="px-4 py-3 code-font text-primary">#AX-9941</td>
+<td class="px-4 py-3 text-on-surface-variant">2023-10-24 14:02:11.410</td>
+<td class="px-4 py-3 code-font">138ms</td>
+<td class="px-4 py-3 text-on-surface-variant">1.2 KB</td>
+<td class="px-4 py-3">
+<span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase">Pass</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-variant/50 transition-colors">
+<td class="px-4 py-3 code-font text-primary">#AX-9940</td>
+<td class="px-4 py-3 text-on-surface-variant">2023-10-24 14:02:11.388</td>
+<td class="px-4 py-3 code-font">192ms</td>
+<td class="px-4 py-3 text-on-surface-variant">1.2 KB</td>
+<td class="px-4 py-3">
+<span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase">Pass</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-variant/50 transition-colors">
+<td class="px-4 py-3 code-font text-primary">#AX-9939</td>
+<td class="px-4 py-3 text-on-surface-variant">2023-10-24 14:02:11.320</td>
+<td class="px-4 py-3 code-font">141ms</td>
+<td class="px-4 py-3 text-on-surface-variant">1.2 KB</td>
+<td class="px-4 py-3">
+<span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase">Pass</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-variant/50 transition-colors">
+<td class="px-4 py-3 code-font text-primary">#AX-9938</td>
+<td class="px-4 py-3 text-on-surface-variant">2023-10-24 14:02:11.280</td>
+<td class="px-4 py-3 code-font">312ms</td>
+<td class="px-4 py-3 text-on-surface-variant">1.2 KB</td>
+<td class="px-4 py-3">
+<span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase">Pass</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+<!-- Subtle Bottom Status Bar -->
+<footer class="h-6 bg-surface-container-lowest border-t border-outline-variant px-4 flex items-center justify-between text-[10px] text-on-surface-variant uppercase tracking-tighter">
+<div class="flex gap-4">
+<span class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> Node 01 - Frankfurt</span>
+<span class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> System Load: 4%</span>
+</div>
+<div class="flex gap-4">
+<span>Memory: 1.2 GB / 16 GB</span>
+<span class="text-primary font-bold">API CONNECTED</span>
+</div>
+</footer>
+</main>
+<script>
+        // Micro-interaction: Randomize latency numbers slightly for visual flair
+        const statValues = document.querySelectorAll('.code-font');
+        setInterval(() => {
+            statValues.forEach(el => {
+                if (Math.random() > 0.8) {
+                    const current = parseInt(el.innerText);
+                    const diff = Math.floor(Math.random() * 5) - 2;
+                    if (!isNaN(current)) {
+                        el.classList.add('transition-all', 'duration-500');
+                        // Normally we'd update text here but it's a static demo
+                    }
+                }
+            });
+        }, 2000);
+
+        // Simulated Chart Animation
+        const path = document.querySelector('path:nth-of-type(2)');
+        if (path) {
+            path.style.strokeDasharray = '1000';
+            path.style.strokeDashoffset = '1000';
+            path.style.animation = 'draw 3s ease forwards';
+        }
+    </script>
+<style>
+        @keyframes draw {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+    </style>
+</body></html>

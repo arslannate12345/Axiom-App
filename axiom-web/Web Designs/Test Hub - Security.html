@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Axiom Workbench | Security Suite</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #13131b; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: #464554; }
+        
+        .security-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 1px;
+            background-color: #334155;
+            height: calc(100vh - 96px); /* Adjusted for top nav + sub nav */
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#494bd6",
+                        "on-primary-container": "#0d0096",
+                        "primary-fixed": "#e1e0ff",
+                        "on-background": "#e4e1ed",
+                        "tertiary-fixed": "#ffdcc5",
+                        "on-tertiary-container": "#452000",
+                        "on-error": "#690005",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "surface-dim": "#13131b",
+                        "surface-container": "#1f1f27",
+                        "primary-container": "#8083ff",
+                        "secondary": "#bdc2ff",
+                        "error": "#ffb4ab",
+                        "tertiary-container": "#d97721",
+                        "surface-container-highest": "#34343d",
+                        "surface-tint": "#c0c1ff",
+                        "surface-variant": "#34343d",
+                        "secondary-fixed": "#e0e0ff",
+                        "error-container": "#93000a",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "outline": "#908fa0",
+                        "on-primary": "#1000a9",
+                        "secondary-fixed-dim": "#bdc2ff",
+                        "surface-container-lowest": "#0d0d15",
+                        "inverse-surface": "#e4e1ed",
+                        "primary": "#c0c1ff",
+                        "on-surface-variant": "#c7c4d7",
+                        "tertiary": "#ffb783",
+                        "on-tertiary": "#4f2500",
+                        "on-secondary": "#131e8c",
+                        "surface-container-low": "#1b1b23",
+                        "outline-variant": "#464554",
+                        "on-error-container": "#ffdad6",
+                        "secondary-container": "#2f3aa3",
+                        "on-tertiary-fixed": "#301400",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "on-surface": "#e4e1ed",
+                        "on-secondary-fixed": "#000767",
+                        "surface-container-high": "#292932",
+                        "surface": "#13131b",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "background": "#13131b",
+                        "on-secondary-fixed-variant": "#2f3aa3",
+                        "on-secondary-container": "#a8afff",
+                        "on-primary-fixed": "#07006c",
+                        "surface-bright": "#393841",
+                        "inverse-on-surface": "#303038",
+                        "success": "#10B981",
+                        "warning": "#F59E0B",
+                        "danger": "#EF4444"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "input-height-sm": "28px",
+                        "element-gap": "8px",
+                        "list-item-height": "32px",
+                        "unit": "4px",
+                        "container-padding": "16px"
+                    },
+                    "fontFamily": {
+                        "code-md": ["JetBrains Mono"],
+                        "label-md": ["Inter"],
+                        "code-sm": ["JetBrains Mono"],
+                        "headline-sm": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "code-md": ["13px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "code-sm": ["12px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "headline-sm": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden h-screen">
+<!-- SideNavBar Anchor -->
+<aside class="fixed left-0 top-0 h-full w-[260px] bg-surface-container border-r border-outline-variant flex flex-col py-4 z-50">
+<div class="px-6 mb-8">
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-surface">Axiom</h1>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant/50">V1.2.0-stable</p>
+</div>
+<nav class="flex-1 space-y-1 px-3">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-150 cursor-pointer rounded" href="#">
+<span class="material-symbols-outlined text-[20px]">api</span>
+<span class="font-body-sm text-body-sm">Client</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-150 cursor-pointer rounded" href="#">
+<span class="material-symbols-outlined text-[20px]">folder_open</span>
+<span class="font-body-sm text-body-sm">Collections</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-150 cursor-pointer rounded" href="#">
+<span class="material-symbols-outlined text-[20px]">settings_input_component</span>
+<span class="font-body-sm text-body-sm">Environments</span>
+</a>
+<!-- Active State: Tests -->
+<a class="flex items-center gap-3 px-3 py-2 bg-secondary-container/50 text-on-secondary-container font-medium border-r-2 border-primary transition-colors duration-150 cursor-pointer rounded" href="#">
+<span class="material-symbols-outlined text-[20px]">checklist</span>
+<span class="font-body-sm text-body-sm">Tests</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-150 cursor-pointer rounded" href="#">
+<span class="material-symbols-outlined text-[20px]">history</span>
+<span class="font-body-sm text-body-sm">History</span>
+</a>
+</nav>
+<div class="px-3 mb-4">
+<button class="w-full bg-primary text-on-primary py-2 rounded font-label-md text-label-md flex items-center justify-center gap-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Request
+            </button>
+</div>
+<div class="px-3 border-t border-outline-variant pt-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-150 cursor-pointer rounded" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="font-body-sm text-body-sm">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-150 cursor-pointer rounded" href="#">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+<span class="font-body-sm text-body-sm">Support</span>
+</a>
+</div>
+</aside>
+<!-- TopNavBar Anchor -->
+<header class="fixed top-0 left-[260px] right-0 h-[48px] bg-surface border-b border-outline-variant flex justify-between items-center px-6 z-40">
+<div class="flex items-center gap-6">
+<span class="font-headline-sm text-headline-sm font-black text-primary">Axiom Workbench</span>
+<nav class="flex gap-4">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Main Workspace</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Team Library</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Analytics</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-3 px-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px] cursor-pointer hover:text-primary transition-colors">notifications</span>
+<span class="material-symbols-outlined text-[20px] cursor-pointer hover:text-primary transition-colors">cloud_done</span>
+</div>
+<div class="h-6 w-[1px] bg-outline-variant"></div>
+<div class="flex items-center gap-2">
+<button class="px-3 h-7 bg-transparent border border-outline-variant text-on-surface hover:text-primary transition-colors text-label-md font-label-md rounded">Share</button>
+<button class="px-3 h-7 bg-primary text-on-primary font-label-md text-label-md rounded active:scale-95 transition-transform">Deploy</button>
+</div>
+<img class="w-8 h-8 rounded-full border border-outline-variant" data-alt="A clean, minimalist profile avatar for a technical professional, featuring a stylized geometric icon in muted slate and indigo tones, centered in a circular frame with high-end digital precision." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrOjVM9iTRd0qGqLS__z4JDQNEnaEN43cZwKk8CWq0P3_TnHH6LSHTGBxljHWIJ0MB96fxaUrsnIs47JiAxa4JlQJj7znRlO_hqKY9dGRutEv9q5-OmXtczYpxVBzumJI5w_gsKFDLQE-bDjXccVY4VntxDK9Hn07R8a2kZQo5KbAf256cCU4HOjPnvfKtzROdUycuIncOv_P3nzESmHUyoWS3x9mFyxA8afuzuQwWm-nutbQWUnKw3PaKZF3vh2feINEKXwRp8h4"/>
+</div>
+</header>
+<!-- Sub-Navigation for Tests Hub -->
+<nav class="fixed top-[48px] left-[260px] right-0 h-[48px] bg-surface-container-low border-b border-outline-variant flex items-center px-6 gap-8 z-30 overflow-x-auto">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors" href="#">Benchmarks</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors" href="#">Contracts &amp; Regression</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors" href="#">Fuzzing</a>
+<a class="font-label-md text-label-md text-primary border-b-2 border-primary h-full flex items-center whitespace-nowrap" href="#">Security</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors" href="#">Chaos</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors" href="#">Idempotency</a>
+</nav>
+<!-- Main Content Area -->
+<main class="pt-[96px] pl-[260px] h-full overflow-hidden">
+<div class="security-grid">
+<!-- 1. Configuration Panel (Left) -->
+<aside class="bg-surface-container p-6 overflow-y-auto">
+<h2 class="font-label-md text-label-md uppercase tracking-wider text-outline mb-6">Scan Configuration</h2>
+<div class="space-y-6">
+<!-- Scan Depth -->
+<div class="space-y-3">
+<label class="font-label-md text-label-md text-on-surface block">Scan Depth</label>
+<select class="w-full bg-background border border-outline-variant rounded px-3 py-1.5 text-body-sm font-code-sm focus:ring-1 focus:ring-primary outline-none transition-all">
+<option>Surface (L1)</option>
+<option selected="">Standard (L2)</option>
+<option>Exhaustive (L3)</option>
+<option>Deep Forensics (L4)</option>
+</select>
+</div>
+<!-- Toggles Group -->
+<div class="space-y-4 pt-4 border-t border-outline-variant/30">
+<div class="flex items-center justify-between">
+<span class="text-body-sm font-body-sm text-on-surface-variant">Header Verification</span>
+<button class="relative w-8 h-4 bg-primary rounded-full transition-colors">
+<span class="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></span>
+</button>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-body-sm font-body-sm text-on-surface-variant">Auth Scanning</span>
+<button class="relative w-8 h-4 bg-primary rounded-full transition-colors">
+<span class="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></span>
+</button>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-body-sm font-body-sm text-on-surface-variant">SQLi Protection</span>
+<button class="relative w-8 h-4 bg-primary rounded-full transition-colors">
+<span class="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></span>
+</button>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-body-sm font-body-sm text-on-surface-variant">Automated Exploitation</span>
+<button class="relative w-8 h-4 bg-surface-variant rounded-full transition-colors">
+<span class="absolute left-0.5 top-0.5 w-3 h-3 bg-outline rounded-full"></span>
+</button>
+</div>
+</div>
+<!-- Action -->
+<div class="pt-6">
+<button class="w-full bg-primary/10 border border-primary/30 text-primary py-2.5 rounded font-label-md text-label-md hover:bg-primary/20 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">security</span>
+                            Initialize Security Scan
+                        </button>
+</div>
+</div>
+</aside>
+<!-- 2. Results Area (Right) -->
+<section class="bg-surface overflow-y-auto p-6">
+<!-- Stat Cards -->
+<div class="grid grid-cols-4 gap-4 mb-8">
+<div class="bg-surface-container-high p-4 rounded border border-outline-variant">
+<p class="text-[11px] font-bold uppercase tracking-widest text-outline mb-1">Total Checks</p>
+<h3 class="text-[28px] font-black text-on-surface leading-none">42</h3>
+<p class="text-[10px] text-on-surface-variant/60 mt-2 font-code-sm">Baseline: 40 (+2)</p>
+</div>
+<div class="bg-surface-container-high p-4 rounded border border-danger/20 relative overflow-hidden">
+<div class="absolute right-0 top-0 w-1 h-full bg-danger"></div>
+<p class="text-[11px] font-bold uppercase tracking-widest text-danger/80 mb-1">Vulnerabilities</p>
+<h3 class="text-[28px] font-black text-danger leading-none">03</h3>
+<p class="text-[10px] text-danger/60 mt-2 font-code-sm">Critical Severity</p>
+</div>
+<div class="bg-surface-container-high p-4 rounded border border-warning/20 relative overflow-hidden">
+<div class="absolute right-0 top-0 w-1 h-full bg-warning"></div>
+<p class="text-[11px] font-bold uppercase tracking-widest text-warning/80 mb-1">Warnings</p>
+<h3 class="text-[28px] font-black text-warning leading-none">05</h3>
+<p class="text-[10px] text-warning/60 mt-2 font-code-sm">Non-Blocking Alerts</p>
+</div>
+<div class="bg-surface-container-high p-4 rounded border border-primary/20">
+<p class="text-[11px] font-bold uppercase tracking-widest text-primary/80 mb-1">Health Score</p>
+<div class="flex items-baseline gap-1">
+<h3 class="text-[28px] font-black text-primary leading-none">88</h3>
+<span class="text-label-md text-on-surface-variant">/ 100</span>
+</div>
+<div class="w-full bg-background h-1 rounded-full mt-3 overflow-hidden">
+<div class="bg-primary h-full" style="width: 88%"></div>
+</div>
+</div>
+</div>
+<!-- Security Checks List -->
+<div>
+<div class="flex items-center justify-between mb-4">
+<h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Compliance Checklist</h2>
+<div class="flex gap-2">
+<button class="h-8 px-3 bg-surface-container text-label-md border border-outline-variant rounded flex items-center gap-1.5 hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[16px]">filter_list</span>
+                                Filter
+                            </button>
+<button class="h-8 px-3 bg-surface-container text-label-md border border-outline-variant rounded flex items-center gap-1.5 hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[16px]">download</span>
+                                Export Report
+                            </button>
+</div>
+</div>
+<!-- Dense Vertical List -->
+<div class="space-y-[1px] bg-outline-variant">
+<!-- Row 1: Pass -->
+<div class="bg-surface-container hover:bg-surface-container-high transition-colors group">
+<button class="w-full flex items-center px-4 h-[44px] text-left outline-none" onclick="toggleDetails(this)">
+<div class="w-8 flex items-center">
+<span class="material-symbols-outlined text-success text-[20px]">check_circle</span>
+</div>
+<div class="flex-1">
+<span class="text-body-sm font-medium text-on-surface">HTTPS Enforced</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="bg-success/10 text-success text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-tight">Pass</span>
+<span class="material-symbols-outlined text-on-surface-variant group-data-[open=true]:rotate-180 transition-transform">expand_more</span>
+</div>
+</button>
+<div class="hidden px-12 pb-4 border-t border-outline-variant/30 bg-surface/50">
+<pre class="text-code-sm font-code-sm text-on-surface-variant pt-4 leading-relaxed">// Verification Logic: Secure Transport Layer
+// Target: api.axiom.internal
+// Result: 301 Redirect observed for HTTP traffic. HSTS headers present.
+// Max-Age: 63072000; includeSubDomains; preload</pre>
+</div>
+</div>
+<!-- Row 2: Pass -->
+<div class="bg-surface-container hover:bg-surface-container-high transition-colors group">
+<button class="w-full flex items-center px-4 h-[44px] text-left outline-none" onclick="toggleDetails(this)">
+<div class="w-8 flex items-center">
+<span class="material-symbols-outlined text-success text-[20px]">check_circle</span>
+</div>
+<div class="flex-1">
+<span class="text-body-sm font-medium text-on-surface">Sensitive Headers Not Exposed</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="bg-success/10 text-success text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-tight">Pass</span>
+<span class="material-symbols-outlined text-on-surface-variant transition-transform">expand_more</span>
+</div>
+</button>
+<div class="hidden px-12 pb-4 border-t border-outline-variant/30 bg-surface/50">
+<pre class="text-code-sm font-code-sm text-on-surface-variant pt-4 leading-relaxed">// Verification Logic: Header Sanitization
+// Checked: X-Powered-By, Server, X-AspNet-Version, X-Runtime
+// Result: No identifying server signatures or internal metadata found in response headers.</pre>
+</div>
+</div>
+<!-- Row 3: Pass -->
+<div class="bg-surface-container hover:bg-surface-container-high transition-colors group">
+<button class="w-full flex items-center px-4 h-[44px] text-left outline-none" onclick="toggleDetails(this)">
+<div class="w-8 flex items-center">
+<span class="material-symbols-outlined text-success text-[20px]">check_circle</span>
+</div>
+<div class="flex-1">
+<span class="text-body-sm font-medium text-on-surface">Auth Required on Mutating Methods</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="bg-success/10 text-success text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-tight">Pass</span>
+<span class="material-symbols-outlined text-on-surface-variant transition-transform">expand_more</span>
+</div>
+</button>
+<div class="hidden px-12 pb-4 border-t border-outline-variant/30 bg-surface/50">
+<pre class="text-code-sm font-code-sm text-on-surface-variant pt-4 leading-relaxed">// Verification Logic: RBAC/Auth Enforcement
+// Methods tested: POST, PUT, DELETE, PATCH
+// Response: 401 Unauthorized returned for all unauthenticated mutate requests across 24 endpoints.</pre>
+</div>
+</div>
+<!-- Row 4: Warning -->
+<div class="bg-surface-container hover:bg-surface-container-high transition-colors group">
+<button class="w-full flex items-center px-4 h-[44px] text-left outline-none" onclick="toggleDetails(this)">
+<div class="w-8 flex items-center">
+<span class="material-symbols-outlined text-warning text-[20px]">warning</span>
+</div>
+<div class="flex-1">
+<span class="text-body-sm font-medium text-on-surface">Rate Limiting Active</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="bg-warning/10 text-warning text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-tight">Warning</span>
+<span class="material-symbols-outlined text-on-surface-variant transition-transform">expand_more</span>
+</div>
+</button>
+<div class="hidden px-12 pb-4 border-t border-outline-variant/30 bg-surface/50">
+<pre class="text-code-sm font-code-sm text-on-surface-variant pt-4 leading-relaxed">// Verification Logic: Request Throttling
+// Test: 10,000 requests/sec burst
+// Result: Partial failure. Global rate limit triggered, but endpoint-specific limits (/auth/login) are too permissive (allow 50 attempts/min).</pre>
+</div>
+</div>
+<!-- Row 5: Fail -->
+<div class="bg-surface-container hover:bg-surface-container-high transition-colors group">
+<button class="w-full flex items-center px-4 h-[44px] text-left outline-none" onclick="toggleDetails(this)">
+<div class="w-8 flex items-center">
+<span class="material-symbols-outlined text-danger text-[20px]">error</span>
+</div>
+<div class="flex-1">
+<span class="text-body-sm font-medium text-on-surface">CORS Policy Strictness</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="bg-danger/10 text-danger text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-tight">Fail</span>
+<span class="material-symbols-outlined text-on-surface-variant transition-transform">expand_more</span>
+</div>
+</button>
+<div class="hidden px-12 pb-4 border-t border-outline-variant/30 bg-surface/50">
+<pre class="text-code-sm font-code-sm text-danger/80 pt-4 leading-relaxed font-bold">CRITICAL VULNERABILITY DETECTED
+Access-Control-Allow-Origin set to wildcard (*).
+Allow-Credentials: true
+This configuration permits cross-site request forgery and data exfiltration from unauthorized domains.</pre>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Decoration/Terminal Feed -->
+<div class="mt-8 border-t border-outline-variant pt-4">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-code-md text-outline uppercase tracking-widest">Live Security Event Log</span>
+<span class="text-[10px] font-code-md text-primary animate-pulse">RECORDING...</span>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded font-code-sm text-[11px] text-on-surface-variant space-y-1">
+<div class="flex gap-4"><span class="text-outline">14:02:11</span> <span class="text-primary">[INFO]</span> Initializing fuzzing engine for /v1/transactions...</div>
+<div class="flex gap-4"><span class="text-outline">14:02:15</span> <span class="text-warning">[WARN]</span> Detected non-standard HTTP method 'PROPFIND' response: 405 Method Not Allowed</div>
+<div class="flex gap-4"><span class="text-outline">14:02:44</span> <span class="text-success">[PASS]</span> Token introspection successfully validated against Auth0 provider.</div>
+<div class="flex gap-4"><span class="text-outline">14:03:02</span> <span class="text-danger">[ERR]</span> Potential SQLi sequence detected on 'sort_by' parameter. Remediation required.</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<script>
+        function toggleDetails(btn) {
+            const container = btn.parentElement;
+            const content = btn.nextElementSibling;
+            const icon = btn.querySelector('.material-symbols-outlined:last-child');
+            
+            const isOpen = !content.classList.contains('hidden');
+            
+            // Close all first for accordion effect (optional)
+            // document.querySelectorAll('.bg-surface-container > div').forEach(d => d.classList.add('hidden'));
+            
+            if (isOpen) {
+                content.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+                btn.removeAttribute('data-open');
+            } else {
+                content.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+                btn.setAttribute('data-open', 'true');
+            }
+        }
+
+        // Initialize micro-interactions
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mousedown', () => {
+                btn.style.transform = 'scale(0.98)';
+            });
+            btn.addEventListener('mouseup', () => {
+                btn.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body></html>
