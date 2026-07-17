@@ -131,14 +131,14 @@ export default function EnvironmentsPage() {
   return (
     <div className="flex-1 flex overflow-hidden">
       {/* Left: Environment List */}
-      <aside className="w-72 border-r border-[#334155] bg-[#1E293B] flex flex-col shrink-0">
-        <div className="p-4 flex justify-between items-center border-b border-[#334155]">
-          <h2 className="text-[11px] font-semibold text-[#6366F1] uppercase tracking-wider">
+      <aside className="w-72 border-r border-border bg-card flex flex-col shrink-0">
+        <div className="p-4 flex justify-between items-center border-b border-border">
+          <h2 className="text-[11px] font-semibold text-primary uppercase tracking-wider">
             Environments
           </h2>
           <button
             onClick={() => setCreatingEnv(true)}
-            className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#334155] text-[#94A3B8] hover:text-[#e4e1ed] transition-colors"
+            className="w-7 h-7 flex items-center justify-center rounded hover:bg-border text-muted-foreground hover:text-foreground transition-colors"
           >
             <span className="material-symbols-outlined text-[18px]">add</span>
           </button>
@@ -152,8 +152,8 @@ export default function EnvironmentsPage() {
                 onClick={() => handleEnvChange(env.id)}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded text-xs transition-colors group ${
                   env.id === activeEnvId
-                    ? 'bg-[rgba(47,58,163,0.2)] text-[#e4e1ed] border-r-2 border-[#6366F1]'
-                    : 'text-[#94A3B8] hover:bg-[#334155]/50'
+                    ? 'bg-secondary/20 text-foreground border-r-2 border-primary'
+                    : 'text-muted-foreground hover:bg-border/50'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -175,7 +175,7 @@ export default function EnvironmentsPage() {
                 value={newEnvName}
                 onChange={(e) => setNewEnvName(e.target.value)}
                 placeholder="Environment name"
-                className="h-7 bg-[#0F172A] border-[#334155] text-xs flex-1"
+                className="h-7 bg-background border-border text-xs flex-1"
                 onKeyDown={(e) => e.key === 'Enter' && handleCreateEnv()}
                 autoFocus
               />
@@ -188,12 +188,12 @@ export default function EnvironmentsPage() {
       </aside>
 
       {/* Right: Variable Editor */}
-      <section className="flex-1 flex flex-col bg-[#0F172A]">
+      <section className="flex-1 flex flex-col bg-background">
         {activeEnv ? (
           <>
-            <header className="px-6 py-4 border-b border-[#334155] flex items-center justify-between bg-[#1E293B]/50">
+            <header className="px-6 py-4 border-b border-border flex items-center justify-between bg-card/50">
               <div className="flex items-center gap-3">
-                <h2 className="text-sm font-bold text-[#e4e1ed]">{activeEnv.name}</h2>
+                <h2 className="text-sm font-bold text-foreground">{activeEnv.name}</h2>
                 <span className="px-2 py-0.5 rounded bg-[rgba(16,185,129,0.2)] text-[#10B981] text-[10px] font-bold uppercase tracking-widest border border-[rgba(16,185,129,0.3)]">
                   Active
                 </span>
@@ -201,7 +201,7 @@ export default function EnvironmentsPage() {
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  className="h-7 px-3 text-xs border-[#334155] text-[#94A3B8] hover:text-[#e4e1ed]"
+                  className="h-7 px-3 text-xs border-border text-muted-foreground hover:text-foreground"
                   onClick={() => toast.info('Coming in M2')}
                 >
                   Duplicate
@@ -210,21 +210,21 @@ export default function EnvironmentsPage() {
                   <AlertDialogTrigger asChild>
                     <Button
                       variant="outline"
-                      className="h-7 px-3 text-xs border-[#334155] text-[#94A3B8] hover:bg-[rgba(239,68,68,0.1)] hover:text-[#EF4444]"
+                      className="h-7 px-3 text-xs border-border text-muted-foreground hover:bg-[rgba(239,68,68,0.1)] hover:text-[#EF4444]"
                       disabled={activeEnv.name === 'Global'}
                     >
                       Delete
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="bg-[#1E293B] border-[#334155] text-[#e4e1ed]">
+                  <AlertDialogContent className="bg-card border-border text-foreground">
                     <AlertDialogHeader>
                       <AlertDialogTitle className="text-sm font-bold">Delete Environment</AlertDialogTitle>
-                      <AlertDialogDescription className="text-xs text-[#94A3B8]">
+                      <AlertDialogDescription className="text-xs text-muted-foreground">
                         This will permanently delete &quot;{activeEnv.name}&quot; and all its variables.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel className="text-xs bg-transparent border-[#334155] text-[#94A3B8]">
+                      <AlertDialogCancel className="text-xs bg-transparent border-border text-muted-foreground">
                         Cancel
                       </AlertDialogCancel>
                       <AlertDialogAction
@@ -241,14 +241,14 @@ export default function EnvironmentsPage() {
 
             <ScrollArea className="flex-1 p-6">
               {/* Variables table */}
-              <div className="bg-[#1E293B] border border-[#334155] rounded-xl overflow-hidden">
+              <div className="bg-card border border-border rounded-xl overflow-hidden">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-[#34343d]/30">
-                      <th className="px-4 py-3 text-[10px] font-bold text-[#64748B] uppercase tracking-wider w-1/4">Key</th>
-                      <th className="px-4 py-3 text-[10px] font-bold text-[#64748B] uppercase tracking-wider w-1/2">Value</th>
-                      <th className="px-4 py-3 text-[10px] font-bold text-[#64748B] uppercase tracking-wider text-center w-20">Secret</th>
-                      <th className="px-4 py-3 text-[10px] font-bold text-[#64748B] uppercase tracking-wider text-right w-20">Actions</th>
+                    <tr className="bg-muted/30">
+                      <th className="px-4 py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider w-1/4">Key</th>
+                      <th className="px-4 py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider w-1/2">Value</th>
+                      <th className="px-4 py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-center w-20">Secret</th>
+                      <th className="px-4 py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-right w-20">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="text-xs font-mono">
@@ -263,9 +263,9 @@ export default function EnvironmentsPage() {
                     {variables.length === 0 && (
                       <tr>
                         <td colSpan={4} className="px-4 py-12 text-center">
-                          <span className="material-symbols-outlined text-[#334155] text-3xl block mb-2">info</span>
-                          <p className="text-xs text-[#475569]">No variables yet</p>
-                          <p className="text-[10px] text-[#334155] mt-1">Add variables for this environment</p>
+                          <span className="material-symbols-outlined text-muted-foreground text-3xl block mb-2">info</span>
+                          <p className="text-xs text-muted-foreground">No variables yet</p>
+                          <p className="text-[10px] text-muted-foreground mt-1">Add variables for this environment</p>
                         </td>
                       </tr>
                     )}
@@ -278,7 +278,7 @@ export default function EnvironmentsPage() {
                 <Button
                   variant="ghost"
                   onClick={handleAddVariable}
-                  className="w-full h-8 border border-dashed border-[#334155] text-[#94A3B8] hover:text-[#e4e1ed] hover:border-[#6366F1] hover:bg-[rgba(99,102,241,0.05)] text-xs"
+                  className="w-full h-8 border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-primary hover:bg-primary/5 text-xs"
                 >
                   <span className="material-symbols-outlined text-sm mr-1">add_circle</span>
                   Add Variable
@@ -286,29 +286,29 @@ export default function EnvironmentsPage() {
               </div>
 
               {/* Hint */}
-              <div className="mt-8 p-6 border border-[#334155] border-dashed rounded-xl flex flex-col items-center justify-center opacity-40">
-                <span className="material-symbols-outlined text-3xl mb-2 text-[#64748B]">info</span>
-                <p className="text-xs text-[#64748B] text-center max-w-sm">
+              <div className="mt-8 p-6 border border-border border-dashed rounded-xl flex flex-col items-center justify-center opacity-40">
+                <span className="material-symbols-outlined text-3xl mb-2 text-muted-foreground">info</span>
+                <p className="text-xs text-muted-foreground text-center max-w-sm">
                   Environment variables are shared across your team workspace. Secrets are encrypted at rest and masked in logs.
                 </p>
               </div>
             </ScrollArea>
 
             {/* Footer */}
-            <footer className="px-6 py-3 border-t border-[#334155] bg-[#1E293B] flex items-center justify-between">
-              <div className="flex items-center gap-3 text-[10px] text-[#94A3B8]">
+            <footer className="px-6 py-3 border-t border-border bg-card flex items-center justify-between">
+              <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-[#10B981]" />
                   {syncing ? 'Syncing...' : 'Saved'}
                 </div>
                 {lastUpdatedRef.current && (
-                  <span className="text-[#64748B]">
+                  <span className="text-muted-foreground">
                     Last updated {timeAgo(lastUpdatedRef.current.toISOString())}
                   </span>
                 )}
               </div>
               <Button
-                className="h-7 px-4 text-xs bg-[#6366F1] hover:bg-[#4F46E5] text-white shadow-[0_2px_10px_rgba(99,102,241,0.3)]"
+                className="h-7 px-4 text-xs bg-primary hover:bg-primary/90 text-white shadow-[0_2px_10px_rgba(99,102,241,0.3)]"
                 onClick={() => {
                   setSyncing(true);
                   setTimeout(() => setSyncing(false), 800);
@@ -321,7 +321,7 @@ export default function EnvironmentsPage() {
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center">
-            <p className="text-xs text-[#475569]">Create or select an environment</p>
+            <p className="text-xs text-muted-foreground">Create or select an environment</p>
           </div>
         )}
       </section>
@@ -341,12 +341,12 @@ function VariableRow({
   onDelete: (id: string) => void;
 }) {
   return (
-    <tr className="group hover:bg-[#334155]/30 transition-colors border-b border-[#334155]/50">
+    <tr className="group hover:bg-border/30 transition-colors border-b border-border/50">
       <td className="px-4 py-2.5">
         <Input
           defaultValue={variable.key}
           onBlur={(e) => onUpdate(variable.id, e.target.value, variable.value, variable.is_secret)}
-          className="h-7 bg-transparent border-none text-xs font-mono text-[#6366F1] p-0 focus:ring-0"
+          className="h-7 bg-transparent border-none text-xs font-mono text-primary p-0 focus:ring-0"
           placeholder="key_name"
         />
       </td>
@@ -357,12 +357,12 @@ function VariableRow({
             type={variable.is_secret ? 'password' : 'text'}
             onBlur={(e) => onUpdate(variable.id, variable.key, e.target.value, variable.is_secret)}
             className={`h-7 bg-transparent border-none text-xs font-mono p-0 focus:ring-0 ${
-              variable.is_secret ? 'tracking-widest text-[#94A3B8]' : 'text-[#10B981]'
+              variable.is_secret ? 'tracking-widest text-muted-foreground' : 'text-[#10B981]'
             }`}
             placeholder={variable.is_secret ? '••••••••••••' : 'value'}
           />
           {variable.is_secret && (
-            <span className="material-symbols-outlined text-[14px] text-[#64748B]">lock</span>
+            <span className="material-symbols-outlined text-[14px] text-muted-foreground">lock</span>
           )}
         </div>
       </td>
@@ -372,13 +372,13 @@ function VariableRow({
           onCheckedChange={(checked) =>
             onUpdate(variable.id, variable.key, variable.value, checked)
           }
-          className="data-[state=checked]:bg-[#6366F1]"
+          className="data-[state=checked]:bg-primary"
         />
       </td>
       <td className="px-4 py-2.5 text-right">
         <button
           onClick={() => onDelete(variable.id)}
-          className="text-[#64748B] hover:text-[#EF4444] opacity-0 group-hover:opacity-100 transition-all"
+          className="text-muted-foreground hover:text-[#EF4444] opacity-0 group-hover:opacity-100 transition-all"
         >
           <span className="material-symbols-outlined text-[16px]">delete</span>
         </button>

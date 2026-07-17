@@ -125,18 +125,18 @@ export function CollectionRunnerView({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="w-[500px] max-w-full bg-[#0F172A] border-l border-[#334155] text-[#e4e1ed] p-0 flex flex-col">
-          <SheetHeader className="px-5 pt-5 pb-3 border-b border-[#334155] bg-[rgba(15,23,42,0.9)]">
+        <SheetContent side="right" className="w-[500px] max-w-full bg-background border-l border-border text-foreground p-0 flex flex-col">
+          <SheetHeader className="px-5 pt-5 pb-3 border-b border-border bg-background/90">
             <div className="flex items-center justify-between">
-              <SheetTitle className="text-sm font-bold text-[#e4e1ed]">Collection Runner</SheetTitle>
-              <span className="text-[10px] text-[#64748B] font-mono">{collectionName}</span>
+              <SheetTitle className="text-sm font-bold text-foreground">Collection Runner</SheetTitle>
+              <span className="text-[10px] text-muted-foreground font-mono">{collectionName}</span>
             </div>
           </SheetHeader>
 
           {/* Summary bar */}
-          <div className="px-5 py-3 bg-[#1E293B] border-b border-[#334155] flex items-center justify-between">
+          <div className="px-5 py-3 bg-card border-b border-border flex items-center justify-between">
             <div>
-              <span className="text-xs text-[#94A3B8]">
+              <span className="text-xs text-muted-foreground">
                 {runStatus === 'idle' && 'Ready to run'}
                 {runStatus === 'running' && `Running step ${activeStepIndex + 1} of ${steps.length}...`}
                 {runStatus === 'completed' && `${summary.passed}/${summary.total} passed`}
@@ -144,7 +144,7 @@ export function CollectionRunnerView({
                 {runStatus === 'failed' && 'Run failed'}
               </span>
               {runStatus === 'completed' && (
-                <span className="text-[10px] text-[#64748B] ml-3">
+                <span className="text-[10px] text-muted-foreground ml-3">
                   {Math.round(summary.duration / 1000)}s total
                 </span>
               )}
@@ -153,7 +153,7 @@ export function CollectionRunnerView({
               {runStatus === 'idle' && (
                 <Button
                   onClick={handleStart}
-                  className="h-7 px-3 text-[10px] bg-[#6366F1] hover:bg-[#4F46E5] text-white"
+                  className="h-7 px-3 text-[10px] bg-primary hover:bg-primary/90 text-white"
                 >
                   <span className="material-symbols-outlined text-[12px] mr-1">play_arrow</span>
                   Start Run
@@ -179,7 +179,7 @@ export function CollectionRunnerView({
                   </Button>
                   <Button
                     onClick={handleReset}
-                    className="h-7 px-3 text-[10px] bg-[#6366F1] hover:bg-[#4F46E5] text-white"
+                    className="h-7 px-3 text-[10px] bg-primary hover:bg-primary/90 text-white"
                   >
                     <span className="material-symbols-outlined text-[12px] mr-1">refresh</span>
                     Run Again
@@ -205,7 +205,7 @@ export function CollectionRunnerView({
 
             {steps.length === 0 && (
               <div className="flex items-center justify-center h-40">
-                <p className="text-xs text-[#475569]">No requests in this collection</p>
+                <p className="text-xs text-muted-foreground">No requests in this collection</p>
               </div>
             )}
           </ScrollArea>
@@ -237,15 +237,15 @@ function StepCard({
   const getStatusIcon = () => {
     switch (step.status) {
       case 'pending':
-        return <span className="material-symbols-outlined text-sm text-[#64748B]">schedule</span>;
+        return <span className="material-symbols-outlined text-sm text-muted-foreground">schedule</span>;
       case 'running':
-        return <div className="w-4 h-4 border-2 border-[#6366F1] border-t-transparent rounded-full animate-spin" />;
+        return <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />;
       case 'passed':
         return <span className="material-symbols-outlined text-sm text-[#10B981]">check_circle</span>;
       case 'failed':
         return <span className="material-symbols-outlined text-sm text-[#EF4444]">close_circle</span>;
       case 'skipped':
-        return <span className="material-symbols-outlined text-sm text-[#64748B]">redo</span>;
+        return <span className="material-symbols-outlined text-sm text-muted-foreground">redo</span>;
     }
   };
 
@@ -253,8 +253,8 @@ function StepCard({
     <div
       className={`rounded-lg border transition-colors ${
         isActive && step.status === 'running'
-          ? 'border-[#6366F1] bg-[rgba(99,102,241,0.05)]'
-          : 'border-[#1E293B] bg-[#0F172A]'
+          ? 'border-primary bg-primary/5'
+          : 'border-card bg-background'
       }`}
     >
       <button onClick={() => setExpanded(!expanded)} className="w-full text-left p-4">
@@ -268,7 +268,7 @@ function StepCard({
           </span>
 
           {/* Step name */}
-          <span className="flex-1 text-xs text-[#e4e1ed] truncate">{step.name || `Request ${index + 1}`}</span>
+          <span className="flex-1 text-xs text-foreground truncate">{step.name || `Request ${index + 1}`}</span>
 
           {/* Status icon */}
           <div className="w-5 flex items-center justify-center">{getStatusIcon()}</div>
@@ -276,11 +276,11 @@ function StepCard({
 
         {/* Details (expandable) */}
         {expanded && (
-          <div className="mt-3 pt-3 border-t border-[#1E293B] space-y-2">
-            <div className="text-[10px] font-mono text-[#94A3B8] break-all">{step.url}</div>
+          <div className="mt-3 pt-3 border-t border-card space-y-2">
+            <div className="text-[10px] font-mono text-muted-foreground break-all">{step.url}</div>
             {step.statusCode && (
               <div className="flex gap-3 text-[10px]">
-                <span className="text-[#64748B]">Status:</span>
+                <span className="text-muted-foreground">Status:</span>
                 <Badge className={`text-[10px] px-1.5 py-0 ${
                   step.statusCode < 400 ? 'bg-[#10B981]' : 'bg-[#EF4444]'
                 }`}>
@@ -288,8 +288,8 @@ function StepCard({
                 </Badge>
                 {step.latencyMs !== undefined && (
                   <>
-                    <span className="text-[#64748B]">Latency:</span>
-                    <span className="text-[#94A3B8] font-mono">{step.latencyMs}ms</span>
+                    <span className="text-muted-foreground">Latency:</span>
+                    <span className="text-muted-foreground font-mono">{step.latencyMs}ms</span>
                   </>
                 )}
               </div>

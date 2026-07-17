@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -80,30 +80,30 @@ export default function HistoryPage() {
   const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
 
   return (
-    <div className="flex-1 flex flex-col bg-[#0F172A]">
+    <div className="flex-1 flex flex-col bg-background">
       {/* Header */}
-      <div className="px-6 py-5 border-b border-[#334155]">
+      <div className="px-6 py-5 border-b border-border">
         <div className="flex justify-between items-start">
           <div>
-            <h2 className="text-sm font-bold text-[#e4e1ed]">Request History</h2>
-            <p className="text-xs text-[#94A3B8] mt-0.5">Review and re-run your historical API interactions.</p>
+            <h2 className="text-sm font-bold text-foreground">Request History</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Review and re-run your historical API interactions.</p>
           </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" className="h-8 px-3 text-xs border-[#334155] text-[#94A3B8] hover:text-[#EF4444] hover:border-[#EF4444]">
+              <Button variant="outline" className="h-8 px-3 text-xs border-border text-muted-foreground hover:text-[#EF4444] hover:border-[#EF4444]">
                 <span className="material-symbols-outlined text-[14px] mr-1">delete_sweep</span>
                 Clear All
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="bg-[#1E293B] border-[#334155] text-[#e4e1ed]">
+            <AlertDialogContent className="bg-card border-border text-foreground">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-sm font-bold">Clear History</AlertDialogTitle>
-                <AlertDialogDescription className="text-xs text-[#94A3B8]">
+                <AlertDialogDescription className="text-xs text-muted-foreground">
                   This will delete all history entries. This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="text-xs bg-transparent border-[#334155] text-[#94A3B8]">Cancel</AlertDialogCancel>
+                <AlertDialogCancel className="text-xs bg-transparent border-border text-muted-foreground">Cancel</AlertDialogCancel>
                 <AlertDialogAction className="text-xs bg-[#EF4444] text-white hover:bg-[#DC2626]" onClick={handleClearAll}>
                   Clear All
                 </AlertDialogAction>
@@ -113,21 +113,21 @@ export default function HistoryPage() {
         </div>
 
         {/* Filters */}
-        <div className="mt-4 flex items-center gap-3 p-2 bg-[#1E293B] rounded-lg border border-[#334155]">
+        <div className="mt-4 flex items-center gap-3 p-2 bg-card rounded-lg border border-border">
           <div className="flex-1 relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-[#64748B] text-sm pointer-events-none">search</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-muted-foreground text-sm pointer-events-none">search</span>
             <Input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by request ID or error..."
-              className="w-full bg-[#0F172A] border-[#334155] rounded pl-9 pr-3 h-7 text-xs text-[#e4e1ed] focus:border-[#6366F1]"
+              className="w-full bg-background border-border rounded pl-9 pr-3 h-7 text-xs text-foreground focus:border-primary"
             />
           </div>
           <Select value={methodFilter} onValueChange={setMethodFilter}>
-            <SelectTrigger className="w-28 h-7 bg-[#0F172A] border-[#334155] text-xs text-[#94A3B8]">
+            <SelectTrigger className="w-28 h-7 bg-background border-border text-xs text-muted-foreground">
               <SelectValue placeholder="Method" />
             </SelectTrigger>
-            <SelectContent className="bg-[#1E293B] border-[#334155] text-[#e4e1ed]">
+            <SelectContent className="bg-card border-border text-foreground">
               <SelectItem value="all" className="text-xs">All Methods</SelectItem>
               {methods.map((m) => (
                 <SelectItem key={m} value={m} className="text-xs">{m}</SelectItem>
@@ -140,8 +140,8 @@ export default function HistoryPage() {
       {/* Table */}
       <ScrollArea className="flex-1">
         <table className="w-full text-left border-collapse">
-          <thead className="sticky top-0 bg-[#0F172A] border-b border-[#334155] z-10">
-            <tr className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">
+          <thead className="sticky top-0 bg-background border-b border-border z-10">
+            <tr className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
               <th className="px-6 py-3 w-20">Status</th>
               <th className="px-6 py-3">Error</th>
               <th className="px-6 py-3 w-20 text-right">Latency</th>
@@ -150,12 +150,12 @@ export default function HistoryPage() {
               <th className="px-6 py-3 w-16 text-right pr-8">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#334155]/50">
+          <tbody className="divide-y divide-border/50">
             {filtered.map((entry) => (
               <tr
                 key={entry.id}
                 onClick={() => { setInspectorEntry(entry); setInspectorOpen(true); }}
-                className="group hover:bg-[#34343d]/30 transition-colors cursor-pointer"
+                className="group hover:bg-muted/30 transition-colors cursor-pointer"
               >
                 <td className="px-6 py-3">
                   <span
@@ -175,23 +175,23 @@ export default function HistoryPage() {
                   </span>
                 </td>
                 <td className="px-6 py-3">
-                  <span className="text-xs text-[#94A3B8] truncate block max-w-md font-mono">
+                  <span className="text-xs text-muted-foreground truncate block max-w-md font-mono">
                     {entry.error_message || entry.response_body?.slice(0, 80) || '—'}
                   </span>
                 </td>
-                <td className="px-6 py-3 text-right text-xs font-mono text-[#94A3B8]">
+                <td className="px-6 py-3 text-right text-xs font-mono text-muted-foreground">
                   {entry.latency_ms ? `${entry.latency_ms}ms` : '—'}
                 </td>
-                <td className="px-6 py-3 text-right text-xs font-mono text-[#94A3B8]">
+                <td className="px-6 py-3 text-right text-xs font-mono text-muted-foreground">
                   {entry.response_size ? `${entry.response_size}B` : '—'}
                 </td>
-                <td className="px-6 py-3 text-xs text-[#64748B]">
+                <td className="px-6 py-3 text-xs text-muted-foreground">
                   {entry.executed_at ? timeAgo(entry.executed_at) : '—'}
                 </td>
                 <td className="px-6 py-3 text-right pr-8">
                   <button
                     onClick={(e) => { e.stopPropagation(); handleRestore(entry); }}
-                    className="opacity-0 group-hover:opacity-100 material-symbols-outlined text-[#6366F1] hover:scale-110 transition-all text-sm"
+                    className="opacity-0 group-hover:opacity-100 material-symbols-outlined text-primary hover:scale-110 transition-all text-sm"
                     title="Restore to Workbench"
                   >
                     open_in_new
@@ -205,17 +205,17 @@ export default function HistoryPage() {
         {filtered.length === 0 && (
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
-              <span className="material-symbols-outlined text-[#334155] text-4xl block mb-2">history</span>
-              <p className="text-sm text-[#475569]">No history entries</p>
-              <p className="text-xs text-[#334155] mt-1">Send a request from the Client to see it here</p>
+              <span className="material-symbols-outlined text-muted-foreground text-4xl block mb-2">history</span>
+              <p className="text-sm text-muted-foreground">No history entries</p>
+              <p className="text-xs text-muted-foreground mt-1">Send a request from the Client to see it here</p>
             </div>
           </div>
         )}
       </ScrollArea>
 
       {/* Footer */}
-      <footer className="h-8 bg-[#1E293B] border-t border-[#334155] px-6 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3 text-[10px] text-[#94A3B8]">
+      <footer className="h-8 bg-card border-t border-border px-6 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
           <span className="flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" /> System Online
           </span>
@@ -228,13 +228,13 @@ export default function HistoryPage() {
 
       {/* Inspector Drawer */}
       <Sheet open={inspectorOpen} onOpenChange={setInspectorOpen}>
-        <SheetContent side="right" className="w-[400px] bg-[#1E293B] border-l border-[#334155] text-[#e4e1ed] p-0">
+        <SheetContent side="right" className="w-[400px] bg-card border-l border-border text-foreground p-0">
           {inspectorEntry && (
             <div className="h-full flex flex-col">
-              <SheetHeader className="p-4 border-b border-[#334155] bg-[#1b1b23]">
+              <SheetHeader className="p-4 border-b border-border bg-sidebar">
                 <div className="flex items-center gap-3">
                   <span className="text-[10px] font-bold px-2 py-1 rounded"
-                    style={{ backgroundColor: '#334155', color: '#3B82F6' }}>
+                    style={{ backgroundColor: 'var(--border)', color: '#3B82F6' }}>
                     HISTORY
                   </span>
                   <SheetTitle className="text-xs font-bold">Request Detail</SheetTitle>
@@ -243,7 +243,7 @@ export default function HistoryPage() {
 
               <ScrollArea className="flex-1 p-4 space-y-5">
                 <div>
-                  <h4 className="text-[10px] font-bold text-[#94A3B8] uppercase mb-2 tracking-widest">Status</h4>
+                  <h4 className="text-[10px] font-bold text-muted-foreground uppercase mb-2 tracking-widest">Status</h4>
                   <div className="flex items-center gap-2">
                     <Badge className={`text-[10px] font-bold px-2 py-0.5 ${
                       inspectorEntry.status_code && inspectorEntry.status_code < 400
@@ -251,18 +251,18 @@ export default function HistoryPage() {
                     }`}>
                       {inspectorEntry.status_code ?? 'Error'}
                     </Badge>
-                    <span className="text-xs text-[#64748B] font-mono">
+                    <span className="text-xs text-muted-foreground font-mono">
                       {inspectorEntry.latency_ms ? `${inspectorEntry.latency_ms}ms` : ''}
                     </span>
                   </div>
                 </div>
 
-                <Separator className="bg-[#334155]" />
+                <Separator className="bg-border" />
 
                 {inspectorEntry.error_message && (
                   <div>
                     <h4 className="text-[10px] font-bold text-[#EF4444] uppercase mb-2 tracking-widest">Error</h4>
-                    <div className="p-2 bg-[#0F172A] border border-[#334155] rounded text-xs font-mono text-[#FCA5A5] break-all">
+                    <div className="p-2 bg-background border border-border rounded text-xs font-mono text-[#FCA5A5] break-all">
                       {inspectorEntry.error_message}
                     </div>
                   </div>
@@ -270,8 +270,8 @@ export default function HistoryPage() {
 
                 {inspectorEntry.response_body && (
                   <div>
-                    <h4 className="text-[10px] font-bold text-[#94A3B8] uppercase mb-2 tracking-widest">Response Body</h4>
-                    <pre className="p-3 bg-[#0F172A] border border-[#334155] rounded text-xs font-mono text-[#94A3B8] max-h-48 overflow-auto whitespace-pre-wrap break-all">
+                    <h4 className="text-[10px] font-bold text-muted-foreground uppercase mb-2 tracking-widest">Response Body</h4>
+                    <pre className="p-3 bg-background border border-border rounded text-xs font-mono text-muted-foreground max-h-48 overflow-auto whitespace-pre-wrap break-all">
                       {inspectorEntry.response_body.slice(0, 2000)}
                       {inspectorEntry.response_body.length > 2000 ? '...' : ''}
                     </pre>
@@ -280,12 +280,12 @@ export default function HistoryPage() {
 
                 {inspectorEntry.response_headers && Object.keys(inspectorEntry.response_headers).length > 0 && (
                   <div>
-                    <h4 className="text-[10px] font-bold text-[#94A3B8] uppercase mb-2 tracking-widest">Headers</h4>
+                    <h4 className="text-[10px] font-bold text-muted-foreground uppercase mb-2 tracking-widest">Headers</h4>
                     <div className="space-y-1">
                       {Object.entries(inspectorEntry.response_headers).slice(0, 10).map(([k, v]) => (
-                        <div key={k} className="flex justify-between p-1.5 bg-[#34343d]/20 rounded text-[10px]">
-                          <span className="text-[#94A3B8] font-bold">{k}</span>
-                          <span className="text-[#e4e1ed] font-mono">{v}</span>
+                        <div key={k} className="flex justify-between p-1.5 bg-muted/20 rounded text-[10px]">
+                          <span className="text-muted-foreground font-bold">{k}</span>
+                          <span className="text-foreground font-mono">{v}</span>
                         </div>
                       ))}
                     </div>
@@ -293,10 +293,10 @@ export default function HistoryPage() {
                 )}
               </ScrollArea>
 
-              <div className="p-4 border-t border-[#334155] bg-[#1b1b23]">
+              <div className="p-4 border-t border-border bg-sidebar">
                 <Button
                   onClick={() => handleRestore(inspectorEntry)}
-                  className="w-full h-9 bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs"
+                  className="w-full h-9 bg-primary hover:bg-primary/90 text-white text-xs"
                 >
                   <span className="material-symbols-outlined text-sm mr-1">refresh</span>
                   Restore to Workbench

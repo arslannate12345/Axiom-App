@@ -31,24 +31,24 @@ export function MethodSelector({ method, onSelect }: MethodSelectorProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="px-4 py-2 bg-[#292932] text-xs font-bold border-r border-[#334155] hover:bg-[#34343d] transition-colors outline-none min-w-[80px] text-center"
+          className="px-4 py-2 bg-muted text-xs font-bold border-r border-border hover:bg-muted transition-colors outline-none min-w-[80px] text-center"
           style={{ color }}
         >
           {method}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="bg-[#1E293B] border-[#334155] min-w-[160px]">
-        <div className="px-3 py-2 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider text-center">
+      <DropdownMenuContent className="bg-card border-border min-w-[160px]">
+        <div className="px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-center">
           HTTP Method
         </div>
         {METHODS.map((m) => (
           <DropdownMenuItem
             key={m}
             onClick={() => onSelect(m)}
-            className={`text-xs font-bold cursor-pointer hover:bg-[#34343d] ${
-              m === method ? 'bg-[#334155] text-[#e4e1ed]' : ''
+            className={`text-xs font-bold cursor-pointer hover:bg-muted ${
+              m === method ? 'bg-border text-foreground' : ''
             }`}
-            style={{ color: m === method ? '#e4e1ed' : METHOD_COLORS[m] }}
+            style={{ color: m === method ? 'var(--foreground)' : METHOD_COLORS[m] }}
           >
             {m}
           </DropdownMenuItem>

@@ -41,8 +41,8 @@ export function KeyValueEditor({
             onClick={() => updatePair(index, { enabled: !pair.enabled })}
             className={`w-5 h-5 rounded flex items-center justify-center border transition-colors shrink-0 ${
               pair.enabled
-                ? 'bg-[#6366F1] border-[#6366F1]'
-                : 'bg-transparent border-[#475569]'
+                ? 'bg-primary border-primary'
+                : 'bg-transparent border-border'
             }`}
           >
             {pair.enabled && (
@@ -55,7 +55,7 @@ export function KeyValueEditor({
             value={pair.key}
             onChange={(e) => updatePair(index, { key: e.target.value })}
             placeholder={keyPlaceholder}
-            className="h-8 bg-[#1E293B] border-[#334155] text-[#e4e1ed] text-xs font-mono focus:border-[#6366F1] flex-1"
+            className="h-8 bg-card border-border text-foreground text-xs font-mono focus:border-primary flex-1"
           />
 
           {/* Value */}
@@ -63,13 +63,13 @@ export function KeyValueEditor({
             value={pair.value}
             onChange={(e) => updatePair(index, { value: e.target.value })}
             placeholder={valuePlaceholder}
-            className="h-8 bg-[#1E293B] border-[#334155] text-[#e4e1ed] text-xs font-mono focus:border-[#6366F1] flex-[2]"
+            className="h-8 bg-card border-border text-foreground text-xs font-mono focus:border-primary flex-[2]"
           />
 
           {/* Remove */}
           <button
             onClick={() => removePair(index)}
-            className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#34343d] transition-colors shrink-0"
+            className="w-6 h-6 flex items-center justify-center rounded hover:bg-muted transition-colors shrink-0"
           >
             <span className="material-symbols-outlined text-[#EF4444] text-sm">close</span>
           </button>
@@ -80,7 +80,7 @@ export function KeyValueEditor({
       <Button
         variant="ghost"
         onClick={() => addPair()}
-        className="w-full border border-dashed border-[#334155] text-[#6366F1] text-xs h-8 rounded hover:bg-transparent hover:border-[#6366F1]"
+        className="w-full border border-dashed border-border text-primary text-xs h-8 rounded hover:bg-transparent hover:border-primary"
       >
         <span className="material-symbols-outlined text-sm mr-1">add</span>
         Add
@@ -96,7 +96,7 @@ export function KeyValueEditor({
                 const exists = pairs.some((p) => p.key === key);
                 if (!exists) addPair(key);
               }}
-              className="px-3 py-1 bg-[#1E293B] border border-[#334155] rounded-full text-xs text-[#94A3B8] hover:border-[#6366F1] hover:text-[#e4e1ed] transition-colors"
+              className="px-3 py-1 bg-card border border-border rounded-full text-xs text-muted-foreground hover:border-primary hover:text-foreground transition-colors"
             >
               + {key}
             </button>

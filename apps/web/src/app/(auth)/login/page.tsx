@@ -46,17 +46,17 @@ export default function LoginPage() {
   return (
     <AnimatedBackground>
     <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-[420px] bg-[#1E293B] border-[#334155] shadow-2xl">
+      <Card className="w-full max-w-[420px] bg-card border-border shadow-2xl">
         <CardContent className="p-8">
           {/* Header Identity */}
           <div className="flex flex-col items-center mb-8">
             <div className="flex items-center gap-2 mb-2">
-              <span className="material-symbols-outlined text-[#6366F1] text-2xl">api</span>
-              <h1 className="text-lg font-black tracking-tighter uppercase text-[#e4e1ed]">
+              <span className="material-symbols-outlined text-primary text-2xl">api</span>
+              <h1 className="text-lg font-black tracking-tighter uppercase text-foreground">
                 AXIOM
               </h1>
             </div>
-            <p className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-[0.2em]">
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.2em]">
               Workbench Authentication
             </p>
           </div>
@@ -65,7 +65,7 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="space-y-5">
             {/* Email */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider flex items-center gap-2">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <span className="material-symbols-outlined text-[14px]">alternate_email</span>
                 Email Address
               </label>
@@ -74,21 +74,21 @@ export default function LoginPage() {
                 placeholder="developer@axiom.io"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-9 bg-[#0F172A] border-[#334155] text-[#e4e1ed] font-mono text-xs focus:border-[#6366F1] focus:ring-0 placeholder:text-[#475569]"
+                className="h-9 bg-background border-border text-foreground font-mono text-xs focus:border-primary focus:ring-0 placeholder:text-muted-foreground"
               />
             </div>
 
             {/* Password */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <label className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider flex items-center gap-2">
+                <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                   <span className="material-symbols-outlined text-[14px]">lock</span>
                   Password
                 </label>
                 <button
                   type="button"
                   onClick={() => toast.info('Password reset coming soon')}
-                  className="text-[11px] font-semibold text-[#6366F1] hover:underline transition-all"
+                  className="text-[11px] font-semibold text-primary hover:underline transition-all"
                 >
                   FORGOT?
                 </button>
@@ -98,7 +98,7 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-9 bg-[#0F172A] border-[#334155] text-[#e4e1ed] font-mono text-xs focus:border-[#6366F1] focus:ring-0 placeholder:text-[#475569]"
+                className="h-9 bg-background border-border text-foreground font-mono text-xs focus:border-primary focus:ring-0 placeholder:text-muted-foreground"
               />
             </div>
 
@@ -106,7 +106,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-10 bg-[#6366F1] hover:bg-[#4F46E5] text-white text-[11px] font-semibold uppercase tracking-widest rounded"
+              className="w-full h-10 bg-primary hover:bg-primary/90 text-white text-[11px] font-semibold uppercase tracking-widest rounded"
             >
               {loading ? (
                 <>
@@ -124,19 +124,19 @@ export default function LoginPage() {
 
           {/* Divider */}
           <div className="flex items-center gap-4 my-8">
-            <Separator className="flex-1 bg-[#334155]" />
-            <span className="text-[11px] font-semibold text-[#334155]">OR</span>
-            <Separator className="flex-1 bg-[#334155]" />
+            <Separator className="flex-1 bg-border" />
+            <span className="text-[11px] font-semibold text-muted-foreground">OR</span>
+            <Separator className="flex-1 bg-border" />
           </div>
 
           {/* Secondary Actions */}
           <div className="flex flex-col items-center gap-4">
             <Link
               href="/signup"
-              className="text-xs text-[#94A3B8] hover:text-[#e4e1ed] transition-colors"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               New to the workbench?{' '}
-              <span className="text-[#6366F1] font-medium">Create account</span>
+              <span className="text-primary font-medium">Create account</span>
             </Link>
           </div>
         </CardContent>
@@ -144,8 +144,8 @@ export default function LoginPage() {
 
       {/* Technical Footer */}
       <div className="fixed bottom-8 flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
-        <span className="material-symbols-outlined text-[14px] text-[#64748B]">info</span>
-        <span className="text-[11px] font-mono text-[#64748B]">
+        <span className="material-symbols-outlined text-[14px] text-muted-foreground">info</span>
+        <span className="text-[11px] font-mono text-muted-foreground">
           Connection secured via TLS 1.3 / Axiom-Auth-v2
         </span>
       </div>

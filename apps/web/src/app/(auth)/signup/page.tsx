@@ -58,17 +58,17 @@ export default function SignupPage() {
   return (
     <AnimatedBackground>
     <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-[420px] bg-[#1E293B] border-[#334155] shadow-2xl">
+      <Card className="w-full max-w-[420px] bg-card border-border shadow-2xl">
         <CardContent className="p-8">
           {/* Header Identity */}
           <div className="flex flex-col items-center mb-8">
             <div className="flex items-center gap-2 mb-2">
-              <span className="material-symbols-outlined text-[#6366F1] text-2xl">person_add</span>
-              <h1 className="text-lg font-black tracking-tighter uppercase text-[#e4e1ed]">
+              <span className="material-symbols-outlined text-primary text-2xl">person_add</span>
+              <h1 className="text-lg font-black tracking-tighter uppercase text-foreground">
                 Create Account
               </h1>
             </div>
-            <p className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-[0.2em]">
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.2em]">
               Join AXIOM to sync your collections
             </p>
           </div>
@@ -77,7 +77,7 @@ export default function SignupPage() {
           <form onSubmit={handleSignup} className="space-y-5">
             {/* Email */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider flex items-center gap-2">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <span className="material-symbols-outlined text-[14px]">alternate_email</span>
                 Email Address
               </label>
@@ -86,13 +86,13 @@ export default function SignupPage() {
                 placeholder="developer@axiom.io"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-9 bg-[#0F172A] border-[#334155] text-[#e4e1ed] font-mono text-xs focus:border-[#6366F1] focus:ring-0 placeholder:text-[#475569]"
+                className="h-9 bg-background border-border text-foreground font-mono text-xs focus:border-primary focus:ring-0 placeholder:text-muted-foreground"
               />
             </div>
 
             {/* Password */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider flex items-center gap-2">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <span className="material-symbols-outlined text-[14px]">lock</span>
                 Password
               </label>
@@ -101,13 +101,13 @@ export default function SignupPage() {
                 placeholder="Min. 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-9 bg-[#0F172A] border-[#334155] text-[#e4e1ed] font-mono text-xs focus:border-[#6366F1] focus:ring-0 placeholder:text-[#475569]"
+                className="h-9 bg-background border-border text-foreground font-mono text-xs focus:border-primary focus:ring-0 placeholder:text-muted-foreground"
               />
             </div>
 
             {/* Confirm Password */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider flex items-center gap-2">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <span className="material-symbols-outlined text-[14px]">lock</span>
                 Confirm Password
               </label>
@@ -116,7 +116,7 @@ export default function SignupPage() {
                 placeholder="Re-enter your password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="h-9 bg-[#0F172A] border-[#334155] text-[#e4e1ed] font-mono text-xs focus:border-[#6366F1] focus:ring-0 placeholder:text-[#475569]"
+                className="h-9 bg-background border-border text-foreground font-mono text-xs focus:border-primary focus:ring-0 placeholder:text-muted-foreground"
               />
             </div>
 
@@ -124,7 +124,7 @@ export default function SignupPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-10 bg-[#6366F1] hover:bg-[#4F46E5] text-white text-[11px] font-semibold uppercase tracking-widest rounded"
+              className="w-full h-10 bg-primary hover:bg-primary/90 text-white text-[11px] font-semibold uppercase tracking-widest rounded"
             >
               {loading ? (
                 <>
@@ -142,19 +142,19 @@ export default function SignupPage() {
 
           {/* Divider */}
           <div className="flex items-center gap-4 my-8">
-            <div className="h-[1px] flex-1 bg-[#334155]" />
-            <span className="text-[11px] font-semibold text-[#334155]">OR</span>
-            <div className="h-[1px] flex-1 bg-[#334155]" />
+            <div className="h-[1px] flex-1 bg-border" />
+            <span className="text-[11px] font-semibold text-muted-foreground">OR</span>
+            <div className="h-[1px] flex-1 bg-border" />
           </div>
 
           {/* Secondary Actions */}
           <div className="flex flex-col items-center gap-4">
             <Link
               href="/login"
-              className="text-xs text-[#94A3B8] hover:text-[#e4e1ed] transition-colors"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               Already have an account?{' '}
-              <span className="text-[#6366F1] font-medium">Sign in</span>
+              <span className="text-primary font-medium">Sign in</span>
             </Link>
           </div>
         </CardContent>

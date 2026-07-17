@@ -143,41 +143,41 @@ export function BenchmarksSuite() {
     <div className="flex-1 flex gap-6 overflow-hidden">
       {/* Left: Configuration */}
       <div className="w-[320px] flex flex-col gap-4 shrink-0">
-        <div className="bg-[#1E293B] border border-[#334155] p-5 rounded-lg flex flex-col flex-1">
-          <h2 className="text-xs font-semibold text-[#e4e1ed] mb-5 flex items-center gap-2">
+        <div className="bg-card border border-border p-5 rounded-lg flex flex-col flex-1">
+          <h2 className="text-xs font-semibold text-foreground mb-5 flex items-center gap-2">
             <span className="material-symbols-outlined text-sm">tune</span>
             Configuration
           </h2>
 
           <div className="space-y-5 flex-1">
             <div>
-              <label className="block text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-2">
+              <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Iterations
               </label>
               <Input
                 type="number"
                 value={iterations}
                 onChange={(e) => setIterations(e.target.value)}
-                className="w-full bg-[#0F172A] border-[#334155] rounded px-3 py-2 text-xs font-mono text-[#e4e1ed] focus:border-[#6366F1]"
+                className="w-full bg-background border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:border-primary"
               />
-              <p className="text-[10px] text-[#64748B] mt-1">Total requests per scenario batch.</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Total requests per scenario batch.</p>
             </div>
 
             <div>
-              <label className="block text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-2">
+              <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Concurrency
               </label>
               <Input
                 type="number"
                 value={concurrency}
                 onChange={(e) => setConcurrency(e.target.value)}
-                className="w-full bg-[#0F172A] border-[#334155] rounded px-3 py-2 text-xs font-mono text-[#e4e1ed] focus:border-[#6366F1]"
+                className="w-full bg-background border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:border-primary"
               />
-              <p className="text-[10px] text-[#64748B] mt-1">Simultaneous workers/threads.</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Simultaneous workers/threads.</p>
             </div>
 
             <div>
-              <label className="block text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-2">
+              <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Ramp Pattern
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -187,8 +187,8 @@ export function BenchmarksSuite() {
                     onClick={() => setPattern(p)}
                     className={`py-2 text-[10px] font-semibold rounded border transition-colors ${
                       pattern === p
-                        ? 'border-[#6366F1] text-[#6366F1] bg-[rgba(99,102,241,0.1)]'
-                        : 'border-[#334155] text-[#94A3B8] hover:border-[#64748B]'
+                        ? 'border-primary text-primary bg-primary/10'
+                        : 'border-border text-muted-foreground hover:border-muted-foreground'
                     }`}
                   >
                     {p}
@@ -198,17 +198,17 @@ export function BenchmarksSuite() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-2">
+              <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Target Endpoint
               </label>
               <div className="flex">
-                <span className="bg-[#1E293B] px-3 py-2 border border-r-0 border-[#334155] rounded-l text-[10px] font-mono text-[#94A3B8]">
+                <span className="bg-card px-3 py-2 border border-r-0 border-border rounded-l text-[10px] font-mono text-muted-foreground">
                   POST
                 </span>
                 <Input
                   value="https://api.axiom.tech/v1/ingest"
                   onChange={() => {}}
-                  className="flex-1 bg-[#0F172A] border-[#334155] rounded-l-none rounded-r text-xs font-mono text-[#e4e1ed] focus:border-[#6366F1]"
+                  className="flex-1 bg-background border-border rounded-l-none rounded-r text-xs font-mono text-foreground focus:border-primary"
                 />
               </div>
             </div>
@@ -220,7 +220,7 @@ export function BenchmarksSuite() {
               className={`w-full h-9 text-[11px] font-bold uppercase tracking-widest ${
                 isRunning
                   ? 'bg-[#EF4444] hover:bg-[#DC2626] text-white'
-                  : 'bg-[#6366F1] hover:bg-[#4F46E5] text-white'
+                  : 'bg-primary hover:bg-primary/90 text-white'
               }`}
             >
               <span className="material-symbols-outlined text-sm mr-1">
@@ -251,7 +251,7 @@ export function BenchmarksSuite() {
             title="p95 Latency"
             value={String(stats.p95)}
             unit="ms"
-            footer={<span className="text-[10px] text-[#64748B]">{stats.p95Label}</span>}
+            footer={<span className="text-[10px] text-muted-foreground">{stats.p95Label}</span>}
           />
           <StatCard
             title="p99 Latency"
@@ -270,24 +270,24 @@ export function BenchmarksSuite() {
             value={`${stats.throughput}k`}
             unit="req/s"
             accentColor="#6366F1"
-            footer={<span className="text-[10px] text-[#64748B]">{stats.throughputLabel}</span>}
+            footer={<span className="text-[10px] text-muted-foreground">{stats.throughputLabel}</span>}
           />
         </div>
 
         {/* Chart */}
-        <div className="bg-[#1E293B] border border-[#334155] rounded-lg p-5 flex-[2] flex flex-col min-h-0">
+        <div className="bg-card border border-border rounded-lg p-5 flex-[2] flex flex-col min-h-0">
           <div className="flex justify-between items-center mb-4 shrink-0">
-            <h3 className="text-[10px] font-semibold text-[#94A3B8] uppercase tracking-widest">
+            <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
               Real-time Latency Distribution (ms)
             </h3>
             <div className="flex gap-4">
               <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-[#6366F1]" />
-                <span className="text-[10px] text-[#64748B]">Response Time</span>
+                <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                <span className="text-[10px] text-muted-foreground">Response Time</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-[#8083ff]" />
-                <span className="text-[10px] text-[#64748B]">Average</span>
+                <span className="text-[10px] text-muted-foreground">Average</span>
               </div>
             </div>
           </div>
@@ -297,24 +297,24 @@ export function BenchmarksSuite() {
         </div>
 
         {/* Iterations table */}
-        <div className="bg-[#1E293B] border border-[#334155] rounded-lg flex flex-col h-52 shrink-0">
-          <div className="px-4 py-3 border-b border-[#334155] flex justify-between items-center bg-[#1b1b23]/50">
-            <h3 className="text-[10px] font-semibold text-[#e4e1ed] uppercase tracking-wider">
+        <div className="bg-card border border-border rounded-lg flex flex-col h-52 shrink-0">
+          <div className="px-4 py-3 border-b border-border flex justify-between items-center bg-sidebar/50">
+            <h3 className="text-[10px] font-semibold text-foreground uppercase tracking-wider">
               Recent Iterations
             </h3>
             <div className="flex gap-2">
-              <span className="text-[10px] text-[#64748B] px-2 py-0.5 border border-[#334155] rounded cursor-pointer hover:text-[#e4e1ed]">
+              <span className="text-[10px] text-muted-foreground px-2 py-0.5 border border-border rounded cursor-pointer hover:text-foreground">
                 Filter: All
               </span>
-              <span className="text-[10px] text-[#64748B] px-2 py-0.5 border border-[#334155] rounded cursor-pointer hover:text-[#e4e1ed]">
+              <span className="text-[10px] text-muted-foreground px-2 py-0.5 border border-border rounded cursor-pointer hover:text-foreground">
                 Export CSV
               </span>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto">
             <table className="w-full text-left">
-              <thead className="sticky top-0 bg-[#1E293B]">
-                <tr className="text-[10px] font-bold text-[#94A3B8] uppercase border-b border-[#334155]">
+              <thead className="sticky top-0 bg-card">
+                <tr className="text-[10px] font-bold text-muted-foreground uppercase border-b border-border">
                   <th className="px-4 py-3">Iteration ID</th>
                   <th className="px-4 py-3">Timestamp</th>
                   <th className="px-4 py-3">Latency</th>
@@ -322,13 +322,13 @@ export function BenchmarksSuite() {
                   <th className="px-4 py-3">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#334155]/30 text-xs">
+              <tbody className="divide-y divide-border/30 text-xs">
                 {MOCK_ITERATIONS.map((iter) => (
-                  <tr key={iter.id} className="hover:bg-[#34343d]/50 transition-colors">
-                    <td className="px-4 py-3 font-mono text-[#6366F1]">{iter.id}</td>
-                    <td className="px-4 py-3 text-[#94A3B8]">{iter.timestamp}</td>
+                  <tr key={iter.id} className="hover:bg-muted/50 transition-colors">
+                    <td className="px-4 py-3 font-mono text-primary">{iter.id}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{iter.timestamp}</td>
                     <td className="px-4 py-3 font-mono">{iter.latency}ms</td>
-                    <td className="px-4 py-3 text-[#94A3B8]">{iter.size}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{iter.size}</td>
                     <td className="px-4 py-3">
                       <span className="bg-[rgba(16,185,129,0.2)] text-[#10B981] px-2 py-0.5 rounded-full text-[10px] font-bold uppercase">
                         {iter.status}
@@ -364,15 +364,15 @@ function StatCard({
 }) {
   return (
     <div
-      className={`bg-[#1E293B] border border-[#334155] p-4 rounded-lg ${accent ? 'border-l-2' : ''}`}
+      className={`bg-card border border-border p-4 rounded-lg ${accent ? 'border-l-2' : ''}`}
       style={accent ? { borderLeftColor: '#6366F1' } : {}}
     >
-      <p className="text-[10px] text-[#94A3B8] font-semibold uppercase mb-1">{title}</p>
+      <p className="text-[10px] text-muted-foreground font-semibold uppercase mb-1">{title}</p>
       <div className="flex items-end gap-1">
-        <span className="text-xl font-bold font-mono text-[#e4e1ed]" style={accentColor ? { color: accentColor } : {}}>
+        <span className="text-xl font-bold font-mono text-foreground" style={accentColor ? { color: accentColor } : {}}>
           {value}
         </span>
-        <span className="text-[11px] text-[#64748B] mb-0.5">{unit}</span>
+        <span className="text-[11px] text-muted-foreground mb-0.5">{unit}</span>
       </div>
       {footer && <div className="mt-1">{footer}</div>}
     </div>

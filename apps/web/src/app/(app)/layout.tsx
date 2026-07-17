@@ -51,26 +51,25 @@ export default function AppLayout({
     <div className="flex h-screen overflow-hidden">
       {/* SideNav */}
       <aside
-        className="shrink-0 bg-[#1f1f27] border-r border-[#334155] flex flex-col z-50 transition-all duration-200"
+        className="shrink-0 bg-sidebar border-r border-sidebar-border flex flex-col z-50 transition-all duration-200"
         style={{ width: sidebarWidth }}
       >
         {/* Brand */}
-        <div className="flex items-center justify-between px-3 py-4 border-b border-[#334155] min-h-[52px]">
+        <div className="flex items-center justify-between px-3 py-4 border-b border-sidebar-border min-h-[52px]">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-8 h-8 bg-[#6366F1] rounded flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-white text-lg" style={{fontVariationSettings: "'FILL' 1"}}>terminal</span>
+            <div className="w-8 h-8 bg-primary rounded flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-primary-foreground text-lg" style={{fontVariationSettings: "'FILL' 1"}}>terminal</span>
             </div>
             {!collapsed && (
               <div className="whitespace-nowrap">
-                <h1 className="text-sm font-bold text-[#e4e1ed]">Axiom</h1>
-                <p className="text-[10px] uppercase tracking-widest text-[#64748B] font-bold">V1.2.0-stable</p>
+                <h1 className="text-sm font-bold text-sidebar-foreground">Axiom</h1>
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">V1.2.0-stable</p>
               </div>
             )}
           </div>
-          {/* Collapse toggle */}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="shrink-0 w-6 h-6 flex items-center justify-center rounded hover:bg-[#34343d] text-[#64748B] hover:text-[#e4e1ed] transition-colors"
+            className="shrink-0 w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-sidebar-foreground transition-colors"
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             <span className="material-symbols-outlined text-[16px]">
@@ -84,7 +83,7 @@ export default function AppLayout({
           <div className="px-4 py-3">
             <Button
               onClick={() => router.push('/client')}
-              className="w-full h-9 bg-[#6366F1] hover:bg-[#4F46E5] text-white text-[11px] font-semibold rounded"
+              className="w-full h-9 bg-primary hover:bg-primary/90 text-primary-foreground text-[11px] font-semibold rounded"
             >
               <span className="material-symbols-outlined text-[18px] mr-1">add</span>
               New Request
@@ -105,8 +104,8 @@ export default function AppLayout({
                   'flex items-center gap-3 rounded-md text-sm transition-colors duration-150',
                   collapsed ? 'px-2 py-3 justify-center' : 'px-3 py-2',
                   isActive
-                    ? 'bg-[#2f3aa3]/50 text-[#a8afff] font-medium border-r-2 border-[#6366F1]'
-                    : 'text-[#c7c4d7] hover:text-[#e4e1ed] hover:bg-[#34343d]/50',
+                    ? 'bg-secondary/50 text-secondary-foreground font-medium border-r-2 border-primary'
+                    : 'text-muted-foreground hover:text-sidebar-foreground hover:bg-muted/50',
                 )}
               >
                 <span className="material-symbols-outlined text-[20px] shrink-0">{item.icon}</span>
@@ -117,7 +116,7 @@ export default function AppLayout({
         </nav>
 
         {/* Footer */}
-        <div className="px-3 py-4 border-t border-[#334155] space-y-1">
+        <div className="px-3 py-4 border-t border-sidebar-border space-y-1">
           <Link
             href="/settings"
             title={collapsed ? 'Settings' : undefined}
@@ -125,8 +124,8 @@ export default function AppLayout({
               'flex items-center gap-3 rounded-md text-xs transition-colors duration-150',
               collapsed ? 'px-2 py-3 justify-center' : 'px-3 py-2',
               pathname === '/settings'
-                ? 'bg-[#2f3aa3]/50 text-[#a8afff] font-medium border-r-2 border-[#6366F1]'
-                : 'text-[#c7c4d7] hover:text-[#e4e1ed] hover:bg-[#34343d]/50',
+                ? 'bg-secondary/50 text-secondary-foreground font-medium border-r-2 border-primary'
+                : 'text-muted-foreground hover:text-sidebar-foreground hover:bg-muted/50',
             )}
           >
             <span className="material-symbols-outlined text-[20px] shrink-0">settings</span>
@@ -134,7 +133,7 @@ export default function AppLayout({
           </Link>
 
           {!collapsed && (
-            <div className="flex items-center gap-3 px-3 py-2 text-[#c7c4d7] text-xs cursor-pointer hover:text-[#e4e1ed] hover:bg-[#34343d]/50 rounded-md transition-colors">
+            <div className="flex items-center gap-3 px-3 py-2 text-muted-foreground text-xs cursor-pointer hover:text-sidebar-foreground hover:bg-muted/50 rounded-md transition-colors">
               <span className="material-symbols-outlined text-[20px] shrink-0">help_outline</span>
               Support
             </div>
@@ -142,20 +141,20 @@ export default function AppLayout({
 
           {!collapsed ? (
             <div className="flex items-center gap-3 px-3 py-2 mt-2">
-              <div className="w-8 h-8 rounded-full bg-[#34343d] border border-[#334155] flex items-center justify-center overflow-hidden shrink-0">
-                <span className="material-symbols-outlined text-[#c7c4d7] text-lg">person</span>
+              <div className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center overflow-hidden shrink-0">
+                <span className="material-symbols-outlined text-muted-foreground text-lg">person</span>
               </div>
               <div className="flex-1 overflow-hidden">
-                <p className="text-xs font-bold text-[#e4e1ed] truncate">
+                <p className="text-xs font-bold text-sidebar-foreground truncate">
                   {session?.user?.email?.split('@')[0] || 'Developer'}
                 </p>
-                <p className="text-[10px] text-[#64748B] uppercase font-bold">Pro Plan</p>
+                <p className="text-[10px] text-muted-foreground uppercase font-bold">Pro Plan</p>
               </div>
             </div>
           ) : (
             <div className="flex justify-center py-2">
-              <div className="w-8 h-8 rounded-full bg-[#34343d] border border-[#334155] flex items-center justify-center overflow-hidden shrink-0">
-                <span className="material-symbols-outlined text-[#c7c4d7] text-lg">person</span>
+              <div className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center overflow-hidden shrink-0">
+                <span className="material-symbols-outlined text-muted-foreground text-lg">person</span>
               </div>
             </div>
           )}
@@ -165,20 +164,20 @@ export default function AppLayout({
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* TopBar */}
-        <header className="flex justify-between items-center h-12 px-6 bg-[#1E293B] border-b border-[#334155] shrink-0">
+        <header className="flex justify-between items-center h-12 px-6 bg-card border-b border-border shrink-0">
           <div className="flex items-center gap-2">
             {collapsed && (
-              <span className="text-sm font-black text-[#6366F1] uppercase tracking-tighter hidden sm:inline">
+              <span className="text-sm font-black text-primary uppercase tracking-tighter hidden sm:inline">
                 Axiom
               </span>
             )}
-            <span className="text-xs text-[#94A3B8] hidden sm:inline">Workbench</span>
+            <span className="text-xs text-muted-foreground hidden sm:inline">Workbench</span>
           </div>
           <div className="flex items-center gap-2">
             {mounted && (
               <button
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[#34343d] text-[#94A3B8] hover:text-[#e4e1ed] transition-colors"
+                className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                 title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
               >
                 <span className="material-symbols-outlined text-[18px]">
@@ -189,27 +188,27 @@ export default function AppLayout({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 rounded-full p-0">
-                  <div className="w-8 h-8 rounded-full bg-[#34343d] border border-[#334155] flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[#c7c4d7] text-lg">person</span>
+                  <div className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center">
+                    <span className="material-symbols-outlined text-muted-foreground text-lg">person</span>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-[#1E293B] border-[#334155] text-[#e4e1ed] min-w-[180px]" align="end">
-                <DropdownMenuLabel className="text-xs font-normal text-[#94A3B8]">
+              <DropdownMenuContent className="bg-card border-border text-foreground min-w-[180px]" align="end">
+                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
                   {session?.user?.email || 'Signed in'}
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-[#334155]" />
+                <DropdownMenuSeparator className="bg-border" />
                 <DropdownMenuItem
                   onClick={() => router.push('/settings')}
-                  className="text-xs cursor-pointer hover:bg-[#34343d]"
+                  className="text-xs cursor-pointer hover:bg-muted"
                 >
                   <span className="material-symbols-outlined text-[16px] mr-2">settings</span>
                   Settings
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-[#334155]" />
+                <DropdownMenuSeparator className="bg-border" />
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="text-xs cursor-pointer text-[#EF4444] hover:bg-[#34343d]"
+                  className="text-xs cursor-pointer text-destructive hover:bg-muted"
                 >
                   <span className="material-symbols-outlined text-[16px] mr-2">logout</span>
                   Sign Out
@@ -219,8 +218,8 @@ export default function AppLayout({
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 min-h-0">
+        {/* Page content — CRITICAL: must be flex container so children flex-1 works */}
+        <main className="flex-1 min-h-0 flex flex-col overflow-hidden">
           {children}
         </main>
       </div>

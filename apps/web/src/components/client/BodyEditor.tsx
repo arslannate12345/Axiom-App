@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 
 const MonacoEditor = dynamic(
   () => import('@monaco-editor/react').then((mod) => mod.default),
-  { ssr: false, loading: () => <div className="h-full bg-[#0F172A] animate-pulse" /> },
+  { ssr: false, loading: () => <div className="h-full bg-background animate-pulse" /> },
 );
 
 export interface BodyEditorProps {
@@ -52,8 +52,8 @@ export function BodyEditor({ bodyType, body, onBodyTypeChange, onBodyChange }: B
             onClick={() => onBodyTypeChange(type)}
             className={`h-7 px-3 text-[10px] font-semibold uppercase tracking-wider ${
               bodyType === type
-                ? 'bg-[#6366F1] text-white'
-                : 'bg-transparent border-[#334155] text-[#94A3B8] hover:text-[#e4e1ed]'
+                ? 'bg-primary text-white'
+                : 'bg-transparent border-border text-muted-foreground hover:text-foreground'
             }`}
           >
             {type}
@@ -63,7 +63,7 @@ export function BodyEditor({ bodyType, body, onBodyTypeChange, onBodyChange }: B
           <Button
             variant="ghost"
             onClick={handleFormat}
-            className="ml-auto h-7 px-3 text-[10px] font-semibold text-[#6366F1] hover:text-[#818CF8]"
+            className="ml-auto h-7 px-3 text-[10px] font-semibold text-primary hover:text-primary"
           >
             Beautify
           </Button>
@@ -73,7 +73,7 @@ export function BodyEditor({ bodyType, body, onBodyTypeChange, onBodyChange }: B
       {/* Body = none => show nothing */}
       {bodyType === 'none' ? (
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-xs text-[#475569]">This request does not have a body</p>
+          <p className="text-xs text-muted-foreground">This request does not have a body</p>
         </div>
       ) : (
         <>
@@ -84,7 +84,7 @@ export function BodyEditor({ bodyType, body, onBodyTypeChange, onBodyChange }: B
                 <button
                   key={key}
                   onClick={() => insertAtCursor(key)}
-                  className="px-3 py-1 bg-[#334155] border border-[#475569] rounded text-xs font-mono text-[#e4e1ed] hover:bg-[#475569] transition-colors shrink-0"
+                  className="px-3 py-1 bg-border border border-border rounded text-xs font-mono text-foreground hover:bg-muted transition-colors shrink-0"
                 >
                   {key}
                 </button>
@@ -93,7 +93,7 @@ export function BodyEditor({ bodyType, body, onBodyTypeChange, onBodyChange }: B
           )}
 
           {/* Monaco editor */}
-          <div className="flex-1 min-h-[160px] border border-[#334155] rounded overflow-hidden">
+          <div className="flex-1 min-h-[160px] border border-border rounded overflow-hidden">
             <MonacoEditor
               language={bodyType === 'json' ? 'json' : 'plaintext'}
               value={body}

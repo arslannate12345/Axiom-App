@@ -2,7 +2,7 @@
 
 export function AnimatedBackground({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-screen bg-[#0F172A] overflow-hidden">
+    <div className="relative min-h-screen bg-background overflow-hidden">
       {/* Floating orbs */}
       <div className="fixed inset-0 pointer-events-none" aria-hidden="true">
         <Orb

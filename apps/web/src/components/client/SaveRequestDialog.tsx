@@ -125,7 +125,7 @@ export function SaveRequestDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#1E293B] border-[#334155] text-[#e4e1ed] max-w-md">
+      <DialogContent className="bg-card border-border text-foreground max-w-md">
         <DialogHeader>
           <DialogTitle className="text-sm font-bold">Add Request</DialogTitle>
         </DialogHeader>
@@ -133,7 +133,7 @@ export function SaveRequestDialog({
         <div className="space-y-4">
           {/* Request Name */}
           <div>
-            <label className="text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-1.5 block">
+            <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">
               Request Name
             </label>
             <Input
@@ -141,13 +141,13 @@ export function SaveRequestDialog({
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Login Endpoint"
               autoFocus
-              className="h-8 bg-[#0F172A] border-[#334155] text-xs font-mono text-[#e4e1ed] focus:border-[#6366F1]"
+              className="h-8 bg-background border-border text-xs font-mono text-foreground focus:border-primary"
             />
           </div>
 
           {/* Workspace */}
           <div>
-            <label className="text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-1.5 block">
+            <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">
               Workspace
             </label>
             <div className="flex flex-wrap gap-2">
@@ -157,8 +157,8 @@ export function SaveRequestDialog({
                   onClick={() => handleWorkspaceChange(ws.id)}
                   className={`px-3 py-1.5 rounded-full text-xs transition-colors ${
                     ws.id === activeWorkspaceId
-                      ? 'bg-[#6366F1] text-white'
-                      : 'bg-[#1E293B] border border-[#334155] text-[#94A3B8] hover:text-[#e4e1ed]'
+                      ? 'bg-primary text-white'
+                      : 'bg-card border border-border text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {ws.name}
@@ -170,7 +170,7 @@ export function SaveRequestDialog({
                     value={newWsName}
                     onChange={(e) => setNewWsName(e.target.value)}
                     placeholder="Name"
-                    className="h-7 w-28 bg-[#0F172A] border-[#334155] text-xs"
+                    className="h-7 w-28 bg-background border-border text-xs"
                     onKeyDown={(e) => e.key === 'Enter' && handleCreateWorkspace()}
                   />
                   <Button size="sm" className="h-7 w-7 p-0 bg-[#10B981]" onClick={handleCreateWorkspace}>
@@ -180,7 +180,7 @@ export function SaveRequestDialog({
               ) : (
                 <button
                   onClick={() => setIsCreatingWs(true)}
-                  className="px-3 py-1.5 rounded-full text-xs border border-dashed border-[#334155] text-[#6366F1] hover:border-[#6366F1]"
+                  className="px-3 py-1.5 rounded-full text-xs border border-dashed border-border text-primary hover:border-primary"
                 >
                   + New
                 </button>
@@ -190,7 +190,7 @@ export function SaveRequestDialog({
 
           {/* Collection */}
           <div>
-            <label className="text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-1.5 block">
+            <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">
               Collection
             </label>
             <ScrollArea className="max-h-36">
@@ -201,11 +201,11 @@ export function SaveRequestDialog({
                     onClick={() => setSelectedCollectionId(col.id)}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded text-xs border transition-colors ${
                       col.id === selectedCollectionId
-                        ? 'border-[#6366F1] bg-[rgba(99,102,241,0.1)] text-[#e4e1ed]'
-                        : 'border-[#334155] text-[#94A3B8] hover:border-[#6366F1]'
+                        ? 'border-primary bg-primary/10 text-foreground'
+                        : 'border-border text-muted-foreground hover:border-primary'
                     }`}
                   >
-                    <span className="material-symbols-outlined text-sm text-[#64748B]">folder</span>
+                    <span className="material-symbols-outlined text-sm text-muted-foreground">folder</span>
                     {col.name}
                   </button>
                 ))}
@@ -217,7 +217,7 @@ export function SaveRequestDialog({
                   value={newColName}
                   onChange={(e) => setNewColName(e.target.value)}
                   placeholder="Collection name"
-                  className="h-7 flex-1 bg-[#0F172A] border-[#334155] text-xs"
+                  className="h-7 flex-1 bg-background border-border text-xs"
                   onKeyDown={(e) => e.key === 'Enter' && handleCreateCollection()}
                 />
                 <Button size="sm" className="h-7 w-7 p-0 bg-[#10B981]" onClick={handleCreateCollection}>
@@ -228,7 +228,7 @@ export function SaveRequestDialog({
               <Button
                 variant="ghost"
                 onClick={() => setIsCreatingCol(true)}
-                className="w-full mt-2 h-7 border border-dashed border-[#334155] text-[#6366F1] text-xs hover:border-[#6366F1]"
+                className="w-full mt-2 h-7 border border-dashed border-border text-primary text-xs hover:border-primary"
               >
                 <span className="material-symbols-outlined text-sm mr-1">add</span>
                 New Collection
@@ -241,14 +241,14 @@ export function SaveRequestDialog({
           <Button
             variant="ghost"
             onClick={() => onOpenChange(false)}
-            className="text-xs text-[#94A3B8] hover:text-[#e4e1ed]"
+            className="text-xs text-muted-foreground hover:text-foreground"
           >
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             disabled={isSaving || !name.trim() || !selectedCollectionId}
-            className="bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs"
+            className="bg-primary hover:bg-primary/90 text-white text-xs"
           >
             {isSaving ? 'Saving...' : 'Save'}
           </Button>
