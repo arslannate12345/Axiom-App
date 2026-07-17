@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTheme } from 'next-themes';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useSupabase } from '@/providers/supabase-provider';
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,10 @@ export default function AppLayout({
   const router = useRouter();
   const { supabase, session } = useSupabase();
   const [collapsed, setCollapsed] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
+
+  useEffect(() => { setMounted(true); }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -169,7 +174,18 @@ export default function AppLayout({
             )}
             <span className="text-xs text-[#94A3B8] hidden sm:inline">Workbench</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {mounted && (
+              <button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[#34343d] text-[#94A3B8] hover:text-[#e4e1ed] transition-colors"
+                title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+                </span>
+              </button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 rounded-full p-0">
