@@ -129,8 +129,8 @@ export function ResponsePanel({ response, error, isLoading }: ResponsePanelProps
 
         {/* Body tab */}
         {activeTab === 'body' && (
-          <div className="flex-1 min-h-0">
-            <div className="w-full h-full">
+          <div className="flex-1 min-h-[120px] relative">
+            <div className="absolute inset-0">
               {(() => {
                 try {
                   const parsed = JSON.parse(response.body);
@@ -140,6 +140,7 @@ export function ResponsePanel({ response, error, isLoading }: ResponsePanelProps
                       value={JSON.stringify(parsed, null, 2)}
                       theme="vs-dark"
                       height="100%"
+                      loading={<div className="flex items-center justify-center h-full"><div className="w-5 h-5 border-2 border-[#6366F1] border-t-transparent rounded-full animate-spin" /></div>}
                       options={{
                         readOnly: true,
                         minimap: { enabled: false },
@@ -160,6 +161,7 @@ export function ResponsePanel({ response, error, isLoading }: ResponsePanelProps
                       value={response.body}
                       theme="vs-dark"
                       height="100%"
+                      loading={<div className="flex items-center justify-center h-full"><div className="w-5 h-5 border-2 border-[#6366F1] border-t-transparent rounded-full animate-spin" /></div>}
                       options={{
                         readOnly: true,
                         minimap: { enabled: false },
