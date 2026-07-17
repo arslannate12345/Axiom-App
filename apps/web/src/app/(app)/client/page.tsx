@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,30 @@ export default function ClientPage() {
   const [showSaveModal, setShowSaveModal] = useState(false);
 
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Hydrate from a saved request (opened from Collections)
+  useEffect(() => {
+    const raw = sessionStorage.getItem('axiom-open-request');
+    if (!raw) return;
+    try {
+      const req = JSON.parse(raw);
+      setMethod((req.method as HttpMethod) || 'GET');
+      setUrl(req.url || '');
+      setHeaders(
+        Array.isArray(req.headers) && req.headers.length > 0
+          ? req.headers
+          : [{ key: 'Content-Type', value: 'application/json', enabled: true }],
+      );
+      setQueryParams(
+        Array.isArray(req.query_params) ? req.query_params : Array.isArray(req.queryParams) ? req.queryParams : [],
+      );
+      setBodyType((req.body_type as BodyType) || (req.bodyType as BodyType) || 'none');
+      setBody(req.body || '');
+      sessionStorage.removeItem('axiom-open-request');
+    } catch {
+      sessionStorage.removeItem('axiom-open-request');
+    }
+  }, []);
 
   const handleSend = useCallback(async () => {
     if (!url.trim()) {

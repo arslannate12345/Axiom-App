@@ -46,6 +46,15 @@ export default function CollectionsPage() {
 
   const loadWorkspaces = async () => {
     const ws = await service.getWorkspaces();
+    if (ws.length === 0) {
+      const defaultWs = await service.createWorkspace('My Workspace');
+      if (defaultWs) {
+        setWorkspaces([defaultWs]);
+        setActiveWorkspaceId(defaultWs.id);
+        setCollections([]);
+        return;
+      }
+    }
     setWorkspaces(ws);
     if (ws.length > 0 && !activeWorkspaceId) {
       setActiveWorkspaceId(ws[0].id);
