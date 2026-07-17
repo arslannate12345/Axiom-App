@@ -98,4 +98,28 @@
   ::-webkit-scrollbar-thumb:hover {
     background: #475569;
   }
+
+  @keyframes drift {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+      opacity: 1;
+    }
+    25% {
+      transform: translate(30px, -40px) scale(1.1);
+      opacity: 0.9;
+    }
+    50% {
+      transform: translate(-20px, 20px) scale(1.15);
+      opacity: 1;
+    }
+    75% {
+      transform: translate(40px, -10px) scale(1.05);
+      opacity: 0.85;
+    }
+  }
+
+  .animate-drift {
+    animation: drift var(--duration, 14s) ease-in-out infinite;
+    animation-delay: var(--delay, 0s);
+  }
 }

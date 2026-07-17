@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 import Link from 'next/link';
 import { useSupabase } from '@/providers/supabase-provider';
 import { Button } from '@/components/ui/button';
@@ -55,7 +56,8 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0F172A] p-4">
+    <AnimatedBackground>
+    <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-[420px] bg-[#1E293B] border-[#334155] shadow-2xl">
         <CardContent className="p-8">
           {/* Header Identity */}
@@ -158,5 +160,6 @@ export default function SignupPage() {
         </CardContent>
       </Card>
     </div>
+    </AnimatedBackground>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 import Link from 'next/link';
 import { useSupabase } from '@/providers/supabase-provider';
 import { Button } from '@/components/ui/button';
@@ -41,7 +42,8 @@ export default function AppLayout({
   };
 
   return (
-    <div className="flex h-screen bg-[#0F172A]">
+    <AnimatedBackground>
+    <div className="flex h-screen">
       {/* SideNav */}
       <aside className="w-[260px] shrink-0 bg-[#1f1f27] border-r border-[#334155] flex flex-col z-50">
         {/* Brand */}
@@ -194,5 +196,6 @@ export default function AppLayout({
         </main>
       </div>
     </div>
+    </AnimatedBackground>
   );
 }
