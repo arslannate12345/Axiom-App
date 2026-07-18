@@ -283,3 +283,39 @@ export async function deleteHistoryEntry(id: string): Promise<boolean> {
   if (error) { console.error(error); return false; }
   return true;
 }
+
+// ─── Reports ──────────────────────────────────────────────
+
+export interface ReportRecord {
+  id: string;
+  user_id: string;
+  collection_id: string;
+  name: string;
+  share_token: string;
+  report_type: 'collection' | 'request';
+  report_data: any;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getUserReports(): Promise<ReportRecord[]> {
+  const { data, error } = await supabase()
+    .from('reports')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error(error); return []; }
+  return data || [];
+}
+
+export async function getSharedReport(token: string): Promise<ReportRecord | null> {
+  const { data, error } = await supabase()
+    .rpc('get_shared_report', { token });
+  if (error) { console.error(error); return null; }
+  return data;
+}
+
+export async function deleteReport(id: string): Promise<boolean> {
+  const { error } = await supabase().from('reports').delete().eq('id', id);
+  if (error) { console.error(error); return false; }
+  return true;
+}
