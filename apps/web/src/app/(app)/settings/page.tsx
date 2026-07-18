@@ -7,7 +7,12 @@ import { useSupabase } from '@/providers/supabase-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
+import * as service from '@/lib/supabase-service';
+import type { ReportRecord } from '@/lib/supabase-service';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -15,8 +20,16 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [reports, setReports] = useState<ReportRecord[]>([]);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => { setMounted(true); loadReports(); }, []);
+
+  const loadReports = async () => { setReports(await service.getUserReports()); };
+
+  const handleDeleteReport = async (id: string) => {
+    const ok = await service.deleteReport(id);
+    if (ok) { setReports((r) => r.filter((x) => x.id !== id)); toast.success('Report deleted'); }
+  };
 
   const handleLogout = async () => {
     setLoading(true);
@@ -83,6 +96,66 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        {/* Reports */}
+        <Card className="bg-card border-border rounded-xl overflow-hidden mb-6">
+          <div className="px-5 py-3 border-b border-border bg-muted/20 flex justify-between items-center">
+            <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Reports</h3>
+            <span className="material-symbols-outlined text-sm text-muted-foreground">description</span>
+          </div>
+          <CardContent className="p-0">
+            {reports.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-6">No reports yet. Run a collection to generate one.</p>
+            ) : (
+              <ScrollArea className="max-h-60">
+                {reports.map((r) => (
+                  <div key={r.id} className="flex items-center justify-between px-5 py-3 border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="material-symbols-outlined text-sm text-primary shrink-0">description</span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">{r.name}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <p className="text-[10px] text-muted-foreground">{timeAgo(r.created_at)}</p>
+                          <Badge className="text-[9px] px-1.5 py-0 bg-primary/10 text-primary border-primary/20">{r.report_type}</Badge>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 ml-2 shrink-0">
+                      <button
+                        onClick={() => {
+                          const url = `${window.location.origin}/reports/${r.share_token}`;
+                          navigator.clipboard.writeText(url);
+                          toast.success('Report link copied');
+                        }}
+                        className="p-1 text-muted-foreground hover:text-primary transition-colors"
+                        title="Copy share link"
+                      >
+                        <span className="material-symbols-outlined text-sm">link</span>
+                      </button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <button className="p-1 text-muted-foreground hover:text-[#EF4444] transition-colors" title="Delete report">
+                            <span className="material-symbols-outlined text-sm">delete</span>
+                          </button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-card border-border text-foreground">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="text-sm font-bold">Delete Report</AlertDialogTitle>
+                            <AlertDialogDescription className="text-xs text-muted-foreground">Permanently delete &quot;{r.name}&quot;?</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="text-xs">Cancel</AlertDialogCancel>
+                            <AlertDialogAction className="text-xs bg-destructive text-white" onClick={() => handleDeleteReport(r.id)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                ))}
+              </ScrollArea>
+            )}
+          </CardContent>
+        </Card>
+
         <Card className="bg-card border-border rounded-xl overflow-hidden">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
@@ -115,4 +188,13 @@ export default function SettingsPage() {
       </div>
     </div>
   );
+}
+
+function timeAgo(d: string): string {
+  const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
 }
