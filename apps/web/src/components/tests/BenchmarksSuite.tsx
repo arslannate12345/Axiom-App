@@ -140,7 +140,7 @@ export function BenchmarksSuite() {
   };
 
   return (
-    <div className="flex-1 flex gap-6 overflow-hidden">
+    <div className="flex-1 flex gap-6 overflow-auto">
       {/* Left: Configuration */}
       <div className="w-[320px] flex flex-col gap-4 shrink-0">
         <div className="bg-card border border-border p-5 rounded-lg flex flex-col flex-1">
@@ -233,7 +233,7 @@ export function BenchmarksSuite() {
       </div>
 
       {/* Right: Results */}
-      <div className="flex-1 flex flex-col gap-5 overflow-hidden">
+      <div className="flex-1 flex flex-col gap-5 overflow-auto">
         {/* Stat cards */}
         <div className="grid grid-cols-4 gap-4">
           <StatCard

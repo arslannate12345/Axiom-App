@@ -29,8 +29,34 @@ export default function ClientPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('params');
   const [showSaveModal, setShowSaveModal] = useState(false);
-
+  const [splitPercent, setSplitPercent] = useState(40);
+  const [isDragging, setIsDragging] = useState(false);
+  const splitPaneRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isDragging) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      const container = splitPaneRef.current;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      const pct = (y / rect.height) * 100;
+      setSplitPercent(Math.min(90, Math.max(10, pct)));
+    };
+    const handleMouseUp = () => setIsDragging(false);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
 
   useEffect(() => {
     const raw = sessionStorage.getItem('axiom-open-request');
@@ -139,10 +165,10 @@ export default function ClientPage() {
         </Button>
       </div>
 
-      {/* Split panes */}
-      <div className="flex-1 flex flex-col min-h-0">
-        {/* Request builder (top) — capped at 45% */}
-        <div className="flex-1 flex flex-col min-h-[140px] max-h-[45%] border-b border-border">
+      {/* Split panes — resizable */}
+      <div ref={splitPaneRef} className="flex-1 flex flex-col min-h-0 relative select-none" style={isDragging ? { cursor: 'row-resize' } : undefined}>
+        {/* Request builder (top) */}
+        <div className="flex flex-col border-b border-border overflow-hidden" style={{ height: `${splitPercent}%`, minHeight: '120px' }}>
           <Tabs value={activeSubTab} onValueChange={(v) => setActiveSubTab(v as SubTab)} className="flex-1 flex flex-col min-h-0">
             <TabsList className="justify-start border-b border-border bg-transparent rounded-none px-4 shrink-0 h-9">
               <TabsTrigger value="params" className="text-xs data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 py-2 text-muted-foreground">
@@ -161,7 +187,6 @@ export default function ClientPage() {
                 Extractions <span className="text-[9px] ml-0.5">M2</span>
               </TabsTrigger>
             </TabsList>
-
             <div className="flex-1 overflow-auto p-4 min-h-0">
               <TabsContent value="params" className="m-0 mt-0">
                 <KeyValueEditor pairs={queryParams} onChange={setQueryParams} keyPlaceholder="Parameter" valuePlaceholder="Value" />
@@ -177,8 +202,16 @@ export default function ClientPage() {
           </Tabs>
         </div>
 
-        {/* Response viewer (bottom) — gets 2x the flex space */}
-        <div className="flex-[2] flex flex-col min-h-[250px] bg-background">
+        {/* Draggable divider */}
+        <div
+          onMouseDown={handleDragStart}
+          className="h-1.5 bg-border hover:bg-primary cursor-row-resize shrink-0 transition-colors group relative z-10 flex items-center justify-center"
+        >
+          <div className="w-8 h-0.5 rounded-full bg-muted-foreground/30 group-hover:bg-primary/50 transition-colors" />
+        </div>
+
+        {/* Response viewer (bottom) */}
+        <div className="flex flex-col bg-background min-h-[120px]" style={{ height: `${100 - splitPercent}%` }}>
           <ResponsePanel response={response} error={error} isLoading={isLoading} />
         </div>
       </div>

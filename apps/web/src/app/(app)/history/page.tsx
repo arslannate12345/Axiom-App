@@ -80,7 +80,7 @@ export default function HistoryPage() {
   const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
 
   return (
-    <div className="flex-1 flex flex-col bg-background">
+    <div className="flex-1 flex flex-col overflow-hidden bg-background">
       {/* Header */}
       <div className="px-6 py-5 border-b border-border">
         <div className="flex justify-between items-start">
