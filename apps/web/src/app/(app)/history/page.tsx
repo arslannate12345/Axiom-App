@@ -71,10 +71,31 @@ export default function HistoryPage() {
   };
 
   const handleRestore = (entry: HistoryEntry) => {
-    // In a real implementation, this would reconstruct the Request
-    // For now just navigate to client
     setInspectorOpen(false);
     router.push('/client');
+  };
+
+  const handleExportCSV = () => {
+    const data = filtered.length > 0 ? filtered : entries;
+    const headers = ['Timestamp', 'Status Code', 'Latency (ms)', 'TTFB (ms)', 'Size (bytes)', 'Error', 'Response Body'];
+    const rows = data.map((e) => [
+      new Date(e.executed_at).toISOString(),
+      String(e.status_code ?? ''),
+      String(e.latency_ms ?? ''),
+      String(e.ttfb_ms ?? ''),
+      String(e.response_size ?? ''),
+      (e.error_message || '').replace(/"/g, '""'),
+      (e.response_body || '').slice(0, 200).replace(/"/g, '""').replace(/\n/g, ' '),
+    ]);
+    const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `axiom-history-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('CSV exported');
   };
 
   const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
@@ -88,7 +109,16 @@ export default function HistoryPage() {
             <h2 className="text-sm font-bold text-foreground">Request History</h2>
             <p className="text-xs text-muted-foreground mt-0.5">Review and re-run your historical API interactions.</p>
           </div>
-          <AlertDialog>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handleExportCSV}
+              className="h-8 px-3 text-xs border-border text-muted-foreground hover:text-foreground"
+            >
+              <span className="material-symbols-outlined text-[14px] mr-1">download</span>
+              Export CSV
+            </Button>
+            <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline" className="h-8 px-3 text-xs border-border text-muted-foreground hover:text-[#EF4444] hover:border-[#EF4444]">
                 <span className="material-symbols-outlined text-[14px] mr-1">delete_sweep</span>
@@ -110,6 +140,7 @@ export default function HistoryPage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          </div>
         </div>
 
         {/* Filters */}
@@ -138,10 +169,10 @@ export default function HistoryPage() {
       </div>
 
       {/* Table */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <table className="w-full text-left border-collapse">
           <thead className="sticky top-0 bg-background border-b border-border z-10">
-            <tr className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+            <tr className="text-[12px] font-bold text-muted-foreground uppercase tracking-wider">
               <th className="px-6 py-3 w-20">Status</th>
               <th className="px-6 py-3">Error</th>
               <th className="px-6 py-3 w-20 text-right">Latency</th>
@@ -159,7 +190,7 @@ export default function HistoryPage() {
               >
                 <td className="px-6 py-3">
                   <span
-                    className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded uppercase"
+                    className="inline-flex items-center gap-1.5 text-[12px] font-bold px-2 py-0.5 rounded uppercase"
                     style={{
                       color: entry.status_code && entry.status_code < 400 ? '#10B981' : '#EF4444',
                       backgroundColor: entry.status_code && entry.status_code < 400
@@ -215,7 +246,7 @@ export default function HistoryPage() {
 
       {/* Footer */}
       <footer className="h-8 bg-card border-t border-border px-6 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-3 text-[12px] text-muted-foreground">
           <span className="flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" /> System Online
           </span>
@@ -233,7 +264,7 @@ export default function HistoryPage() {
             <div className="h-full flex flex-col">
               <SheetHeader className="p-4 border-b border-border bg-sidebar">
                 <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-bold px-2 py-1 rounded"
+                  <span className="text-[12px] font-bold px-2 py-1 rounded"
                     style={{ backgroundColor: 'var(--border)', color: '#3B82F6' }}>
                     HISTORY
                   </span>
@@ -243,9 +274,9 @@ export default function HistoryPage() {
 
               <ScrollArea className="flex-1 p-4 space-y-5">
                 <div>
-                  <h4 className="text-[10px] font-bold text-muted-foreground uppercase mb-2 tracking-widest">Status</h4>
+                  <h4 className="text-[12px] font-bold text-muted-foreground uppercase mb-2 tracking-widest">Status</h4>
                   <div className="flex items-center gap-2">
-                    <Badge className={`text-[10px] font-bold px-2 py-0.5 ${
+                    <Badge className={`text-[12px] font-bold px-2 py-0.5 ${
                       inspectorEntry.status_code && inspectorEntry.status_code < 400
                         ? 'bg-[#10B981]' : 'bg-[#EF4444]'
                     }`}>
@@ -261,7 +292,7 @@ export default function HistoryPage() {
 
                 {inspectorEntry.error_message && (
                   <div>
-                    <h4 className="text-[10px] font-bold text-[#EF4444] uppercase mb-2 tracking-widest">Error</h4>
+                    <h4 className="text-[12px] font-bold text-[#EF4444] uppercase mb-2 tracking-widest">Error</h4>
                     <div className="p-2 bg-background border border-border rounded text-xs font-mono text-[#FCA5A5] break-all">
                       {inspectorEntry.error_message}
                     </div>
@@ -270,7 +301,7 @@ export default function HistoryPage() {
 
                 {inspectorEntry.response_body && (
                   <div>
-                    <h4 className="text-[10px] font-bold text-muted-foreground uppercase mb-2 tracking-widest">Response Body</h4>
+                    <h4 className="text-[12px] font-bold text-muted-foreground uppercase mb-2 tracking-widest">Response Body</h4>
                     <pre className="p-3 bg-background border border-border rounded text-xs font-mono text-muted-foreground max-h-48 overflow-auto whitespace-pre-wrap break-all">
                       {inspectorEntry.response_body.slice(0, 2000)}
                       {inspectorEntry.response_body.length > 2000 ? '...' : ''}
@@ -280,10 +311,10 @@ export default function HistoryPage() {
 
                 {inspectorEntry.response_headers && Object.keys(inspectorEntry.response_headers).length > 0 && (
                   <div>
-                    <h4 className="text-[10px] font-bold text-muted-foreground uppercase mb-2 tracking-widest">Headers</h4>
+                    <h4 className="text-[12px] font-bold text-muted-foreground uppercase mb-2 tracking-widest">Headers</h4>
                     <div className="space-y-1">
                       {Object.entries(inspectorEntry.response_headers).slice(0, 10).map(([k, v]) => (
-                        <div key={k} className="flex justify-between p-1.5 bg-muted/20 rounded text-[10px]">
+                        <div key={k} className="flex justify-between p-1.5 bg-muted/20 rounded text-[12px]">
                           <span className="text-muted-foreground font-bold">{k}</span>
                           <span className="text-foreground font-mono">{v}</span>
                         </div>

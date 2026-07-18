@@ -68,7 +68,7 @@ export default function SignupPage() {
                 Create Account
               </h1>
             </div>
-            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.2em]">
+            <p className="text-[13px] font-semibold text-muted-foreground uppercase tracking-[0.2em]">
               Join AXIOM to sync your collections
             </p>
           </div>
@@ -77,7 +77,7 @@ export default function SignupPage() {
           <form onSubmit={handleSignup} className="space-y-5">
             {/* Email */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <label className="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <span className="material-symbols-outlined text-[14px]">alternate_email</span>
                 Email Address
               </label>
@@ -92,7 +92,7 @@ export default function SignupPage() {
 
             {/* Password */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <label className="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <span className="material-symbols-outlined text-[14px]">lock</span>
                 Password
               </label>
@@ -107,7 +107,7 @@ export default function SignupPage() {
 
             {/* Confirm Password */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <label className="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <span className="material-symbols-outlined text-[14px]">lock</span>
                 Confirm Password
               </label>
@@ -124,7 +124,7 @@ export default function SignupPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-10 bg-primary hover:bg-primary/90 text-white text-[11px] font-semibold uppercase tracking-widest rounded"
+              className="w-full h-10 bg-primary hover:bg-primary/90 text-white text-[13px] font-semibold uppercase tracking-widest rounded"
             >
               {loading ? (
                 <>
@@ -143,7 +143,7 @@ export default function SignupPage() {
           {/* Divider */}
           <div className="flex items-center gap-4 my-8">
             <div className="h-[1px] flex-1 bg-border" />
-            <span className="text-[11px] font-semibold text-muted-foreground">OR</span>
+            <span className="text-[13px] font-semibold text-muted-foreground">OR</span>
             <div className="h-[1px] flex-1 bg-border" />
           </div>
 

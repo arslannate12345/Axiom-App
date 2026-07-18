@@ -1,4 +1,5 @@
 import { getSupabaseBrowserClient } from './supabase';
+import { generateShareToken } from './crypto';
 
 const supabase = () => getSupabaseBrowserClient();
 
@@ -152,6 +153,98 @@ export async function updateRequest(id: string, payload: Partial<SaveRequestPayl
 export async function deleteRequest(id: string): Promise<boolean> {
   const { error } = await supabase().from('requests').delete().eq('id', id);
   if (error) { console.error(error); return false; }
+  return true;
+}
+
+// ─── Snapshots ────────────────────────────────────────────
+
+export interface Snapshot {
+  id: string;
+  request_id: string;
+  user_id: string;
+  name: string;
+  status_code: number | null;
+  response_headers: Record<string, string>;
+  response_body: string | null;
+  response_size: number | null;
+  latency_ms: number | null;
+  tags: string[];
+  created_at: string;
+}
+
+export async function getSnapshots(requestId: string): Promise<Snapshot[]> {
+  const { data, error } = await supabase()
+    .from('snapshots')
+    .select('*')
+    .eq('request_id', requestId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error(error); return []; }
+  return data || [];
+}
+
+export async function createSnapshot(snapshot: Omit<Snapshot, 'id' | 'user_id' | 'created_at'>): Promise<Snapshot | null> {
+  const { data, error } = await supabase()
+    .from('snapshots')
+    .insert(snapshot)
+    .select()
+    .single();
+  if (error) { console.error(error); return null; }
+  return data;
+}
+
+export async function deleteSnapshot(id: string): Promise<boolean> {
+  const { error } = await supabase().from('snapshots').delete().eq('id', id);
+  if (error) { console.error(error); return false; }
+  return true;
+}
+
+// ─── Contracts ────────────────────────────────────────────
+
+export interface Contract {
+  id: string;
+  request_id: string;
+  user_id: string;
+  name: string;
+  schema_url: string | null;
+  schema_body: Record<string, unknown>;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getContracts(requestId: string): Promise<Contract[]> {
+  const { data, error } = await supabase()
+    .from('contracts')
+    .select('*')
+    .eq('request_id', requestId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error(error); return []; }
+  return data || [];
+}
+
+export async function createContract(contract: Omit<Contract, 'id' | 'user_id' | 'created_at' | 'updated_at'>): Promise<Contract | null> {
+  const { data, error } = await supabase()
+    .from('contracts')
+    .insert(contract)
+    .select()
+    .single();
+  if (error) { console.error(error); return null; }
+  return data;
+}
+
+export async function deleteContract(id: string): Promise<boolean> {
+  const { error } = await supabase().from('contracts').delete().eq('id', id);
+  if (error) { console.error(error); return false; }
+  return true;
+}
+
+// ─── Reorder ──────────────────────────────────────────────
+
+export async function reorderItems(table: 'collections' | 'requests', items: { id: string; sort_order: number }[]): Promise<boolean> {
+  for (const item of items) {
+    const { error } = await supabase().from(table).update({ sort_order: item.sort_order }).eq('id', item.id);
+    if (error) { console.error(error); return false; }
+  }
   return true;
 }
 
@@ -318,4 +411,28 @@ export async function deleteReport(id: string): Promise<boolean> {
   const { error } = await supabase().from('reports').delete().eq('id', id);
   if (error) { console.error(error); return false; }
   return true;
+}
+
+export interface CreateReportPayload {
+  collection_id: string;
+  name: string;
+  report_type: 'collection' | 'request';
+  report_data: unknown;
+}
+
+export async function createReport(payload: CreateReportPayload): Promise<ReportRecord | null> {
+  const token = generateShareToken();
+  const { data, error } = await supabase()
+    .from('reports')
+    .insert({
+      collection_id: payload.collection_id,
+      name: payload.name,
+      share_token: token,
+      report_type: payload.report_type,
+      report_data: payload.report_data as any,
+    })
+    .select()
+    .single();
+  if (error) { console.error(error); return null; }
+  return data;
 }

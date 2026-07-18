@@ -12,27 +12,94 @@ import { SaveRequestDialog } from '@/components/client/SaveRequestDialog';
 import { executeRequest } from '@/lib/api';
 import type { HttpMethod, BodyType, KeyValuePair, ResponseTiming, RequestError } from '@/lib/api';
 import { toast } from 'sonner';
+import { useTabsStore } from '@/stores/tabsStore';
+import { AssertionsEditor } from '@/components/client/AssertionsEditor';
+import { ExtractionsEditor } from '@/components/client/ExtractionsEditor';
+import { runAllAssertions } from '@/lib/assertions';
+import { runAllExtractions } from '@/lib/extractions';
+import { MatrixRunner } from '@/components/client/MatrixRunner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type SubTab = 'params' | 'headers' | 'body' | 'tests' | 'extractions';
 
+const METHOD_COLORS_MAP: Record<string, string> = {
+  GET: '#10B981',
+  POST: '#3B82F6',
+  PUT: '#F59E0B',
+  PATCH: '#8B5CF6',
+  DELETE: '#EF4444',
+  HEAD: '#64748B',
+  OPTIONS: '#EC4899',
+};
+
 export default function ClientPage() {
-  const [method, setMethod] = useState<HttpMethod>('GET');
-  const [url, setUrl] = useState('');
-  const [headers, setHeaders] = useState<KeyValuePair[]>([
-    { key: 'Content-Type', value: 'application/json', enabled: true },
-  ]);
-  const [queryParams, setQueryParams] = useState<KeyValuePair[]>([]);
-  const [bodyType, setBodyType] = useState<BodyType>('none');
-  const [body, setBody] = useState('');
-  const [response, setResponse] = useState<ResponseTiming | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const {
+    tabs,
+    activeTabId,
+    addTab,
+    closeTab,
+    setActiveTab,
+    updateTab,
+    markClean,
+  } = useTabsStore();
+
+  const activeTab = tabs.find((t) => t.id === activeTabId) ?? null;
+
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('params');
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [splitPercent, setSplitPercent] = useState(40);
   const [isDragging, setIsDragging] = useState(false);
+  const [closeConfirmTabId, setCloseConfirmTabId] = useState<string | null>(null);
+  const [showMatrixDialog, setShowMatrixDialog] = useState(false);
   const splitPaneRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (tabs.length === 0) {
+      addTab();
+      return;
+    }
+    if (!activeTabId || !tabs.find((t) => t.id === activeTabId)) {
+      setActiveTab(tabs[0].id);
+    }
+  }, []);
+
+  useEffect(() => {
+    const raw = sessionStorage.getItem('axiom-open-request');
+    if (!raw) return;
+    try {
+      const req = JSON.parse(raw);
+      addTab({
+        title: req.name || req.url || 'Untitled',
+        method: (req.method as HttpMethod) || 'GET',
+        url: req.url || '',
+        headers:
+          Array.isArray(req.headers) && req.headers.length > 0
+            ? req.headers
+            : [{ key: 'Content-Type', value: 'application/json', enabled: true }],
+        queryParams:
+          Array.isArray(req.query_params)
+            ? req.query_params
+            : Array.isArray(req.queryParams)
+              ? req.queryParams
+              : [],
+        bodyType: (req.body_type as BodyType) || (req.bodyType as BodyType) || 'none',
+        body: req.body || '',
+      });
+      sessionStorage.removeItem('axiom-open-request');
+    } catch {
+      sessionStorage.removeItem('axiom-open-request');
+    }
+  }, []);
 
   const handleDragStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -58,88 +125,171 @@ export default function ClientPage() {
     };
   }, [isDragging]);
 
-  useEffect(() => {
-    const raw = sessionStorage.getItem('axiom-open-request');
-    if (!raw) return;
-    try {
-      const req = JSON.parse(raw);
-      setMethod((req.method as HttpMethod) || 'GET');
-      setUrl(req.url || '');
-      setHeaders(
-        Array.isArray(req.headers) && req.headers.length > 0
-          ? req.headers
-          : [{ key: 'Content-Type', value: 'application/json', enabled: true }],
-      );
-      setQueryParams(
-        Array.isArray(req.query_params) ? req.query_params : Array.isArray(req.queryParams) ? req.queryParams : [],
-      );
-      setBodyType((req.body_type as BodyType) || (req.bodyType as BodyType) || 'none');
-      setBody(req.body || '');
-      sessionStorage.removeItem('axiom-open-request');
-    } catch {
-      sessionStorage.removeItem('axiom-open-request');
-    }
-  }, []);
-
   const handleSend = useCallback(async () => {
-    if (!url.trim()) { toast.error('Please enter a URL'); return; }
-    setIsLoading(true);
-    setResponse(null);
-    setError(null);
+    if (!activeTab) return;
+    if (!activeTab.url.trim()) { toast.error('Please enter a URL'); return; }
+    updateTab(activeTab.id, { isLoading: true, response: null, error: null });
     const controller = new AbortController();
     abortControllerRef.current = controller;
     try {
       const result = await executeRequest(
-        { method, url: url.trim(), headers, queryParams, bodyType, body },
-        {}, controller.signal, 30000,
+        {
+          method: activeTab.method,
+          url: activeTab.url.trim(),
+          headers: activeTab.headers || [],
+          queryParams: activeTab.queryParams || [],
+          bodyType: activeTab.bodyType,
+          body: activeTab.body,
+        },
+        {},
+        controller.signal,
+        30000,
       );
-      setResponse(result);
+      const ranAssertions = runAllAssertions(activeTab.assertions || [], result);
+      const ranExtractions = runAllExtractions(activeTab.extractions || [], result);
+      updateTab(activeTab.id, {
+        response: result,
+        isLoading: false,
+        assertions: ranAssertions,
+        extractions: ranExtractions,
+      });
     } catch (err) {
       const reqError = err as RequestError;
-      setError(reqError.message || 'Request failed');
+      updateTab(activeTab.id, { error: reqError.message || 'Request failed', isLoading: false });
     } finally {
-      setIsLoading(false);
       abortControllerRef.current = null;
     }
-  }, [method, url, headers, queryParams, bodyType, body]);
+  }, [activeTab, updateTab]);
 
   const handleCancel = useCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
-  }, []);
+    if (activeTab) {
+      updateTab(activeTab.id, { isLoading: false });
+    }
+  }, [activeTab, updateTab]);
 
   const handleReset = useCallback(() => {
-    setMethod('GET'); setUrl('');
-    setHeaders([{ key: 'Content-Type', value: 'application/json', enabled: true }]);
-    setQueryParams([]); setBodyType('none'); setBody('');
-    setResponse(null); setError(null);
-  }, []);
+    if (!activeTab) return;
+    updateTab(activeTab.id, {
+      method: 'GET',
+      url: '',
+      headers: [{ key: 'Content-Type', value: 'application/json', enabled: true }],
+      queryParams: [],
+      bodyType: 'none',
+      body: '',
+      response: null,
+      error: null,
+    });
+  }, [activeTab, updateTab]);
 
-  const activeParamsCount = queryParams.filter((p) => p.enabled && p.key.trim()).length;
-  const activeHeadersCount = headers.filter((h) => h.enabled && h.key.trim()).length;
+  const handleCloseTabClick = (id: string) => {
+    const tab = tabs.find((t) => t.id === id);
+    if (tab?.dirty) {
+      setCloseConfirmTabId(id);
+    } else {
+      closeTab(id);
+    }
+  };
+
+  const handleConfirmClose = () => {
+    if (closeConfirmTabId) {
+      closeTab(closeConfirmTabId);
+      setCloseConfirmTabId(null);
+    }
+  };
+
+  if (!activeTab && tabs.length > 0) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <span className="text-muted-foreground text-sm">Select or create a tab</span>
+      </div>
+    );
+  }
+
+  if (!activeTab) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <span className="text-muted-foreground text-sm">Loading...</span>
+      </div>
+    );
+  }
+
+  const activeParamsCount = (activeTab.queryParams || []).filter((p) => p.enabled && p.key.trim()).length;
+  const activeHeadersCount = (activeTab.headers || []).filter((h) => h.enabled && h.key.trim()).length;
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Tab bar */}
+      <div className="flex items-center bg-card border-b border-border shrink-0 h-9">
+        <div className="flex items-center flex-1 overflow-x-auto min-w-0">
+          {tabs.map((tab) => {
+            const isActive = tab.id === activeTabId;
+            const methodColor = METHOD_COLORS_MAP[tab.method] || '#64748B';
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-1.5 h-9 px-3 text-xs shrink-0 border-r border-border transition-colors ${
+                  isActive
+                    ? 'bg-background text-foreground border-b-2 border-b-primary'
+                    : 'text-muted-foreground hover:bg-muted/50'
+                }`}
+              >
+                <span className="text-[12px] font-bold uppercase" style={{ color: methodColor }}>
+                  {tab.method}
+                </span>
+                <span className="truncate max-w-[140px]">{tab.title}</span>
+                {tab.dirty && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" title="Unsaved changes" />
+                )}
+                <span
+                  className="material-symbols-outlined text-[12px] hover:text-foreground shrink-0 ml-0.5"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCloseTabClick(tab.id);
+                  }}
+                >
+                  close
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <button
+          onClick={() => addTab()}
+          className="shrink-0 w-9 h-9 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          title="New Tab"
+        >
+          <span className="material-symbols-outlined text-[16px]">add</span>
+        </button>
+      </div>
+
       {/* Request Bar */}
       <div className="flex items-center gap-3 p-3 bg-card border-b border-border shrink-0">
         <div className="flex items-center border border-border rounded-lg flex-1 focus-within:border-primary transition-all overflow-hidden">
-          <MethodSelector method={method} onSelect={(m) => setMethod(m as HttpMethod)} />
+          <MethodSelector
+            method={activeTab.method}
+            onSelect={(m) => updateTab(activeTab.id, { method: m as HttpMethod })}
+          />
           <Input
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            value={activeTab.url}
+            onChange={(e) => updateTab(activeTab.id, { url: e.target.value })}
             placeholder="https://api.example.com/endpoint"
             className="flex-1 bg-transparent border-none text-xs font-mono text-foreground h-9 focus:ring-0 px-4 placeholder:text-muted-foreground"
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
           />
           <Button
-            onClick={isLoading ? handleCancel : handleSend}
+            onClick={activeTab.isLoading ? handleCancel : handleSend}
             className={`h-9 px-5 text-xs font-bold rounded-none ${
-              isLoading ? 'bg-[#EF4444] hover:bg-[#DC2626] text-white' : 'bg-primary hover:bg-primary/90 text-primary-foreground'
+              activeTab.isLoading
+                ? 'bg-[#EF4444] hover:bg-[#DC2626] text-white'
+                : 'bg-primary hover:bg-primary/90 text-primary-foreground'
             }`}
           >
-            {isLoading ? (
+            {activeTab.isLoading ? (
               <><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-1" />Cancel</>
             ) : (
               <><span className="material-symbols-outlined text-[14px] mr-1">send</span>Send</>
@@ -148,20 +298,33 @@ export default function ClientPage() {
         </div>
         <button className="flex items-center gap-2 px-3 py-1.5 bg-background border border-border rounded-lg hover:bg-muted transition-colors shrink-0">
           <span className="w-2 h-2 rounded-full bg-[#10B981]" />
-          <span className="text-[11px] text-muted-foreground font-medium">Production</span>
+          <span className="text-[13px] text-muted-foreground font-medium">Production</span>
           <span className="material-symbols-outlined text-[14px] text-muted-foreground">expand_more</span>
         </button>
       </div>
 
       {/* Action pills */}
       <div className="flex gap-2 px-3 py-1.5 bg-card/50 border-b border-border shrink-0">
-        <Button variant="ghost" onClick={() => setShowSaveModal(true)}
-          className="h-7 px-3 text-[10px] font-semibold text-primary bg-primary/10 border border-primary/20 rounded hover:bg-primary/15">
+        <Button
+          variant="ghost"
+          onClick={() => setShowSaveModal(true)}
+          className="h-7 px-3 text-[12px] font-semibold text-primary bg-primary/10 border border-primary/20 rounded hover:bg-primary/15"
+        >
           <span className="material-symbols-outlined text-[14px] mr-1">bookmark_add</span>Add to Collection
         </Button>
-        <Button variant="ghost" onClick={handleReset}
-          className="h-7 px-3 text-[10px] font-semibold text-primary bg-primary/10 border border-primary/20 rounded hover:bg-primary/15">
+        <Button
+          variant="ghost"
+          onClick={handleReset}
+          className="h-7 px-3 text-[12px] font-semibold text-primary bg-primary/10 border border-primary/20 rounded hover:bg-primary/15"
+        >
           <span className="material-symbols-outlined text-[14px] mr-1">refresh</span>Reset
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => setShowMatrixDialog(true)}
+          className="h-7 px-3 text-[12px] font-semibold text-primary bg-primary/10 border border-primary/20 rounded hover:bg-primary/15"
+        >
+          <span className="material-symbols-outlined text-[14px] mr-1">grid_view</span>Run Matrix
         </Button>
       </div>
 
@@ -180,23 +343,58 @@ export default function ClientPage() {
               <TabsTrigger value="body" className="text-xs data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 py-2 text-muted-foreground">
                 Body
               </TabsTrigger>
-              <TabsTrigger value="tests" disabled className="text-xs rounded-none px-3 py-2 text-muted-foreground cursor-not-allowed">
-                Tests <span className="text-[9px] ml-0.5">M2</span>
+              <TabsTrigger value="tests" className="text-xs data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 py-2 text-muted-foreground">
+                Tests{(activeTab.assertions || []).filter((a) => a.enabled).length > 0 ? ` (${(activeTab.assertions || []).filter((a) => a.enabled).length})` : ''}
               </TabsTrigger>
-              <TabsTrigger value="extractions" disabled className="text-xs rounded-none px-3 py-2 text-muted-foreground cursor-not-allowed">
-                Extractions <span className="text-[9px] ml-0.5">M2</span>
+              <TabsTrigger value="extractions" className="text-xs data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 py-2 text-muted-foreground">
+                Extractions{(activeTab.extractions || []).filter((e) => e.enabled).length > 0 ? ` (${(activeTab.extractions || []).filter((e) => e.enabled).length})` : ''}
               </TabsTrigger>
             </TabsList>
             <div className="flex-1 overflow-auto p-4 min-h-0">
               <TabsContent value="params" className="m-0 mt-0">
-                <KeyValueEditor pairs={queryParams} onChange={setQueryParams} keyPlaceholder="Parameter" valuePlaceholder="Value" />
+                <KeyValueEditor
+                  pairs={activeTab.queryParams || []}
+                  onChange={(pairs) => updateTab(activeTab.id, { queryParams: pairs })}
+                  keyPlaceholder="Parameter"
+                  valuePlaceholder="Value"
+                />
               </TabsContent>
               <TabsContent value="headers" className="m-0 mt-0">
-                <KeyValueEditor pairs={headers} onChange={setHeaders} keyPlaceholder="Header" valuePlaceholder="Value"
-                  suggestedKeys={['Authorization', 'Content-Type', 'Accept', 'User-Agent']} />
+                <KeyValueEditor
+                  pairs={activeTab.headers || []}
+                  onChange={(pairs) => updateTab(activeTab.id, { headers: pairs })}
+                  keyPlaceholder="Header"
+                  valuePlaceholder="Value"
+                  suggestedKeys={['Authorization', 'Content-Type', 'Accept', 'User-Agent']}
+                />
               </TabsContent>
               <TabsContent value="body" className="m-0 mt-0 h-full">
-                <BodyEditor bodyType={bodyType} body={body} onBodyTypeChange={setBodyType} onBodyChange={setBody} />
+                <BodyEditor
+                  bodyType={activeTab.bodyType}
+                  body={activeTab.body}
+                  onBodyTypeChange={(bt) => updateTab(activeTab.id, { bodyType: bt })}
+                  onBodyChange={(b) => updateTab(activeTab.id, { body: b })}
+                />
+              </TabsContent>
+              <TabsContent value="tests" className="m-0 mt-0 h-full">
+                <AssertionsEditor
+                  assertions={activeTab.assertions || []}
+                  onChange={(assertions) => updateTab(activeTab.id, { assertions })}
+                  onRun={() => {
+                    if (!activeTab.response) {
+                      toast.error('Send a request first to run assertions');
+                      return;
+                    }
+                    const ran = runAllAssertions(activeTab.assertions || [], activeTab.response);
+                    updateTab(activeTab.id, { assertions: ran });
+                  }}
+                />
+              </TabsContent>
+              <TabsContent value="extractions" className="m-0 mt-0 h-full">
+                <ExtractionsEditor
+                  extractions={activeTab.extractions || []}
+                  onChange={(extractions) => updateTab(activeTab.id, { extractions })}
+                />
               </TabsContent>
             </div>
           </Tabs>
@@ -212,20 +410,56 @@ export default function ClientPage() {
 
         {/* Response viewer (bottom) */}
         <div className="flex flex-col bg-background min-h-[120px]" style={{ height: `${100 - splitPercent}%` }}>
-          <ResponsePanel response={response} error={error} isLoading={isLoading} />
+          <ResponsePanel
+            response={activeTab.response}
+            error={activeTab.error}
+            isLoading={activeTab.isLoading}
+          />
         </div>
       </div>
 
       <SaveRequestDialog
         open={showSaveModal}
         onOpenChange={setShowSaveModal}
-        onSaved={(id) => console.log('Saved request:', id)}
-        method={method}
-        url={url}
-        headers={headers}
-        queryParams={queryParams}
-        bodyType={bodyType}
-        body={body}
+        onSaved={(id) => {
+          console.log('Saved request:', id);
+          if (activeTab) markClean(activeTab.id);
+        }}
+        method={activeTab.method}
+        url={activeTab.url}
+        headers={activeTab.headers || []}
+        queryParams={activeTab.queryParams || []}
+        bodyType={activeTab.bodyType}
+        body={activeTab.body}
+      />
+
+      {/* Close confirmation dialog */}
+      <AlertDialog open={closeConfirmTabId !== null} onOpenChange={(open) => { if (!open) setCloseConfirmTabId(null); }}>
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This tab has unsaved changes. Are you sure you want to close it?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={handleConfirmClose}>
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <MatrixRunner
+        open={showMatrixDialog}
+        onOpenChange={setShowMatrixDialog}
+        method={activeTab.method}
+        url={activeTab.url}
+        headers={activeTab.headers || []}
+        queryParams={activeTab.queryParams || []}
+        bodyType={activeTab.bodyType}
+        body={activeTab.body}
       />
     </div>
   );

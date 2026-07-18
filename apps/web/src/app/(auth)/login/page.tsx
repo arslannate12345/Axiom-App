@@ -56,7 +56,7 @@ export default function LoginPage() {
                 AXIOM
               </h1>
             </div>
-            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.2em]">
+            <p className="text-[13px] font-semibold text-muted-foreground uppercase tracking-[0.2em]">
               Workbench Authentication
             </p>
           </div>
@@ -65,7 +65,7 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="space-y-5">
             {/* Email */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <label className="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <span className="material-symbols-outlined text-[14px]">alternate_email</span>
                 Email Address
               </label>
@@ -81,14 +81,14 @@ export default function LoginPage() {
             {/* Password */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <label className="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                   <span className="material-symbols-outlined text-[14px]">lock</span>
                   Password
                 </label>
                 <button
                   type="button"
                   onClick={() => toast.info('Password reset coming soon')}
-                  className="text-[11px] font-semibold text-primary hover:underline transition-all"
+                  className="text-[13px] font-semibold text-primary hover:underline transition-all"
                 >
                   FORGOT?
                 </button>
@@ -106,7 +106,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-10 bg-primary hover:bg-primary/90 text-white text-[11px] font-semibold uppercase tracking-widest rounded"
+              className="w-full h-10 bg-primary hover:bg-primary/90 text-white text-[13px] font-semibold uppercase tracking-widest rounded"
             >
               {loading ? (
                 <>
@@ -125,7 +125,7 @@ export default function LoginPage() {
           {/* Divider */}
           <div className="flex items-center gap-4 my-8">
             <Separator className="flex-1 bg-border" />
-            <span className="text-[11px] font-semibold text-muted-foreground">OR</span>
+            <span className="text-[13px] font-semibold text-muted-foreground">OR</span>
             <Separator className="flex-1 bg-border" />
           </div>
 
@@ -145,7 +145,7 @@ export default function LoginPage() {
       {/* Technical Footer */}
       <div className="fixed bottom-8 flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
         <span className="material-symbols-outlined text-[14px] text-muted-foreground">info</span>
-        <span className="text-[11px] font-mono text-muted-foreground">
+        <span className="text-[13px] font-mono text-muted-foreground">
           Connection secured via TLS 1.3 / Axiom-Auth-v2
         </span>
       </div>

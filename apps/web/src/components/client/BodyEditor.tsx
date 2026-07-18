@@ -50,7 +50,7 @@ export function BodyEditor({ bodyType, body, onBodyTypeChange, onBodyChange }: B
             key={type}
             variant={bodyType === type ? 'default' : 'outline'}
             onClick={() => onBodyTypeChange(type)}
-            className={`h-7 px-3 text-[10px] font-semibold uppercase tracking-wider ${
+            className={`h-7 px-3 text-[12px] font-semibold uppercase tracking-wider ${
               bodyType === type
                 ? 'bg-primary text-white'
                 : 'bg-transparent border-border text-muted-foreground hover:text-foreground'
@@ -63,7 +63,7 @@ export function BodyEditor({ bodyType, body, onBodyTypeChange, onBodyChange }: B
           <Button
             variant="ghost"
             onClick={handleFormat}
-            className="ml-auto h-7 px-3 text-[10px] font-semibold text-primary hover:text-primary"
+            className="ml-auto h-7 px-3 text-[12px] font-semibold text-primary hover:text-primary"
           >
             Beautify
           </Button>

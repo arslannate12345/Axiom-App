@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from 'sonner';
 import * as service from '@/lib/supabase-service';
 import type { ReportRecord } from '@/lib/supabase-service';
+import { ReportDetailDialog } from '@/components/reports/ReportDetailDialog';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function SettingsPage() {
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [reports, setReports] = useState<ReportRecord[]>([]);
+  const [viewingReport, setViewingReport] = useState<ReportRecord | null>(null);
 
   useEffect(() => { setMounted(true); loadReports(); }, []);
 
@@ -51,13 +53,13 @@ export default function SettingsPage() {
           <h2 className="text-lg font-bold text-foreground mb-1">{user?.email?.split('@')[0] || 'Developer'}</h2>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">{user?.email}</span>
-            <span className="px-2 py-0.5 bg-primary/20 text-primary text-[10px] font-bold rounded uppercase tracking-widest border border-primary/30">Pro Plan</span>
+            <span className="px-2 py-0.5 bg-primary/20 text-primary text-[12px] font-bold rounded uppercase tracking-widest border border-primary/30">Pro Plan</span>
           </div>
         </div>
 
         <Card className="bg-card border-border rounded-xl overflow-hidden mb-6">
           <div className="px-5 py-3 border-b border-border bg-muted/20 flex justify-between items-center">
-            <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Account</h3>
+            <h3 className="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider">Account</h3>
             <span className="material-symbols-outlined text-sm text-muted-foreground">lock</span>
           </div>
           <CardContent className="p-5 space-y-4">
@@ -86,7 +88,7 @@ export default function SettingsPage() {
 
         <Card className="bg-card border-border rounded-xl overflow-hidden mb-6">
           <div className="px-5 py-3 border-b border-border bg-muted/20 flex justify-between items-center">
-            <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Workspace</h3>
+            <h3 className="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider">Workspace</h3>
             <span className="material-symbols-outlined text-sm text-muted-foreground">terminal</span>
           </div>
           <CardContent className="p-5">
@@ -99,7 +101,7 @@ export default function SettingsPage() {
         {/* Reports */}
         <Card className="bg-card border-border rounded-xl overflow-hidden mb-6">
           <div className="px-5 py-3 border-b border-border bg-muted/20 flex justify-between items-center">
-            <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Reports</h3>
+            <h3 className="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider">Reports</h3>
             <span className="material-symbols-outlined text-sm text-muted-foreground">description</span>
           </div>
           <CardContent className="p-0">
@@ -114,12 +116,19 @@ export default function SettingsPage() {
                       <div className="min-w-0">
                         <p className="text-xs font-medium text-foreground truncate">{r.name}</p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <p className="text-[10px] text-muted-foreground">{timeAgo(r.created_at)}</p>
-                          <Badge className="text-[9px] px-1.5 py-0 bg-primary/10 text-primary border-primary/20">{r.report_type}</Badge>
+                          <p className="text-[12px] text-muted-foreground">{timeAgo(r.created_at)}</p>
+                          <Badge className="text-[12px] px-1.5 py-0 bg-primary/10 text-primary border-primary/20">{r.report_type}</Badge>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 ml-2 shrink-0">
+                      <button
+                        onClick={() => setViewingReport(r)}
+                        className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                        title="View report"
+                      >
+                        <span className="material-symbols-outlined text-sm">visibility</span>
+                      </button>
                       <button
                         onClick={() => {
                           const url = `${window.location.origin}/reports/${r.share_token}`;
@@ -171,13 +180,13 @@ export default function SettingsPage() {
               <div className="flex bg-background p-1 rounded border border-border">
                 <button
                   onClick={() => setTheme('dark')}
-                  className={`px-3 py-1 rounded text-[10px] font-bold uppercase tracking-tighter ${mounted && theme === 'dark' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
+                  className={`px-3 py-1 rounded text-[12px] font-bold uppercase tracking-tighter ${mounted && theme === 'dark' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
                 >
                   Dark
                 </button>
                 <button
                   onClick={() => setTheme('light')}
-                  className={`px-3 py-1 rounded text-[10px] font-bold uppercase tracking-tighter ${mounted && theme === 'light' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
+                  className={`px-3 py-1 rounded text-[12px] font-bold uppercase tracking-tighter ${mounted && theme === 'light' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
                 >
                   Light
                 </button>
@@ -186,6 +195,12 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <ReportDetailDialog
+        open={viewingReport !== null}
+        onOpenChange={(open) => { if (!open) setViewingReport(null); }}
+        report={viewingReport}
+      />
     </div>
   );
 }

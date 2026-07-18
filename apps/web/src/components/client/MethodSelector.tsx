@@ -38,7 +38,7 @@ export function MethodSelector({ method, onSelect }: MethodSelectorProps) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="bg-card border-border min-w-[160px]">
-        <div className="px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-center">
+        <div className="px-3 py-2 text-[12px] font-bold text-muted-foreground uppercase tracking-wider text-center">
           HTTP Method
         </div>
         {METHODS.map((m) => (

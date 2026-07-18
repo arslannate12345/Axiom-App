@@ -46,7 +46,7 @@ export function KeyValueEditor({
             }`}
           >
             {pair.enabled && (
-              <span className="text-white text-[10px] font-bold">✓</span>
+              <span className="text-white text-[12px] font-bold">✓</span>
             )}
           </button>
 

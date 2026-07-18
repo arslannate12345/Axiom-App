@@ -62,7 +62,7 @@ export function ResponsePanel({ response, error, isLoading }: ResponsePanelProps
       <div className="flex items-center gap-4 px-4 py-2 bg-sidebar border-b border-border shrink-0">
         <div className="flex items-center gap-2">
           <Badge
-            className="text-white text-[11px] font-bold px-3 py-1 rounded"
+            className="text-white text-[13px] font-bold px-3 py-1 rounded"
             style={{ backgroundColor: statusColor }}
           >
             {response.status} {response.statusText}
@@ -70,11 +70,11 @@ export function ResponsePanel({ response, error, isLoading }: ResponsePanelProps
         </div>
         <div className="flex items-center gap-1.5 text-muted-foreground">
           <span className="material-symbols-outlined text-[14px]">schedule</span>
-          <span className="text-[11px] font-mono">{formatMs(response.totalTime)}</span>
+          <span className="text-[13px] font-mono">{formatMs(response.totalTime)}</span>
         </div>
         <div className="flex items-center gap-1.5 text-muted-foreground">
           <span className="material-symbols-outlined text-[14px]">database</span>
-          <span className="text-[11px] font-mono">{formatBytes(response.size)}</span>
+          <span className="text-[13px] font-mono">{formatBytes(response.size)}</span>
         </div>
         <div className="ml-auto flex gap-2">
           <button
@@ -188,7 +188,7 @@ export function ResponsePanel({ response, error, isLoading }: ResponsePanelProps
               {Object.entries(response.headers).map(([key, value]) => (
                 <div
                   key={key}
-                  className="flex justify-between py-1.5 px-2 rounded text-[11px] hover:bg-card transition-colors"
+                  className="flex justify-between py-1.5 px-2 rounded text-[13px] hover:bg-card transition-colors"
                 >
                   <span className="text-[#93C5FD] font-mono font-medium">{key}</span>
                   <span className="text-muted-foreground font-mono ml-4 text-right break-all max-w-[60%]">

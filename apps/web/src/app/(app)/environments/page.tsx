@@ -133,7 +133,7 @@ export default function EnvironmentsPage() {
       {/* Left: Environment List */}
       <aside className="w-72 border-r border-border bg-card flex flex-col shrink-0">
         <div className="p-4 flex justify-between items-center border-b border-border">
-          <h2 className="text-[11px] font-semibold text-primary uppercase tracking-wider">
+          <h2 className="text-[13px] font-semibold text-primary uppercase tracking-wider">
             Environments
           </h2>
           <button
@@ -194,7 +194,7 @@ export default function EnvironmentsPage() {
             <header className="px-6 py-4 border-b border-border flex items-center justify-between bg-card/50">
               <div className="flex items-center gap-3">
                 <h2 className="text-sm font-bold text-foreground">{activeEnv.name}</h2>
-                <span className="px-2 py-0.5 rounded bg-[rgba(16,185,129,0.2)] text-[#10B981] text-[10px] font-bold uppercase tracking-widest border border-[rgba(16,185,129,0.3)]">
+                <span className="px-2 py-0.5 rounded bg-[rgba(16,185,129,0.2)] text-[#10B981] text-[12px] font-bold uppercase tracking-widest border border-[rgba(16,185,129,0.3)]">
                   Active
                 </span>
               </div>
@@ -245,10 +245,10 @@ export default function EnvironmentsPage() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-muted/30">
-                      <th className="px-4 py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider w-1/4">Key</th>
-                      <th className="px-4 py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider w-1/2">Value</th>
-                      <th className="px-4 py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-center w-20">Secret</th>
-                      <th className="px-4 py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-right w-20">Actions</th>
+                      <th className="px-4 py-3 text-[12px] font-bold text-muted-foreground uppercase tracking-wider w-1/4">Key</th>
+                      <th className="px-4 py-3 text-[12px] font-bold text-muted-foreground uppercase tracking-wider w-1/2">Value</th>
+                      <th className="px-4 py-3 text-[12px] font-bold text-muted-foreground uppercase tracking-wider text-center w-20">Secret</th>
+                      <th className="px-4 py-3 text-[12px] font-bold text-muted-foreground uppercase tracking-wider text-right w-20">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="text-xs font-mono">
@@ -265,7 +265,7 @@ export default function EnvironmentsPage() {
                         <td colSpan={4} className="px-4 py-12 text-center">
                           <span className="material-symbols-outlined text-muted-foreground text-3xl block mb-2">info</span>
                           <p className="text-xs text-muted-foreground">No variables yet</p>
-                          <p className="text-[10px] text-muted-foreground mt-1">Add variables for this environment</p>
+                          <p className="text-[12px] text-muted-foreground mt-1">Add variables for this environment</p>
                         </td>
                       </tr>
                     )}
@@ -296,7 +296,7 @@ export default function EnvironmentsPage() {
 
             {/* Footer */}
             <footer className="px-6 py-3 border-t border-border bg-card flex items-center justify-between">
-              <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+              <div className="flex items-center gap-3 text-[12px] text-muted-foreground">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-[#10B981]" />
                   {syncing ? 'Syncing...' : 'Saved'}

@@ -133,7 +133,7 @@ export function SaveRequestDialog({
         <div className="space-y-4">
           {/* Request Name */}
           <div>
-            <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">
+            <label className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">
               Request Name
             </label>
             <Input
@@ -147,7 +147,7 @@ export function SaveRequestDialog({
 
           {/* Workspace */}
           <div>
-            <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">
+            <label className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">
               Workspace
             </label>
             <div className="flex flex-wrap gap-2">
@@ -190,7 +190,7 @@ export function SaveRequestDialog({
 
           {/* Collection */}
           <div>
-            <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">
+            <label className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">
               Collection
             </label>
             <ScrollArea className="max-h-36">

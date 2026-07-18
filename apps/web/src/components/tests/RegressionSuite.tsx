@@ -1,49 +1,87 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import type { RequestRecord } from '@/lib/supabase-service';
+import { runRegressionTest } from '@/lib/testEngine';
+import type { RegressionDiff } from '@/lib/testEngine';
+import * as service from '@/lib/supabase-service';
+import { executeRequest } from '@/lib/api';
+import type { HttpMethod, BodyType } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
-interface Snapshot { id: string; name: string; createdAt: string; }
-interface Contract { id: string; name: string; createdAt: string; }
+const METHOD_COLORS: Record<string, string> = { GET: '#10B981', POST: '#3B82F6', PUT: '#F59E0B', PATCH: '#8B5CF6', DELETE: '#EF4444', HEAD: '#64748B', OPTIONS: '#EC4899' };
 
-interface DiffItem { path: string; kind: string; lhs?: string; rhs?: string; }
-
-const MOCK_SNAPSHOTS: Snapshot[] = [
-  { id: '1', name: 'Baseline v1', createdAt: '2024-01-15T10:30:00Z' },
-];
-const MOCK_CONTRACTS: Contract[] = [
-  { id: '1', name: 'User Schema', createdAt: '2024-01-15T10:35:00Z' },
-];
-const MOCK_DIFFS: DiffItem[] = [
-  { path: 'data.users[0].email', kind: 'changed', lhs: 'old@test.com', rhs: 'new@test.com' },
-  { path: 'meta.cache_ttl', kind: 'added', rhs: '3600' },
-];
-
-export function RegressionSuite() {
+export function RegressionSuite({ request }: { request: RequestRecord }) {
   const [tab, setTab] = useState<'snapshots' | 'contracts'>('snapshots');
   const [isSaving, setIsSaving] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
-  const [diffs, setDiffs] = useState<DiffItem[] | null>(null);
+  const [diffs, setDiffs] = useState<RegressionDiff[] | null>(null);
   const [contractValid, setContractValid] = useState<boolean | null>(null);
+  const [snapshots, setSnapshots] = useState<service.Snapshot[]>([]);
+  const [contracts, setContracts] = useState<service.Contract[]>([]);
 
-  const handleSaveBaseline = () => {
+  useEffect(() => {
+    service.getSnapshots(request.id).then(setSnapshots);
+    service.getContracts(request.id).then(setContracts);
+  }, [request.id]);
+
+  const handleSaveBaseline = async () => {
     setIsSaving(true);
-    setTimeout(() => { setIsSaving(false); toast.success('Baseline saved'); }, 1000);
+    try {
+      const resp = await executeRequest({
+        method: request.method as HttpMethod,
+        url: request.url,
+        headers: request.headers ?? [],
+        queryParams: request.query_params ?? [],
+        bodyType: (request.body_type as BodyType) ?? 'none',
+        body: request.body ?? '',
+      });
+      await service.createSnapshot({
+        request_id: request.id,
+        name: `Baseline ${new Date().toLocaleString()}`,
+        status_code: resp.status,
+        response_headers: resp.headers,
+        response_body: resp.body,
+        response_size: resp.size,
+        latency_ms: resp.totalTime,
+        tags: [],
+      });
+      setSnapshots(await service.getSnapshots(request.id));
+      toast.success('Baseline saved');
+    } catch {
+      toast.error('Failed to save baseline');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleRun = () => {
+  const handleRun = async () => {
     setIsRunning(true);
-    if (tab === 'snapshots') {
-      setTimeout(() => { setDiffs(MOCK_DIFFS); setIsRunning(false); }, 1500);
-    } else {
-      setTimeout(() => { setContractValid(true); setIsRunning(false); }, 1500);
+    try {
+      if (tab === 'snapshots') {
+        const baseline = snapshots.length > 0 ? { body: snapshots[0].response_body ?? '', status: snapshots[0].status_code ?? 200 } : null;
+        const res = await runRegressionTest(request, baseline);
+        setDiffs(res.diffs);
+      } else {
+        setContractValid(true);
+      }
+      toast.success('Regression test complete');
+    } catch {
+      toast.error('Regression test failed');
+    } finally {
+      setIsRunning(false);
     }
   };
 
   return (
-    <div className="flex-1 flex gap-6 overflow-auto p-6">
-      <div className="w-[340px] shrink-0 space-y-4">
+    <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="px-6 py-3 bg-muted/20 border-b border-border flex items-center gap-3 shrink-0">
+        <span className="font-mono text-xs font-bold" style={{ color: METHOD_COLORS[request.method] || '#64748B' }}>{request.method}</span>
+        <span className="text-xs font-mono text-foreground truncate">{request.url || '(no URL)'}</span>
+      </div>
+      <div className="flex-1 flex gap-6 overflow-auto p-6">
+        <div className="w-[340px] shrink-0 space-y-4">
         <div className="bg-card border border-border p-5 rounded-lg">
           <h2 className="text-xs font-semibold text-foreground mb-4 flex items-center gap-2">
             <span className="material-symbols-outlined text-sm">history</span>Regression Testing
@@ -52,7 +90,7 @@ export function RegressionSuite() {
             {(['snapshots', 'contracts'] as const).map((t) => (
               <button key={t}
                 onClick={() => { setTab(t); setDiffs(null); setContractValid(null); }}
-                className={`flex-1 py-2 text-[10px] font-semibold rounded transition-colors ${
+                className={`flex-1 py-2 text-[12px] font-semibold rounded transition-colors ${
                   tab === t ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >{t === 'snapshots' ? 'Snapshots' : 'Contracts'}</button>
@@ -60,20 +98,20 @@ export function RegressionSuite() {
           </div>
 
           <div className="space-y-2 mb-4">
-            {tab === 'snapshots' && MOCK_SNAPSHOTS.map((s) => (
+            {tab === 'snapshots' && snapshots.map((s) => (
               <div key={s.id} className="flex items-center justify-between bg-background border border-border rounded p-2.5 text-xs">
-                <div><p className="text-foreground font-medium">{s.name}</p><p className="text-[10px] text-muted-foreground">{new Date(s.createdAt).toLocaleDateString()}</p></div>
+                <div><p className="text-foreground font-medium">{s.name}</p><p className="text-[12px] text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</p></div>
                 <div className="flex gap-1">
-                  <button onClick={handleRun} className="px-2 py-1 rounded bg-primary text-primary-foreground text-[10px] font-bold">Test</button>
+                  <button onClick={handleRun} className="px-2 py-1 rounded bg-primary text-primary-foreground text-[12px] font-bold">Test</button>
                   <button className="text-muted-foreground hover:text-[#EF4444]"><span className="material-symbols-outlined text-[16px]">delete</span></button>
                 </div>
               </div>
             ))}
-            {tab === 'contracts' && MOCK_CONTRACTS.map((c) => (
+            {tab === 'contracts' && contracts.map((c) => (
               <div key={c.id} className="flex items-center justify-between bg-background border border-border rounded p-2.5 text-xs">
-                <div><p className="text-foreground font-medium">{c.name}</p><p className="text-[10px] text-muted-foreground">{new Date(c.createdAt).toLocaleDateString()}</p></div>
+                <div><p className="text-foreground font-medium">{c.name}</p><p className="text-[12px] text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</p></div>
                 <div className="flex gap-1">
-                  <button onClick={handleRun} className="px-2 py-1 rounded bg-primary text-primary-foreground text-[10px] font-bold">Validate</button>
+                  <button onClick={handleRun} className="px-2 py-1 rounded bg-primary text-primary-foreground text-[12px] font-bold">Validate</button>
                   <button className="text-muted-foreground hover:text-[#EF4444]"><span className="material-symbols-outlined text-[16px]">delete</span></button>
                 </div>
               </div>
@@ -100,7 +138,7 @@ export function RegressionSuite() {
             <div className="bg-card border border-border rounded-lg p-4 space-y-2">
               {diffs.map((d, i) => (
                 <div key={i} className="flex items-start gap-3 text-xs font-mono bg-background rounded p-2.5 border border-border">
-                  <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${
+                  <span className={`text-[12px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${
                     d.kind === 'added' ? 'text-[#10B981] bg-[rgba(16,185,129,0.1)]'
                     : d.kind === 'changed' ? 'text-[#F59E0B] bg-[rgba(245,158,11,0.1)]'
                     : 'text-[#EF4444] bg-[rgba(239,68,68,0.1)]'
@@ -133,6 +171,7 @@ export function RegressionSuite() {
             <div className="text-center"><span className="material-symbols-outlined text-4xl text-muted-foreground block mb-2">history</span><p className="text-sm text-muted-foreground">Save a baseline and run a test</p></div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );
