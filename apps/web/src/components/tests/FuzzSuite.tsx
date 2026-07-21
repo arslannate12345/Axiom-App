@@ -1,20 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { RequestRecord } from '@/lib/supabase-service';
 import { runFuzzTest, FUZZ_STRATEGIES } from '@/lib/testEngine';
 import type { FuzzResult } from '@/lib/testEngine';
+import { useTestResultsStore } from '@/stores/testResultsStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
-const METHOD_COLORS: Record<string, string> = { GET: '#10B981', POST: '#3B82F6', PUT: '#F59E0B', PATCH: '#8B5CF6', DELETE: '#EF4444', HEAD: '#64748B', OPTIONS: '#EC4899' };
+import { METHOD_COLORS } from '@/lib/constants';
 
 export function FuzzSuite({ request }: { request: RequestRecord }) {
   const [active, setActive] = useState<Set<string>>(new Set(FUZZ_STRATEGIES.map((s) => s.id)));
   const [iterations, setIterations] = useState('10');
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState<FuzzResult[] | null>(null);
+  const setSectionResults = useTestResultsStore((s) => s.setSectionResults);
+
+  useEffect(() => {
+    if (results) setSectionResults('fuzz', results);
+  }, [results]);
 
   const toggle = (id: string) => {
     const next = new Set(active);
@@ -31,8 +37,9 @@ export function FuzzSuite({ request }: { request: RequestRecord }) {
       });
       setResults(res);
       toast.success(`Fuzz test complete: ${res.length} strategies tested`);
-    } catch {
-      toast.error('Fuzz test failed');
+    } catch (err) {
+      console.error('Fuzz test failed', err);
+      toast.error((err as Error).message || 'Fuzz test failed');
     } finally {
       setIsRunning(false);
     }

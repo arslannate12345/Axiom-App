@@ -8,8 +8,13 @@ import { ChaosSuite } from '@/components/tests/ChaosSuite';
 import { IdempotencySuite } from '@/components/tests/IdempotencySuite';
 import { RegressionSuite } from '@/components/tests/RegressionSuite';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import * as service from '@/lib/supabase-service';
 import type { RequestRecord } from '@/lib/supabase-service';
+import { useTestResultsStore } from '@/stores/testResultsStore';
+import { ReportBuilder } from '@/components/reports/ReportBuilder';
+import type { AggregatedSection } from '@/lib/reportGenerator';
 
 type TestSuite = 'benchmarks' | 'regression' | 'fuzzing' | 'security' | 'chaos' | 'idempotency';
 
@@ -22,10 +27,7 @@ const SUITS: { id: TestSuite; label: string }[] = [
   { id: 'chaos', label: 'Chaos' },
 ];
 
-const METHOD_COLORS: Record<string, string> = {
-  GET: '#10B981', POST: '#3B82F6', PUT: '#F59E0B',
-  PATCH: '#8B5CF6', DELETE: '#EF4444', HEAD: '#64748B', OPTIONS: '#EC4899',
-};
+import { METHOD_COLORS } from '@/lib/constants';
 
 export default function TestsPage() {
   const [active, setActive] = useState<TestSuite>('benchmarks');
@@ -33,6 +35,14 @@ export default function TestsPage() {
   const [savedRequests, setSavedRequests] = useState<RequestRecord[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showReportBuilder, setShowReportBuilder] = useState(false);
+  const [editUrl, setEditUrl] = useState('');
+
+  const testStore = useTestResultsStore();
+
+  useEffect(() => {
+    if (selectedRequest) setEditUrl(selectedRequest.url);
+  }, [selectedRequest?.id]);
 
   useEffect(() => {
     loadRequests();
@@ -63,32 +73,43 @@ export default function TestsPage() {
       <div className="px-6 py-4 bg-card border-b border-border shrink-0">
         <div className="flex items-center gap-3">
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider shrink-0">Target Request</label>
-          <div className="relative flex-1 max-w-xl">
+          <div className="relative flex-1 max-w-2xl flex items-center gap-2">
+            {/* Request picker button */}
             <button
               onClick={() => setSearchOpen(!searchOpen)}
-              className="w-full flex items-center gap-3 h-10 px-4 bg-background border border-border rounded-lg text-left hover:border-primary/50 transition-colors"
+              className="shrink-0 flex items-center gap-2 h-10 px-3 bg-background border border-border rounded-lg hover:border-primary/50 transition-colors"
+              title="Select a saved request"
             >
-              {selectedRequest ? (
-                <>
-                  <span className="font-mono text-xs font-bold shrink-0" style={{ color: METHOD_COLORS[selectedRequest.method] || '#64748B' }}>
-                    {selectedRequest.method}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate">{selectedRequest.name}</p>
-                    <p className="text-[12px] text-muted-foreground font-mono truncate">{selectedRequest.url}</p>
-                  </div>
-                  <span className="material-symbols-outlined text-[16px] text-muted-foreground">unfold_more</span>
-                </>
-              ) : (
-                <>
-                  <span className="material-symbols-outlined text-[18px] text-muted-foreground">search</span>
-                  <span className="text-xs text-muted-foreground">Select a saved request to test...</span>
-                  <span className="material-symbols-outlined text-[16px] text-muted-foreground ml-auto">unfold_more</span>
-                </>
-              )}
+              <span className="font-mono text-xs font-bold" style={{ color: selectedRequest ? METHOD_COLORS[selectedRequest.method] || '#64748B' : '#64748B' }}>
+                {selectedRequest?.method || 'GET'}
+              </span>
+              <span className="material-symbols-outlined text-[14px] text-muted-foreground">{searchOpen ? 'expand_less' : 'expand_more'}</span>
             </button>
+            {/* Editable URL */}
+            <Input
+              value={editUrl}
+              onChange={(e) => setEditUrl(e.target.value)}
+              placeholder="https://api.example.com/endpoint"
+              className="flex-1 h-10 bg-background border-border text-xs font-mono text-foreground focus:border-primary"
+              disabled={!selectedRequest}
+            />
+            {selectedRequest && (
+              <Button
+                size="sm"
+                onClick={async () => {
+                  try {
+                    await service.updateRequest(selectedRequest.id, { url: editUrl });
+                    setSelectedRequest({ ...selectedRequest, url: editUrl });
+                    toast.success('URL updated');
+                  } catch { toast.error('Failed to save URL'); }
+                }}
+                className="h-10 px-3 text-xs bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
+              >
+                <span className="material-symbols-outlined text-[14px]">save</span>
+              </Button>
+            )}
             {searchOpen && (
-              <div className="absolute top-full mt-1 left-0 right-0 z-50 bg-card border border-border rounded-lg shadow-xl overflow-hidden">
+              <div className="absolute top-full mt-1 left-0 right-0 z-50 bg-card border border-border rounded-lg shadow-xl overflow-hidden" style={{ maxWidth: '500px' }}>
                 <div className="p-2 border-b border-border">
                   <Input
                     value={searchQuery}
@@ -128,6 +149,15 @@ export default function TestsPage() {
               <div className="fixed inset-0 z-40" onClick={() => setSearchOpen(false)} />
             )}
           </div>
+          {selectedRequest && testStore.sections.length > 0 && (
+            <Button
+              onClick={() => setShowReportBuilder(true)}
+              className="h-10 px-4 text-xs bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
+            >
+              <span className="material-symbols-outlined text-[14px] mr-1">description</span>
+              Generate Report
+            </Button>
+          )}
         </div>
       </div>
 
@@ -161,6 +191,15 @@ export default function TestsPage() {
           </>
         )}
       </div>
+
+      {selectedRequest && (
+        <ReportBuilder
+          open={showReportBuilder}
+          onOpenChange={setShowReportBuilder}
+          request={selectedRequest}
+          sections={testStore.results as AggregatedSection}
+        />
+      )}
     </div>
   );
 }

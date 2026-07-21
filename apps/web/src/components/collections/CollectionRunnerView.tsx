@@ -135,7 +135,7 @@ export function CollectionRunnerView({
     const sum = { passed: p, failed: f, total: steps.length, duration: totalDuration, hasAssertions: steps.some((s) => s.assertionFailures && s.assertionFailures.length > 0) };
     try {
       const report = await service.createReport({
-        collection_id: '00000000-0000-0000-0000-000000000000',
+        collection_id: null,
         name: `${collectionName} - ${new Date().toLocaleDateString()}`,
         report_type: 'collection',
         report_data: {

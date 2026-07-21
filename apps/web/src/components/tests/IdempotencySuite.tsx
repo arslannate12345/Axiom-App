@@ -1,20 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { RequestRecord } from '@/lib/supabase-service';
 import { runIdempotencyTest } from '@/lib/testEngine';
 import type { IdempotencyResult, DiffItem } from '@/lib/testEngine';
+import { useTestResultsStore } from '@/stores/testResultsStore';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 const KIND_LABELS: Record<DiffItem['kind'], string> = { A: 'Added', E: 'Changed', D: 'Removed' };
 
-const METHOD_COLORS: Record<string, string> = { GET: '#10B981', POST: '#3B82F6', PUT: '#F59E0B', PATCH: '#8B5CF6', DELETE: '#EF4444', HEAD: '#64748B', OPTIONS: '#EC4899' };
+import { METHOD_COLORS } from '@/lib/constants';
 
 export function IdempotencySuite({ request }: { request: RequestRecord }) {
   const [mode, setMode] = useState<'sequential' | 'parallel'>('sequential');
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<IdempotencyResult | null>(null);
+  const setSectionResults = useTestResultsStore((s) => s.setSectionResults);
+
+  useEffect(() => {
+    if (result) setSectionResults('idempotency', result);
+  }, [result]);
 
   const handleRun = async () => {
     setIsRunning(true);

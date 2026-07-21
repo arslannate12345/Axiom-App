@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { RequestRecord } from '@/lib/supabase-service';
 import { runChaosTest } from '@/lib/testEngine';
 import type { ChaosIteration } from '@/lib/testEngine';
+import { useTestResultsStore } from '@/stores/testResultsStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
-const METHOD_COLORS: Record<string, string> = { GET: '#10B981', POST: '#3B82F6', PUT: '#F59E0B', PATCH: '#8B5CF6', DELETE: '#EF4444', HEAD: '#64748B', OPTIONS: '#EC4899' };
+import { METHOD_COLORS } from '@/lib/constants';
 
 export function ChaosSuite({ request }: { request: RequestRecord }) {
   const [iterations, setIterations] = useState('20');
@@ -17,6 +18,11 @@ export function ChaosSuite({ request }: { request: RequestRecord }) {
   const [dropProb, setDropProb] = useState('10');
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState<ChaosIteration[] | null>(null);
+  const setSectionResults = useTestResultsStore((s) => s.setSectionResults);
+
+  useEffect(() => {
+    if (results) setSectionResults('chaos', results);
+  }, [results]);
 
   const handleRun = async () => {
     setIsRunning(true);
@@ -29,8 +35,9 @@ export function ChaosSuite({ request }: { request: RequestRecord }) {
       });
       setResults(res);
       toast.success(`Chaos test complete: ${res.filter((r) => r.status === 'passed').length} passed`);
-    } catch {
-      toast.error('Chaos test failed');
+    } catch (err) {
+      console.error('Chaos test failed', err);
+      toast.error((err as Error).message || 'Chaos test failed');
     } finally {
       setIsRunning(false);
     }

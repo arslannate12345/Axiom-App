@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { RequestRecord } from '@/lib/supabase-service';
 import { Line } from 'react-chartjs-2';
 import {
@@ -17,10 +17,11 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { runBenchmark } from '@/lib/testEngine';
 import type { BenchmarkResult, BenchmarkIteration } from '@/lib/testEngine';
+import { useTestResultsStore } from '@/stores/testResultsStore';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
 
-const METHOD_COLORS: Record<string, string> = { GET: '#10B981', POST: '#3B82F6', PUT: '#F59E0B', PATCH: '#8B5CF6', DELETE: '#EF4444', HEAD: '#64748B', OPTIONS: '#EC4899' };
+import { METHOD_COLORS } from '@/lib/constants';
 
 function toNumber(v: string, fb: number): number { const n = parseInt(v); return isNaN(n) ? fb : n; }
 
@@ -38,6 +39,11 @@ export function BenchmarksSuite({ request }: { request: RequestRecord }) {
   const [pattern, setPattern] = useState('Load');
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<BenchmarkResult | null>(null);
+  const setSectionResults = useTestResultsStore((s) => s.setSectionResults);
+
+  useEffect(() => {
+    if (result) setSectionResults('benchmarks', result);
+  }, [result]);
 
   const handleStart = useCallback(async () => {
     setIsRunning(true);

@@ -24,10 +24,13 @@ CREATE INDEX IF NOT EXISTS idx_snapshots_user_id ON snapshots(user_id);
 
 ALTER TABLE snapshots ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can manage own snapshots"
-  ON snapshots FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+DO $$ BEGIN
+  CREATE POLICY "Users can manage own snapshots"
+    ON snapshots FOR ALL
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- -----------------------------------------------------------
 -- 2. CONTRACTS — schema contracts for OpenAPI/JSON Schema validation
@@ -49,18 +52,34 @@ CREATE INDEX IF NOT EXISTS idx_contracts_user_id ON contracts(user_id);
 
 ALTER TABLE contracts ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can manage own contracts"
-  ON contracts FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+DO $$ BEGIN
+  CREATE POLICY "Users can manage own contracts"
+    ON contracts FOR ALL
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TRIGGER update_contracts_updated_at
-  BEFORE UPDATE ON contracts
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DO $$ BEGIN
+  CREATE TRIGGER update_contracts_updated_at
+    BEFORE UPDATE ON contracts
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- -----------------------------------------------------------
--- 3. CHECK CONSTRAINTS
+-- 3. CHECK CONSTRAINTS (normalize existing data first)
 -- -----------------------------------------------------------
+
+-- Normalize assertions.operator values before adding constraint
+UPDATE assertions SET operator = 'equals' WHERE operator NOT IN ('equals','notEquals','contains','notContains','exists','greaterThan','lessThan');
+UPDATE assertions SET operator = 'equals' WHERE operator IS NULL;
+
+-- Normalize requests.method
+UPDATE requests SET method = 'GET' WHERE method IS NULL OR method = '';
+
+-- Normalize requests.body_type
+UPDATE requests SET body_type = 'none' WHERE body_type IS NULL OR body_type = '';
 
 -- requests.method — restrict to valid HTTP methods
 DO $$ BEGIN
@@ -136,14 +155,20 @@ CREATE INDEX IF NOT EXISTS idx_reports_share_token ON reports(share_token);
 
 ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can manage their own reports"
-  ON reports FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+DO $$ BEGIN
+  CREATE POLICY "Users can manage their own reports"
+    ON reports FOR ALL
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TRIGGER update_reports_updated_at
-  BEFORE UPDATE ON reports
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DO $$ BEGIN
+  CREATE TRIGGER update_reports_updated_at
+    BEFORE UPDATE ON reports
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- -----------------------------------------------------------
 -- 7. RPC: get_shared_report (if not already present)

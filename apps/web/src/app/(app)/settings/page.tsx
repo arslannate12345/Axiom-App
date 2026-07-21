@@ -13,7 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from 'sonner';
 import * as service from '@/lib/supabase-service';
 import type { ReportRecord } from '@/lib/supabase-service';
-import { ReportDetailDialog } from '@/components/reports/ReportDetailDialog';
+import { ReportViewer } from '@/components/reports/ReportViewer';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -196,7 +196,7 @@ export default function SettingsPage() {
         </Card>
       </div>
 
-      <ReportDetailDialog
+      <ReportViewer
         open={viewingReport !== null}
         onOpenChange={(open) => { if (!open) setViewingReport(null); }}
         report={viewingReport}

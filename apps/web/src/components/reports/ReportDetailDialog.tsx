@@ -11,10 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { ReportRecord } from '@/lib/supabase-service';
 
-const METHOD_COLORS: Record<string, string> = {
-  GET: '#10B981', POST: '#3B82F6', PUT: '#F59E0B',
-  PATCH: '#8B5CF6', DELETE: '#EF4444', HEAD: '#64748B', OPTIONS: '#EC4899',
-};
+import { METHOD_COLORS } from '@/lib/constants';
 
 interface ReportDetailDialogProps {
   open: boolean;

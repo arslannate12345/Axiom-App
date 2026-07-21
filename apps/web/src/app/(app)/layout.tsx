@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
+import { AnimatePresence, motion } from 'motion/react';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useSupabase } from '@/providers/supabase-provider';
 import { Button } from '@/components/ui/button';
@@ -18,12 +19,14 @@ import {
 import { cn } from '@/lib/utils';
 import * as service from '@/lib/supabase-service';
 import type { RequestRecord } from '@/lib/supabase-service';
+import { METHOD_COLORS } from '@/lib/constants';
 
 const navItems = [
   { href: '/client', label: 'Client', icon: 'api' },
   { href: '/collections', label: 'Collections', icon: 'folder_open' },
   { href: '/environments', label: 'Environments', icon: 'settings_input_component' },
   { href: '/tests', label: 'Tests', icon: 'checklist' },
+  { href: '/reports', label: 'Reports', icon: 'description' },
   { href: '/history', label: 'History', icon: 'history' },
 ] as const;
 
@@ -53,7 +56,7 @@ export default function AppLayout({
     <div className="flex h-screen overflow-hidden">
       {/* SideNav */}
       <aside
-        className="shrink-0 bg-sidebar border-r border-sidebar-border flex flex-col z-50 transition-all duration-200"
+        className="shrink-0 bg-sidebar/80 backdrop-blur-xl border-r border-sidebar-border/60 flex flex-col z-50 transition-all duration-200"
         style={{ width: sidebarWidth }}
       >
         {/* Brand */}
@@ -111,7 +114,7 @@ export default function AppLayout({
                 href={item.href}
                 title={collapsed ? item.label : undefined}
                 className={cn(
-                  'flex items-center gap-3 rounded-md text-sm transition-colors duration-150',
+                  'flex items-center gap-3 rounded-md text-sm transition-all duration-200 active:scale-[0.97]',
                   collapsed ? 'px-2 py-3 justify-center' : 'px-3 py-2',
                   isActive
                     ? 'bg-secondary/50 text-secondary-foreground font-medium border-r-2 border-primary'
@@ -174,7 +177,7 @@ export default function AppLayout({
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* TopBar */}
-        <header className="flex justify-between items-center h-12 px-6 bg-card border-b border-border shrink-0">
+        <header className="flex justify-between items-center h-12 px-6 bg-card/80 backdrop-blur-xl border-b border-border/60 shrink-0">
           <div className="flex items-center gap-2 flex-1">
             {collapsed && (
               <span className="text-sm font-black text-primary uppercase tracking-tighter hidden sm:inline">
@@ -231,7 +234,18 @@ export default function AppLayout({
 
         {/* Page content — CRITICAL: must be flex container so children flex-1 works */}
         <main className="flex-1 min-h-0 flex flex-col overflow-hidden">
-          {children}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="flex-1 flex flex-col min-h-0"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </div>
@@ -240,11 +254,6 @@ export default function AppLayout({
 }
 
 // ─── Search Bar ──────────────────────────────────────────
-
-const METHOD_COLORS: Record<string, string> = {
-  GET: '#10B981', POST: '#3B82F6', PUT: '#F59E0B',
-  PATCH: '#8B5CF6', DELETE: '#EF4444', HEAD: '#64748B', OPTIONS: '#EC4899',
-};
 
 function SearchBar() {
   const router = useRouter();

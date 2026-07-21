@@ -4,19 +4,25 @@ import { useState, useEffect } from 'react';
 import type { RequestRecord } from '@/lib/supabase-service';
 import { runRegressionTest } from '@/lib/testEngine';
 import type { RegressionDiff } from '@/lib/testEngine';
+import { useTestResultsStore } from '@/stores/testResultsStore';
 import * as service from '@/lib/supabase-service';
 import { executeRequest } from '@/lib/api';
 import type { HttpMethod, BodyType } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
-const METHOD_COLORS: Record<string, string> = { GET: '#10B981', POST: '#3B82F6', PUT: '#F59E0B', PATCH: '#8B5CF6', DELETE: '#EF4444', HEAD: '#64748B', OPTIONS: '#EC4899' };
+import { METHOD_COLORS } from '@/lib/constants';
 
 export function RegressionSuite({ request }: { request: RequestRecord }) {
   const [tab, setTab] = useState<'snapshots' | 'contracts'>('snapshots');
   const [isSaving, setIsSaving] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [diffs, setDiffs] = useState<RegressionDiff[] | null>(null);
+  const setSectionResults = useTestResultsStore((s) => s.setSectionResults);
+
+  useEffect(() => {
+    if (diffs) setSectionResults('regression', { diffs });
+  }, [diffs]);
   const [contractValid, setContractValid] = useState<boolean | null>(null);
   const [snapshots, setSnapshots] = useState<service.Snapshot[]>([]);
   const [contracts, setContracts] = useState<service.Contract[]>([]);
@@ -49,8 +55,9 @@ export function RegressionSuite({ request }: { request: RequestRecord }) {
       });
       setSnapshots(await service.getSnapshots(request.id));
       toast.success('Baseline saved');
-    } catch {
-      toast.error('Failed to save baseline');
+    } catch (err) {
+      console.error('Failed to save baseline', err);
+      toast.error((err as Error).message || 'Failed to save baseline');
     } finally {
       setIsSaving(false);
     }
@@ -67,8 +74,9 @@ export function RegressionSuite({ request }: { request: RequestRecord }) {
         setContractValid(true);
       }
       toast.success('Regression test complete');
-    } catch {
-      toast.error('Regression test failed');
+    } catch (err) {
+      console.error('Regression test failed', err);
+      toast.error((err as Error).message || 'Regression test failed');
     } finally {
       setIsRunning(false);
     }
@@ -117,6 +125,10 @@ export function RegressionSuite({ request }: { request: RequestRecord }) {
               </div>
             ))}
           </div>
+
+          <p className="text-[11px] text-muted-foreground mb-4 text-center">
+            {tab === 'snapshots' ? snapshots.length : contracts.length} baseline{tab === 'snapshots' ? snapshots.length !== 1 ? 's' : '' : contracts.length !== 1 ? 's' : ''} saved.
+          </p>
 
           <Button onClick={handleSaveBaseline} disabled={isSaving}
             className="w-full h-9 bg-[#10B981] hover:bg-[#059669] text-white text-xs font-bold">

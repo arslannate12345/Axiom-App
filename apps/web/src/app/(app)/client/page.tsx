@@ -31,15 +31,7 @@ import {
 
 type SubTab = 'params' | 'headers' | 'body' | 'tests' | 'extractions';
 
-const METHOD_COLORS_MAP: Record<string, string> = {
-  GET: '#10B981',
-  POST: '#3B82F6',
-  PUT: '#F59E0B',
-  PATCH: '#8B5CF6',
-  DELETE: '#EF4444',
-  HEAD: '#64748B',
-  OPTIONS: '#EC4899',
-};
+import { METHOD_COLORS } from '@/lib/constants';
 
 export default function ClientPage() {
   const {
@@ -227,7 +219,7 @@ export default function ClientPage() {
         <div className="flex items-center flex-1 overflow-x-auto min-w-0">
           {tabs.map((tab) => {
             const isActive = tab.id === activeTabId;
-            const methodColor = METHOD_COLORS_MAP[tab.method] || '#64748B';
+            const methodColor = METHOD_COLORS[tab.method] || '#64748B';
             return (
               <button
                 key={tab.id}

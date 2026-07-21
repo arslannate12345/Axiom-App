@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { RequestRecord } from '@/lib/supabase-service';
 import { runSecurityScan } from '@/lib/testEngine';
 import type { SecurityCheck, SecurityResult } from '@/lib/testEngine';
+import { useTestResultsStore } from '@/stores/testResultsStore';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
@@ -22,7 +23,7 @@ interface AuditToggle {
   enabled: boolean;
 }
 
-const METHOD_COLORS: Record<string, string> = { GET: '#10B981', POST: '#3B82F6', PUT: '#F59E0B', PATCH: '#8B5CF6', DELETE: '#EF4444', HEAD: '#64748B', OPTIONS: '#EC4899' };
+import { METHOD_COLORS } from '@/lib/constants';
 
 const STATUS_ICON: Record<SecurityCheck['status'], string> = {
   pass: 'check_circle',
@@ -46,6 +47,11 @@ export function SecuritySuite({ request }: { request: RequestRecord }) {
   const [scanDepth, setScanDepth] = useState('L2');
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<SecurityResult | null>(null);
+  const setSectionResults = useTestResultsStore((s) => s.setSectionResults);
+
+  useEffect(() => {
+    if (result) setSectionResults('security', result);
+  }, [result]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [toggles, setToggles] = useState<AuditToggle[]>([
     { id: 'headers', label: 'Header Verification', enabled: true },

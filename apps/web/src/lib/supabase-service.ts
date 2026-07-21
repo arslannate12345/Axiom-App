@@ -178,17 +178,26 @@ export async function getSnapshots(requestId: string): Promise<Snapshot[]> {
     .select('*')
     .eq('request_id', requestId)
     .order('created_at', { ascending: false });
-  if (error) { console.error(error); return []; }
+  if (error) {
+    if (error.code !== 'PGRST205') console.error(error);
+    return [];
+  }
   return data || [];
 }
 
 export async function createSnapshot(snapshot: Omit<Snapshot, 'id' | 'user_id' | 'created_at'>): Promise<Snapshot | null> {
+  const { data: { session } } = await supabase().auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) { console.error('No authenticated user'); return null; }
   const { data, error } = await supabase()
     .from('snapshots')
-    .insert(snapshot)
+    .insert({ ...snapshot, user_id: userId })
     .select()
     .single();
-  if (error) { console.error(error); return null; }
+  if (error) {
+    if (error.code !== 'PGRST205') console.error(error);
+    return null;
+  }
   return data;
 }
 
@@ -218,14 +227,20 @@ export async function getContracts(requestId: string): Promise<Contract[]> {
     .select('*')
     .eq('request_id', requestId)
     .order('created_at', { ascending: false });
-  if (error) { console.error(error); return []; }
+  if (error) {
+    if (error.code !== 'PGRST205') console.error(error);
+    return [];
+  }
   return data || [];
 }
 
 export async function createContract(contract: Omit<Contract, 'id' | 'user_id' | 'created_at' | 'updated_at'>): Promise<Contract | null> {
+  const { data: { session } } = await supabase().auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) { console.error('No authenticated user'); return null; }
   const { data, error } = await supabase()
     .from('contracts')
-    .insert(contract)
+    .insert({ ...contract, user_id: userId })
     .select()
     .single();
   if (error) { console.error(error); return null; }
@@ -382,11 +397,17 @@ export async function deleteHistoryEntry(id: string): Promise<boolean> {
 export interface ReportRecord {
   id: string;
   user_id: string;
-  collection_id: string;
+  collection_id: string | null;
+  request_id: string | null;
   name: string;
   share_token: string;
   report_type: 'collection' | 'request';
   report_data: any;
+  report_status: string;
+  overall_health_score: number;
+  baseline_report_id: string | null;
+  resolution_log: any;
+  resolved_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -395,6 +416,26 @@ export async function getUserReports(): Promise<ReportRecord[]> {
   const { data, error } = await supabase()
     .from('reports')
     .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error(error); return []; }
+  return data || [];
+}
+
+export async function getReportById(id: string): Promise<ReportRecord | null> {
+  const { data, error } = await supabase()
+    .from('reports')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error) { console.error(error); return null; }
+  return data;
+}
+
+export async function getReportsByRequestId(requestId: string): Promise<ReportRecord[]> {
+  const { data, error } = await supabase()
+    .from('reports')
+    .select('*')
+    .eq('request_id', requestId)
     .order('created_at', { ascending: false });
   if (error) { console.error(error); return []; }
   return data || [];
@@ -414,25 +455,97 @@ export async function deleteReport(id: string): Promise<boolean> {
 }
 
 export interface CreateReportPayload {
-  collection_id: string;
+  collection_id?: string | null;
+  request_id?: string | null;
   name: string;
   report_type: 'collection' | 'request';
   report_data: unknown;
+  baseline_report_id?: string | null;
+  overall_health_score?: number;
 }
 
 export async function createReport(payload: CreateReportPayload): Promise<ReportRecord | null> {
   const token = generateShareToken();
+  const { data: { session } } = await supabase().auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) { console.error('No authenticated user'); return null; }
+  const body: Record<string, unknown> = {
+    user_id: userId,
+    collection_id: payload.collection_id || null,
+    request_id: payload.request_id || null,
+    name: payload.name,
+    share_token: token,
+    report_type: payload.report_type,
+    report_data: payload.report_data as any,
+    baseline_report_id: payload.baseline_report_id || null,
+    overall_health_score: payload.overall_health_score ?? 0,
+  };
   const { data, error } = await supabase()
     .from('reports')
-    .insert({
-      collection_id: payload.collection_id,
-      name: payload.name,
-      share_token: token,
-      report_type: payload.report_type,
-      report_data: payload.report_data as any,
-    })
+    .insert(body)
     .select()
     .single();
   if (error) { console.error(error); return null; }
   return data;
+}
+
+export interface UpdateReportPayload {
+  name?: string;
+  report_status?: string;
+  overall_health_score?: number;
+  resolution_log?: any;
+  resolved_by?: string;
+}
+
+export async function updateReport(id: string, payload: UpdateReportPayload): Promise<boolean> {
+  const { error } = await supabase()
+    .from('reports')
+    .update(payload)
+    .eq('id', id);
+  if (error) { console.error(error); return false; }
+  return true;
+}
+
+// ─── Report Issues ─────────────────────────────────────────
+
+export interface ReportIssueRecord {
+  id: string;
+  report_id: string;
+  section: string;
+  title: string;
+  severity: string;
+  status: string;
+  description: string;
+  resolved_at: string | null;
+  developer_note: string;
+  sort_order: number;
+  created_at: string;
+}
+
+export async function getReportIssues(reportId: string): Promise<ReportIssueRecord[]> {
+  const { data, error } = await supabase()
+    .from('report_issues')
+    .select('*')
+    .eq('report_id', reportId)
+    .order('sort_order');
+  if (error) { console.error(error); return []; }
+  return data || [];
+}
+
+export async function updateReportIssue(id: string, payload: { status?: string; developer_note?: string; resolved_at?: string }): Promise<boolean> {
+  const { error } = await supabase()
+    .from('report_issues')
+    .update(payload)
+    .eq('id', id);
+  if (error) { console.error(error); return false; }
+  return true;
+}
+
+export async function createReportIssues(issues: Omit<ReportIssueRecord, 'id' | 'created_at'>[]): Promise<boolean> {
+  if (issues.length === 0) return true;
+  const { error } = await supabase()
+    .from('report_issues')
+    .insert(issues);
+  if (error) { console.error(error); return false; }
+  return true;
 }

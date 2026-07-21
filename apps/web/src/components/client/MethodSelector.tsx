@@ -9,15 +9,7 @@ import {
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'] as const;
 
-const METHOD_COLORS: Record<string, string> = {
-  GET: '#10B981',
-  POST: '#3B82F6',
-  PUT: '#F59E0B',
-  PATCH: '#8B5CF6',
-  DELETE: '#EF4444',
-  HEAD: '#64748B',
-  OPTIONS: '#EC4899',
-};
+import { METHOD_COLORS } from '@/lib/constants';
 
 export interface MethodSelectorProps {
   method: string;
