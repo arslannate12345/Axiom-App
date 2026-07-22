@@ -31,10 +31,16 @@ export default function PerformanceReportsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getAuditHistory().then((data) => {
-      setReports(data);
-      setIsLoading(false);
-    });
+    getAuditHistory()
+      .then((data) => {
+        setReports(data);
+      })
+      .catch((err) => {
+        console.warn('Failed to load performance reports', err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, []);
 
   return (

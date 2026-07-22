@@ -77,21 +77,21 @@ export default function AppLayout({
         }}
       >
         {/* Brand */}
-        <div className={`flex items-center border-b border-sidebar-border min-h-[52px] ${collapsed ? 'justify-center px-0' : 'justify-between px-3'} py-4`}>
+        <div className={`flex items-center border-b border-sidebar-border/60 min-h-[56px] ${collapsed ? 'justify-center px-0' : 'justify-between px-4'} py-3`}>
           {!collapsed ? (
             <>
               <div className="flex items-center gap-3 overflow-hidden">
-                <div className="w-8 h-8 bg-primary rounded flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-primary-foreground text-lg" style={{fontVariationSettings: "'FILL' 1"}}>terminal</span>
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/30">
+                  <span className="material-symbols-outlined text-white text-lg font-black" style={{fontVariationSettings: "'FILL' 1"}}>shield</span>
                 </div>
                 <div className="whitespace-nowrap">
-                  <h1 className="text-sm font-bold text-sidebar-foreground">Axiom</h1>
-                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold">Testing Platform</p>
+                  <h1 className="text-sm font-black tracking-tight text-sidebar-foreground">Axiom</h1>
+                  <p className="text-[10px] uppercase tracking-widest text-indigo-400 font-bold">Workbench</p>
                 </div>
               </div>
               <button
                 onClick={() => setCollapsed(!collapsed)}
-                className="shrink-0 w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-sidebar-foreground transition-colors"
+                className="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg hover:bg-white/10 text-muted-foreground hover:text-sidebar-foreground transition-colors"
                 title="Collapse sidebar"
               >
                 <span className="material-symbols-outlined text-[16px]">chevron_left</span>
@@ -100,10 +100,10 @@ export default function AppLayout({
           ) : (
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-sidebar-foreground transition-colors"
+              className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/30"
               title="Expand sidebar"
             >
-              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+              <span className="material-symbols-outlined text-white text-lg font-black" style={{fontVariationSettings: "'FILL' 1"}}>shield</span>
             </button>
           )}
         </div>

@@ -31,10 +31,16 @@ export default function AccessibilityReportsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getAuditHistory().then((data) => {
-      setReports(data);
-      setIsLoading(false);
-    });
+    getAuditHistory()
+      .then((data) => {
+        setReports(data);
+      })
+      .catch((err) => {
+        console.warn('Failed to load accessibility reports', err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, []);
 
   return (

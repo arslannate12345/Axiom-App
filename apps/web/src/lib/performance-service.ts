@@ -2,22 +2,30 @@ import { getSupabaseBrowserClient } from '@/lib/supabase';
 import type { PerformanceAudit, AuditStrategy, CoreWebVitals } from '@axiom/core/types';
 import * as baseService from './supabase-service';
 
+const LOCAL_STORAGE_KEY = 'axiom_performance_audits';
+
 export async function runAudit(url: string, strategy: AuditStrategy): Promise<PerformanceAudit> {
   const supabase = getSupabaseBrowserClient();
-  const workspaces = await baseService.getWorkspaces();
-  if (workspaces.length === 0) {
-    throw new Error('No active workspace found');
-  }
-  const workspaceId = workspaces[0].id;
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) {
-    throw new Error('Not authenticated');
+  let workspaceId: string | null = null;
+  let userId: string | null = null;
+
+  try {
+    const workspaces = await baseService.getWorkspaces();
+    if (workspaces.length > 0) {
+      workspaceId = workspaces[0].id;
+    }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      userId = session.user.id;
+    }
+  } catch (err) {
+    console.warn('[performance-service] Workspaces or session lookup failed, proceeding with scan.');
   }
 
   // 1. Fetch PSI data from our proxy
   const res = await fetch(`/api/psi?url=${encodeURIComponent(url)}&strategy=${strategy}`);
   if (!res.ok) {
-    const errorData = await res.json();
+    const errorData = await res.json().catch(() => ({ error: 'Failed to fetch PSI data' }));
     throw new Error(errorData.error || 'Failed to fetch PSI data');
   }
   const psiData = await res.json();
@@ -28,15 +36,12 @@ export async function runAudit(url: string, strategy: AuditStrategy): Promise<Pe
   const audits = lighthouseResult.audits || {};
   const loadingExperience = psiData.loadingExperience || {};
 
-  // CWV from CrUX (if available), fallback to simulated Lighthouse metrics
   const cruxMetrics = loadingExperience.metrics || {};
   
   const extractMetric = (cruxKey: string, lhKey: string) => {
-    // Try CrUX first
     if (cruxMetrics[cruxKey]) {
       return cruxMetrics[cruxKey].percentile;
     }
-    // Fallback to Lighthouse
     if (audits[lhKey]) {
       return audits[lhKey].numericValue;
     }
@@ -46,88 +51,146 @@ export async function runAudit(url: string, strategy: AuditStrategy): Promise<Pe
   const core_web_vitals: CoreWebVitals = {
     lcp: extractMetric('LARGEST_CONTENTFUL_PAINT_MS', 'largest-contentful-paint'),
     cls: extractMetric('CUMULATIVE_LAYOUT_SHIFT_SCORE', 'cumulative-layout-shift') !== undefined 
-         ? (extractMetric('CUMULATIVE_LAYOUT_SHIFT_SCORE', 'cumulative-layout-shift') / 100) // CrUX provides CLS * 100
+         ? (extractMetric('CUMULATIVE_LAYOUT_SHIFT_SCORE', 'cumulative-layout-shift') / 100)
          : undefined,
     fcp: extractMetric('FIRST_CONTENTFUL_PAINT_MS', 'first-contentful-paint'),
-    inp: extractMetric('INTERACTION_TO_NEXT_PAINT_MS', 'interactive'), // INP fallback is often TTI or Max Potential FID, but interactive is a safe baseline
+    inp: extractMetric('INTERACTION_TO_NEXT_PAINT_MS', 'interactive'),
     ttfb: extractMetric('EXPERIMENTAL_TIME_TO_FIRST_BYTE', 'server-response-time'),
   };
 
-  // Convert scores (0-1) to 0-100
   const performance_score = categories.performance?.score ? Math.round(categories.performance.score * 100) : null;
   const accessibility_score = categories.accessibility?.score ? Math.round(categories.accessibility.score * 100) : null;
   const best_practices_score = categories['best-practices']?.score ? Math.round(categories['best-practices'].score * 100) : null;
   const seo_score = categories.seo?.score ? Math.round(categories.seo.score * 100) : null;
 
-  // 3. Save to database
-  const { data, error } = await supabase
-    .from('performance_audits')
-    .insert({
-      user_id: session.user.id,
-      workspace_id: workspaceId,
-      url,
-      strategy,
-      performance_score,
-      accessibility_score,
-      best_practices_score,
-      seo_score,
-      core_web_vitals,
-      lighthouse_result: lighthouseResult,
-    })
-    .select()
-    .single();
+  const auditObj: PerformanceAudit = {
+    id: `audit_${Date.now()}`,
+    user_id: userId || 'local_user',
+    workspace_id: workspaceId || 'local_workspace',
+    url,
+    strategy,
+    performance_score,
+    accessibility_score,
+    best_practices_score,
+    seo_score,
+    core_web_vitals,
+    lighthouse_result: lighthouseResult,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
 
-  if (error) {
-    console.error('Failed to save audit to db', error);
-    throw new Error('Failed to save audit results');
+  // 3. Save to database if session is present
+  if (userId && workspaceId) {
+    try {
+      const { data, error } = await supabase
+        .from('performance_audits')
+        .insert({
+          user_id: userId,
+          workspace_id: workspaceId,
+          url,
+          strategy,
+          performance_score,
+          accessibility_score,
+          best_practices_score,
+          seo_score,
+          core_web_vitals,
+          lighthouse_result: lighthouseResult,
+        })
+        .select()
+        .single();
+
+      if (!error && data) {
+        saveToLocalStorage(data as PerformanceAudit);
+        return data as PerformanceAudit;
+      }
+    } catch (err) {
+      console.warn('[performance-service] Database save failed, using local storage fallback.', err);
+    }
   }
 
-  return data as PerformanceAudit;
+  saveToLocalStorage(auditObj);
+  return auditObj;
 }
 
 export async function getRecentAudits(): Promise<PerformanceAudit[]> {
-  const supabase = getSupabaseBrowserClient();
-  const { data, error } = await supabase
-    .from('performance_audits')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(20);
+  try {
+    const supabase = getSupabaseBrowserClient();
+    const { data, error } = await supabase
+      .from('performance_audits')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(20);
 
-  if (error) {
-    console.error('Failed to fetch recent audits', error);
-    return [];
+    if (!error && data && data.length > 0) {
+      // Sync local storage cache
+      data.forEach((item) => saveToLocalStorage(item as PerformanceAudit));
+      return data as PerformanceAudit[];
+    }
+  } catch (err) {
+    console.warn('[performance-service] Fetching recent audits failed, returning local storage fallback.');
   }
 
-  return data as PerformanceAudit[];
+  return getFromLocalStorage().slice(0, 20);
 }
 
 export async function getAuditHistory(): Promise<PerformanceAudit[]> {
-  const supabase = getSupabaseBrowserClient();
-  const { data, error } = await supabase
-    .from('performance_audits')
-    .select('*')
-    .order('created_at', { ascending: false });
+  try {
+    const supabase = getSupabaseBrowserClient();
+    const { data, error } = await supabase
+      .from('performance_audits')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('Failed to fetch audit history', error);
-    return [];
+    if (!error && data && data.length > 0) {
+      data.forEach((item) => saveToLocalStorage(item as PerformanceAudit));
+      return data as PerformanceAudit[];
+    }
+  } catch (err) {
+    console.warn('[performance-service] Fetching audit history failed, returning local storage fallback.');
   }
 
-  return data as PerformanceAudit[];
+  return getFromLocalStorage();
 }
 
 export async function getAuditById(id: string): Promise<PerformanceAudit | null> {
-  const supabase = getSupabaseBrowserClient();
-  const { data, error } = await supabase
-    .from('performance_audits')
-    .select('*')
-    .eq('id', id)
-    .single();
+  try {
+    const supabase = getSupabaseBrowserClient();
+    const { data, error } = await supabase
+      .from('performance_audits')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-  if (error) {
-    console.error(`Failed to fetch audit ${id}`, error);
-    return null;
+    if (!error && data) {
+      return data as PerformanceAudit;
+    }
+  } catch (err) {
+    console.warn(`[performance-service] Fetching audit ${id} failed, checking local storage.`);
   }
 
-  return data as PerformanceAudit;
+  const localItems = getFromLocalStorage();
+  return localItems.find((item) => item.id === id) || null;
+}
+
+// ─── LocalStorage Helpers ─────────────────────────────────────
+
+function getFromLocalStorage(): PerformanceAudit[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveToLocalStorage(audit: PerformanceAudit) {
+  if (typeof window === 'undefined') return;
+  try {
+    const existing = getFromLocalStorage();
+    const updated = [audit, ...existing.filter((item) => item.id !== audit.id)];
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated.slice(0, 50)));
+  } catch (err) {
+    console.error('Failed to save performance audit to localStorage:', err);
+  }
 }

@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=JetBrains+Mono:wght@400;500;700&display=swap');
 @import "tailwindcss";
 @import "material-symbols";
 
@@ -35,7 +36,7 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
@@ -47,58 +48,58 @@
     --card-foreground: #0f172a;
     --popover: #ffffff;
     --popover-foreground: #0f172a;
-    --primary: #6366F1;
+    --primary: #6338F1;
     --primary-foreground: #ffffff;
     --secondary: #eef2ff;
-    --secondary-foreground: #6366F1;
+    --secondary-foreground: #6338F1;
     --muted: #f1f5f9;
     --muted-foreground: #64748b;
     --accent: #eef2ff;
-    --accent-foreground: #6366F1;
+    --accent-foreground: #6338F1;
     --destructive: #EF4444;
     --destructive-foreground: #ffffff;
     --border: #e2e8f0;
     --input: #e2e8f0;
-    --ring: #6366F1;
-    --radius: 0.5rem;
+    --ring: #6338F1;
+    --radius: 0.75rem;
     --sidebar: #f8fafc;
     --sidebar-foreground: #0f172a;
-    --sidebar-primary: #6366F1;
+    --sidebar-primary: #6338F1;
     --sidebar-primary-foreground: #ffffff;
     --sidebar-accent: #eef2ff;
-    --sidebar-accent-foreground: #6366F1;
+    --sidebar-accent-foreground: #6338F1;
     --sidebar-border: #e2e8f0;
-    --sidebar-ring: #6366F1;
+    --sidebar-ring: #6338F1;
   }
 
   .dark {
-    --background: #0F172A;
-    --foreground: #e4e1ed;
-    --card: #1E293B;
-    --card-foreground: #e4e1ed;
-    --popover: #1E293B;
-    --popover-foreground: #e4e1ed;
-    --primary: #6366F1;
+    --background: #0B0E1A;
+    --foreground: #F1F5F9;
+    --card: rgba(17, 23, 39, 0.75);
+    --card-foreground: #F8FAFC;
+    --popover: #111727;
+    --popover-foreground: #F8FAFC;
+    --primary: #6338F1;
     --primary-foreground: #ffffff;
-    --secondary: #2f3aa3;
+    --secondary: rgba(99, 56, 241, 0.15);
     --secondary-foreground: #a8afff;
-    --muted: #34343d;
-    --muted-foreground: #c7c4d7;
-    --accent: #2f3aa3;
+    --muted: rgba(255, 255, 255, 0.05);
+    --muted-foreground: #94A3B8;
+    --accent: rgba(99, 56, 241, 0.15);
     --accent-foreground: #a8afff;
     --destructive: #EF4444;
     --destructive-foreground: #ffffff;
-    --border: #334155;
-    --input: #334155;
-    --ring: #6366F1;
-    --sidebar: #1f1f27;
-    --sidebar-foreground: #e4e1ed;
-    --sidebar-primary: #6366F1;
+    --border: rgba(255, 255, 255, 0.08);
+    --input: rgba(255, 255, 255, 0.08);
+    --ring: #6338F1;
+    --sidebar: #0B0E1A;
+    --sidebar-foreground: #F1F5F9;
+    --sidebar-primary: #6338F1;
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #2f3aa3;
+    --sidebar-accent: rgba(99, 56, 241, 0.15);
     --sidebar-accent-foreground: #a8afff;
-    --sidebar-border: #334155;
-    --sidebar-ring: #6366F1;
+    --sidebar-border: rgba(255, 255, 255, 0.06);
+    --sidebar-ring: #6338F1;
   }
 
   * {
@@ -107,25 +108,62 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: "Inter", sans-serif;
+    font-family: "Plus Jakarta Sans", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* ─── Glassmorphism & Glowing Utilities ────────────────────── */
+
+  .glass-panel {
+    background: rgba(17, 23, 39, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  }
+
+  .glass-card {
+    background: rgba(24, 32, 47, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 25px -5px rgba(99, 56, 241, 0.4);
+  }
+
+  .glow-emerald {
+    box-shadow: 0 0 25px -5px rgba(18, 185, 129, 0.4);
+  }
+
+  .glow-amber {
+    box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.4);
+  }
+
+  .glow-red {
+    box-shadow: 0 0 25px -5px rgba(239, 68, 68, 0.4);
+  }
+
+  .glow-purple {
+    box-shadow: 0 0 25px -5px rgba(139, 92, 246, 0.4);
+  }
+
   /* Custom scrollbar for IDE aesthetic */
   ::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+    width: 5px;
+    height: 5px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #334155;
-    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #475569;
+    background: rgba(255, 255, 255, 0.25);
   }
 
   @keyframes drift {
@@ -157,7 +195,7 @@
   .card-hover {
     @apply transition-all duration-200;
     &:hover {
-      @apply scale-[1.01] shadow-lg shadow-primary/5;
+      @apply scale-[1.01] shadow-lg shadow-primary/10 border-primary/30;
     }
   }
 
@@ -187,7 +225,7 @@
     background: linear-gradient(
       90deg,
       var(--muted) 25%,
-      var(--muted-foreground, #64748b) 37%,
+      rgba(255, 255, 255, 0.1) 37%,
       var(--muted) 63%
     );
     background-size: 200% 100%;
@@ -198,44 +236,6 @@
   /* ─── Focus ring enhancement ────────────────────────── */
 
   .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-[box-shadow] duration-200;
-  }
-
-  /* ─── Dialog animations ──────────────────────────────── */
-
-  @keyframes dialog-in {
-    from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
-    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  }
-
-  @keyframes dialog-out {
-    from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    to   { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
-  }
-
-  @keyframes overlay-in {
-    from { opacity: 0; }
-    to   { opacity: 0.5; }
-  }
-
-  @keyframes overlay-out {
-    from { opacity: 0.5; }
-    to   { opacity: 0; }
-  }
-
-  [data-slot="dialog-content"][data-state="open"] {
-    animation: dialog-in 200ms ease-out;
-  }
-
-  [data-slot="dialog-content"][data-state="closed"] {
-    animation: dialog-out 150ms ease-in;
-  }
-
-  [data-slot="dialog-overlay"][data-state="open"] {
-    animation: overlay-in 200ms ease-out;
-  }
-
-  [data-slot="dialog-overlay"][data-state="closed"] {
-    animation: overlay-out 150ms ease-in;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-[box-shadow] duration-200;
   }
 }

@@ -30,10 +30,16 @@ export default function AccessibilityHistoryPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getAuditHistory().then((data) => {
-      setHistory(data);
-      setIsLoading(false);
-    });
+    getAuditHistory()
+      .then((data) => {
+        setHistory(data);
+      })
+      .catch((err) => {
+        console.warn('Failed to load accessibility history', err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, []);
 
   return (
