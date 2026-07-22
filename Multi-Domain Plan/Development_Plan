@@ -1,0 +1,282 @@
+# Axiom Multi-Domain Testing Platform — Evaluation & Implementation Plan
+
+## Executive Summary
+
+I've completed a thorough review of your [Multi-Domain Implementation Plan](file:///c:/Job/My%20Projects/Axiom/Multi-Domain%20Plan/Axiom_Multi_Domain_Implementation_Plan.md) against the current codebase. **The verdict: this plan is exceptionally well-architected, highly feasible, and maps cleanly onto your existing code.** The plan's author clearly understands the codebase deeply — the claims about what exists, what needs to change, and what's new infra are all accurate.
+
+Below is my full evaluation followed by the execution plan.
+
+---
+
+## 1. Codebase Validation — What the Plan Claims vs. Reality
+
+### ✅ Accurate Claims
+
+| Plan Claim | Verified Against |
+|---|---|
+| "Flat hardcoded `navItems` array in layout.tsx" | [layout.tsx](file:///c:/Job/My%20Projects/Axiom/apps/web/src/app/(app)/layout.tsx#L24-L31) — exact match, 6 API-testing routes |
+| "Six working test suites" | [tests/](file:///c:/Job/My%20Projects/Axiom/apps/web/src/components/tests) — confirmed: `BenchmarksSuite`, `RegressionSuite`, `FuzzSuite`, `SecuritySuite`, `ChaosSuite`, `IdempotencySuite` |
+| "Zustand tabsStore pattern for new domain store" | [tabsStore.ts](file:///c:/Job/My%20Projects/Axiom/apps/web/src/stores/tabsStore.ts) — well-established pattern with `create()` + `persist()` |
+| "`reportGenerator.ts`, `reportCompare.ts`, `remediation.ts`" | All confirmed in [lib/](file:///c:/Job/My%20Projects/Axiom/apps/web/src/lib) — `reportGenerator.ts` (252 lines), `reportCompare.ts` (119 lines), `remediation.ts` (398 lines) |
+| "PDF export + public token-shared report viewer" | [pdfExport.ts](file:///c:/Job/My%20Projects/Axiom/apps/web/src/lib/pdfExport.ts) + [/reports/\[token\]](file:///c:/Job/My%20Projects/Axiom/apps/web/src/app/reports) confirmed |
+| "Well-normalized, RLS-scoped schema" | [schema.sql](file:///c:/Job/My%20Projects/Axiom/supabase/schema.sql) — 446 lines, all tables have RLS policies, clean workspace→collection→request hierarchy |
+| "No headless browser, no Lighthouse/PSI integration" | Confirmed — [package.json](file:///c:/Job/My%20Projects/Axiom/apps/web/package.json) has zero page-audit dependencies |
+| "No existing Next.js API route handlers" | Confirmed — no `route.ts` files exist under `apps/web/src/app/` |
+
+### ⚠️ Minor Gaps / Things to Note
+
+| Area | Finding | Impact |
+|---|---|---|
+| **No existing `domainRegistry.ts` in `packages/core`** | [packages/core/src/types/](file:///c:/Job/My%20Projects/Axiom/packages/core/src/types) has `database.ts`, `assertions.ts`, `runner.ts`, `report.ts` but no domain types yet | Expected — this is new code |
+| **`packages/core/src/stores/` is empty** | The plan suggests putting `useDomainStore` here, but currently stores live in `apps/web/src/stores/` | Minor decision: keep domain store in web app for now, only move to core if mobile needs it |
+| **Middleware/proxy doesn't handle new routes** | [proxy.ts](file:///c:/Job/My%20Projects/Axiom/apps/web/src/proxy.ts#L49) redirects unauthenticated users to `/login` — new domain routes will automatically be protected, but the default redirect is hardcoded to `/client` | Need to update default authenticated redirect to be domain-aware |
+| **`report_type` column constraint** | [001_reports.sql](file:///c:/Job/My%20Projects/Axiom/supabase/migrations/001_reports.sql#L12) has `CHECK (report_type IN ('collection', 'request'))` — new domain reports will need this updated | Need a migration to add `'page_audit'`, `'visual_diff'` etc. |
+| **`pdfExport.ts` header says "API Testing & QA Report"** | [pdfExport.ts](file:///c:/Job/My%20Projects/Axiom/apps/web/src/lib/pdfExport.ts#L38) — hardcoded section labels are API-specific | Will need generalization when we wire new domains into the report pipeline |
+
+---
+
+## 2. Feasibility Assessment
+
+### Risk Matrix
+
+| Component | Complexity | Risk | Rationale |
+|---|---|---|---|
+| **Domain Switcher Shell** | 🟢 Low | 🟢 Minimal | Pure navigation refactor. `navItems` → dynamic from `domainRegistry`. No existing routes change. |
+| **Performance Domain (PSI)** | 🟢 Low-Medium | 🟢 Low | Single API integration. One new Next.js route handler for key hiding. Reuses existing report pipeline. |
+| **Accessibility Domain** | 🟢 Very Low | 🟢 Minimal | Free from same PSI payload. Separate UI view, same data source. |
+| **Security Domain Extension** | 🟡 Medium | 🟢 Low | Extends existing [SecuritySuite.tsx](file:///c:/Job/My%20Projects/Axiom/apps/web/src/components/tests/SecuritySuite.tsx) engine with URL-based checks. Pattern already proven. |
+| **Visual & Responsive** | 🟡 Medium-High | 🟡 Moderate | Only domain needing genuinely new infra. Screenshot capture + pixel diffing. Serverless function or hosted API needed. |
+| **Database Schema** | 🟢 Low | 🟢 Minimal | All additive — 3 new tables, no existing table modifications. |
+
+### Architecture Compatibility
+
+The plan's architecture aligns perfectly with your existing patterns:
+
+1. **Zustand stores** → `useDomainStore` follows exact same pattern as [tabsStore.ts](file:///c:/Job/My%20Projects/Axiom/apps/web/src/stores/tabsStore.ts)
+2. **Component structure** → New domain suites follow the same pattern as existing test suite components (config panel left, results right)
+3. **Service layer** → `pageAuditService.ts` mirrors the pattern of [testEngine.ts](file:///c:/Job/My%20Projects/Axiom/apps/web/src/lib/testEngine.ts)
+4. **Report pipeline** → New domains feed into existing [reportGenerator.ts](file:///c:/Job/My%20Projects/Axiom/apps/web/src/lib/reportGenerator.ts) / [reportCompare.ts](file:///c:/Job/My%20Projects/Axiom/apps/web/src/lib/reportCompare.ts) / [pdfExport.ts](file:///c:/Job/My%20Projects/Axiom/apps/web/src/lib/pdfExport.ts)
+5. **Data model** → RLS policies follow exact same workspace-scoping pattern as all existing tables
+
+---
+
+## 3. Proposed Implementation — Phase Breakdown
+
+### Phase 1: Domain Switcher Shell (Foundation)
+> **Estimated scope: ~8-12 files touched/created**
+
+**Objective:** Transform the single-purpose API testing shell into a domain-aware shell where the sidebar dynamically reconfigures based on the active domain.
+
+#### [NEW] `packages/core/src/types/domains.ts`
+- `TestingDomainId` union type
+- `TestingDomain` interface with `navItems`, `status`, `icon`, `description`
+
+#### [NEW] `apps/web/src/lib/domainRegistry.ts`
+- Full domain registry defining all 5 active domains + roadmap tiles
+- API domain maps to existing 6 nav items unchanged
+- New domains define their route structures
+
+#### [NEW] `apps/web/src/stores/domainStore.ts`
+- Zustand store with `persist` (following `tabsStore` pattern)
+- Tracks `activeDomainId`, provides `setDomain()`, `getActiveDomain()`
+
+#### [MODIFY] `apps/web/src/app/(app)/layout.tsx`
+- Replace hardcoded `navItems` array with dynamic rendering from `domainStore`
+- Add domain switcher UI at top of sidebar (icon rail or dropdown)
+- "New Request" button becomes domain-context-aware (e.g., "New Audit" for performance)
+- Update search bar to be domain-aware
+
+#### [MODIFY] `apps/web/src/proxy.ts`
+- Update default authenticated redirect to be domain-aware
+- Add new domain routes to the route matching
+
+#### [NEW] Route stubs for new domains
+- `apps/web/src/app/(app)/performance/page.tsx` — landing page stub
+- `apps/web/src/app/(app)/accessibility/page.tsx` — landing page stub  
+- `apps/web/src/app/(app)/security-web/page.tsx` — landing page stub
+- `apps/web/src/app/(app)/visual/page.tsx` — landing page stub
+
+---
+
+### Phase 2: Performance Testing Domain (PSI Integration)
+> **Estimated scope: ~6-8 new files**
+
+**Objective:** Ship a real, working performance audit — enter a URL, get Lighthouse-backed scores, itemized issues, and exportable reports.
+
+#### [NEW] `apps/web/src/app/api/audit/route.ts`
+- Next.js API route handler to proxy PSI API calls (hides API key server-side)
+- Accepts `{ url, categories }`, returns normalized audit result
+
+#### [NEW] `apps/web/src/lib/pageAuditService.ts`
+- Client-side service calling the above route
+- Normalizes PSI response into `{ performance, accessibility, seo, bestPractices }` scored sections
+- Caches results per URL with short TTL
+
+#### [NEW] `apps/web/src/components/performance/PerformanceDashboard.tsx`
+- URL input with "Run Audit" button
+- Score gauges (0-100 animated rings for each category)
+- Core Web Vitals cards (LCP, FID, CLS, TTFB)
+- Waterfall/opportunity list from PSI's `audits` array
+
+#### [NEW] `apps/web/src/components/performance/AuditResults.tsx`
+- Expandable issue list (following [SecuritySuite.tsx](file:///c:/Job/My%20Projects/Axiom/apps/web/src/components/tests/SecuritySuite.tsx) pattern)
+- Severity indicators, remediation suggestions
+
+#### [MODIFY] `apps/web/src/lib/reportGenerator.ts`
+- Extend `AggregatedSection` type with `performance?: PageAuditResult`
+- Add performance section weight to health score calculation
+
+#### [NEW] `apps/web/src/app/(app)/performance/page.tsx`
+- Replace stub with full page wiring PerformanceDashboard
+
+#### [NEW] `supabase/migrations/005_page_audits.sql`
+- `page_audits` table with RLS policies (as specified in plan §6)
+
+---
+
+### Phase 3: Accessibility Testing Domain
+> **Estimated scope: ~3-4 new files** (lowest marginal cost — same PSI data)
+
+**Objective:** Surface accessibility violations from the same PSI audit as a separate, dedicated domain experience.
+
+#### [NEW] `apps/web/src/components/accessibility/AccessibilityDashboard.tsx`
+- Accessibility score gauge
+- WCAG violation list grouped by severity (critical/serious/moderate/minor)
+- Contrast ratio checker visualization
+- ARIA/alt-text issue highlighting
+
+#### [NEW] `apps/web/src/components/accessibility/WcagChecklist.tsx`
+- WCAG 2.1 compliance checklist (following Security compliance checklist pattern)
+- Pass/fail/warning per criterion
+
+#### [MODIFY] `apps/web/src/lib/reportGenerator.ts`
+- Add `accessibility?: AccessibilityResult` section
+- Extend issue extraction with accessibility-specific logic
+
+#### [MODIFY] `apps/web/src/lib/remediation.ts`
+- Add accessibility-specific remediation entries (WCAG fix guidance)
+
+---
+
+### Phase 4: Security Domain Extension (Web Checks)
+> **Estimated scope: ~4-5 files touched**
+
+**Objective:** Extend the existing API security engine with web-specific checks that operate on URLs rather than API requests.
+
+#### [NEW] `apps/web/src/lib/webSecurityEngine.ts`
+- TLS/certificate validity check
+- Security headers audit (CSP, HSTS, X-Frame-Options, X-Content-Type-Options)
+- Cookie flags analysis (Secure, HttpOnly, SameSite)
+- Exposed paths scanner (`.env`, `.git/`, `wp-admin/`, etc.)
+
+#### [NEW] `apps/web/src/components/security-web/WebSecurityDashboard.tsx`
+- URL input + scan trigger
+- Reuses `ResultStatCard` pattern from existing SecuritySuite
+- Compliance checklist for web security headers
+
+#### [MODIFY] `apps/web/src/components/tests/SecuritySuite.tsx`
+- Conditionally render web-specific checks when domain is `'security'` rather than within API tests
+
+#### [MODIFY] `apps/web/src/lib/remediation.ts`
+- Add web security remediation entries (header fixes, TLS config, etc.)
+
+---
+
+### Phase 5: Visual & Responsive Testing
+> **Estimated scope: ~8-10 new files** (highest complexity phase)
+
+**Objective:** Capture screenshots at multiple breakpoints and provide run-to-run visual diffing.
+
+#### [NEW] `apps/web/src/app/api/screenshot/route.ts`
+- Serverless screenshot capture endpoint
+- Option A: Hosted screenshot API (e.g., screenshotone.com, browserless)
+- Option B: `@sparticuz/chromium` + Playwright as Vercel serverless function
+
+#### [NEW] `apps/web/src/lib/visualTestService.ts`
+- Manages screenshot capture flow across breakpoints
+- Handles baseline management and diff computation
+- Uses `pixelmatch` or `resemblejs` for pixel diffing
+
+#### [NEW] `apps/web/src/components/visual/VisualDashboard.tsx`
+- URL input + breakpoint selector
+- Screenshot gallery view (mobile/tablet/desktop/wide)
+- Before/after slider comparison
+- Diff overlay visualization with highlighted regression areas
+
+#### [NEW] `apps/web/src/components/visual/DiffViewer.tsx`
+- Side-by-side baseline vs. current comparison
+- Diff percentage badge
+- Reuses [reportCompare.ts](file:///c:/Job/My%20Projects/Axiom/apps/web/src/lib/reportCompare.ts) diff-presentation pattern
+
+#### [NEW] `supabase/migrations/006_visual_testing.sql`
+- `visual_snapshots` + `visual_diffs` tables with RLS (as specified in plan §6)
+
+---
+
+### Phase 6: Polish & Finalization
+> **Cross-cutting concerns across all phases**
+
+#### [MODIFY] Multiple report pipeline files
+- Generalize [pdfExport.ts](file:///c:/Job/My%20Projects/Axiom/apps/web/src/lib/pdfExport.ts) header from "API Testing & QA Report" to domain-aware title
+- Extend `report_type` constraint in a migration
+- Update public report viewer to render new domain report types
+
+#### [MODIFY] `README.md`
+- Rewrite per plan §8 — multi-domain framing, collapsible sections per domain
+
+#### [NEW] Domain selector landing page
+- Beautiful domain picker grid with animated tiles
+- Roadmap domains as labeled "Coming Soon" tiles
+- This becomes the new entry point at `/` for authenticated users
+
+---
+
+## 4. Decisions for Your Review
+
+> [!IMPORTANT]
+> ### Google PageSpeed Insights API Key
+> The Performance domain requires a Google PSI API key. Do you already have one, or should I plan for the flow where we prompt the user to add it in Settings? The free tier (25k queries/day) is more than sufficient.
+
+> [!IMPORTANT]
+> ### Visual Testing Infrastructure
+> The plan offers two options for screenshot capture:
+> 1. **Hosted screenshot API** (simpler, costs money per screenshot) — e.g., screenshotone.com, browserless.io
+> 2. **Self-hosted serverless** (`@sparticuz/chromium` on Vercel) — free but more complex to set up
+> 
+> Which approach do you prefer for the prototype? We can always migrate later.
+
+> [!IMPORTANT]
+> ### Domain Store Location
+> The plan suggests `packages/core` for the domain store. Since mobile doesn't need domain switching right now, I'd recommend keeping it in `apps/web/src/stores/domainStore.ts` to avoid unnecessary coupling. We can extract to core later if mobile ever needs it. Agree?
+
+> [!WARNING]
+> ### `report_type` Constraint
+> The existing `reports` table has a CHECK constraint limiting `report_type` to `'collection' | 'request'`. We need a migration to add new types (`'page_audit'`, `'web_security'`, `'visual_diff'`) before new domains can save reports. This is a straightforward ALTER TABLE but worth flagging.
+
+## 5. Verification Plan
+
+### Per-Phase Testing
+- **Phase 1:** Domain switching renders correct nav items; existing API routes unaffected; sidebar collapses correctly; no visual regression on existing UI
+- **Phase 2:** PSI API returns real scores for a test URL; results persist to Supabase; PDF export includes performance section
+- **Phase 3:** Accessibility violations render correctly from same PSI data; WCAG checklist populates
+- **Phase 4:** Web security checks run independently of API security; header analysis returns accurate results
+- **Phase 5:** Screenshots captured at all 4 breakpoints; diff computation produces visual overlay; results persist to Supabase Storage
+
+### Manual Verification
+- Run the app locally after each phase and verify the domain switcher transitions smoothly
+- Test on a known URL (e.g., google.com, your own site) to validate real audit data
+- Verify zero regression on existing API testing functionality after each phase
+
+---
+
+## 6. Overall Verdict
+
+**This is a very strong plan.** The three key strengths:
+
+1. **Leverage, not sprawl** — Three of four new domains (Performance, Accessibility, SEO) share one backend integration (PSI). Maximum surface area per engineering-hour.
+2. **Additive architecture** — Zero changes to existing tables, routes, or components. The domain switcher is a navigation-layer refactor above the existing app.
+3. **Honest scoping** — Visual & Responsive is explicitly capped at single-URL breakpoint diffing. Roadmap domains are "Coming Soon" tiles, not vaporware. This reads as credible.
+
+The only domain requiring genuinely new infrastructure is Visual & Responsive (Phase 5), and the plan wisely puts it last so the audit-engine pattern is proven first.
+
+**Ready to proceed on your approval — Phase 1 first.**

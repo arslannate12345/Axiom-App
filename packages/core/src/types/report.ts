@@ -1,3 +1,6 @@
+import type { Request } from './database';
+import type { CollectionRunStep } from './runner';
+
 export type ReportType = 'collection' | 'request';
 
 export interface ReportData {

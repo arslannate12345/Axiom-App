@@ -32,12 +32,18 @@ export async function proxy(request: NextRequest) {
   });
 
   let user: unknown = null;
+  let authError = false;
 
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data: { session }, error } = await supabase.auth.getSession();
+    user = session?.user;
+    if (error) {
+      console.warn('[proxy] Auth session error:', error);
+      authError = true;
+    }
   } catch (error) {
-    console.warn('[proxy] Supabase auth is unavailable, skipping auth redirect checks.', error);
+    console.warn('[proxy] Supabase auth threw an exception.', error);
+    authError = true;
   }
 
   if (user && isAuthRoute) {
@@ -46,7 +52,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (!user && !isAuthRoute && !isPublicRoute) {
+  // Only redirect to login if we explicitly know there is no user AND there was no network error
+  if (!user && !authError && !isAuthRoute && !isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
