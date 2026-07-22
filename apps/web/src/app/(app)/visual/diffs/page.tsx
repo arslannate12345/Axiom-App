@@ -1,5 +1,7 @@
-﻿import { ComingSoonPage } from '@/components/ComingSoonPage';
+'use client';
 
-export default function Page() {
-  return <ComingSoonPage title="Visual Diffs" description="Compare screenshots to detect visual regressions." />;
+import { VisualDiffEngine } from '@/components/visual/VisualDiffEngine';
+
+export default function VisualDiffsPage() {
+  return <VisualDiffEngine />;
 }
