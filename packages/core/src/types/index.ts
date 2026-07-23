@@ -1,5 +1,6 @@
 export * from './assertions';
 export * from './database';
+export * from './database-testing';
 export * from './domains';
 export * from './performance';
 export * from './report';

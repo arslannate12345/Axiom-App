@@ -7,7 +7,8 @@ export type TestingDomainId =
   | 'performance'
   | 'accessibility'
   | 'security'
-  | 'visual';
+  | 'visual'
+  | 'database';
 
 export type DomainStatus = 'active' | 'coming_soon';
 
@@ -44,7 +45,6 @@ export interface TestingDomain {
 /** Roadmap-only domains shown as disabled tiles */
 export type RoadmapDomainId =
   | 'seo'
-  | 'database'
   | 'compliance'
   | 'mobile_app';
 

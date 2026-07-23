@@ -126,6 +126,30 @@ export const DOMAINS: Record<TestingDomainId, TestingDomain> = {
     lightBg: '#F5F3FF',
     orbColor: 'rgba(139, 92, 246, 0.14)',
   },
+
+  database: {
+    id: 'database',
+    label: 'Database Testing',
+    tagline: 'Endpoint health, latency & query integrity',
+    icon: 'database',
+    gradient: 'linear-gradient(135deg, #06B6D4 0%, #0D9488 100%)',
+    accentColor: '#06B6D4',
+    description: 'API-driven database health checks: connection latency, schema validation, CRUD response, and integrity scanning.',
+    navItems: [
+      { href: '/database', label: 'Engine', icon: 'database' },
+      { href: '/database/history', label: 'History', icon: 'history' },
+      { href: '/database/reports', label: 'Reports', icon: 'description' },
+    ],
+    status: 'active',
+    primaryAction: {
+      label: 'New DB Audit',
+      icon: 'database',
+      href: '/database',
+    },
+    searchPlaceholder: 'Search database audits...',
+    lightBg: '#ECFEFF',
+    orbColor: 'rgba(6, 182, 212, 0.14)',
+  },
 };
 
 // ─── Roadmap Domains ───────────────────────────────────────
@@ -138,14 +162,6 @@ export const ROADMAP_DOMAINS: RoadmapDomain[] = [
     description: 'Meta tags, headings, broken links, and search engine optimization scoring.',
     gradient: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)',
     accentColor: '#06B6D4',
-  },
-  {
-    id: 'database',
-    label: 'Database Testing',
-    icon: 'database',
-    description: 'Grey-box database testing: query performance, schema validation, and data integrity.',
-    gradient: 'linear-gradient(135deg, #64748B 0%, #475569 100%)',
-    accentColor: '#64748B',
   },
   {
     id: 'compliance',

@@ -6,16 +6,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import * as service from '@/lib/supabase-service';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 
 type StepStatus = 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
 
@@ -124,47 +114,7 @@ export function CollectionRunnerView({
     setActiveStepIndex(-1);
     setTotalDuration(0);
     abortRef.current = false;
-    setReportUrl(null);
-    setShowReportModal(false);
   }, [initialSteps]);
-
-  const handleGenerateReport = useCallback(async () => {
-    setGeneratingReport(true);
-    const p = steps.filter((s) => s.status === 'passed').length;
-    const f = steps.filter((s) => s.status === 'failed').length;
-    const sum = { passed: p, failed: f, total: steps.length, duration: totalDuration, hasAssertions: steps.some((s) => s.assertionFailures && s.assertionFailures.length > 0) };
-    try {
-      const report = await service.createReport({
-        collection_id: null,
-        name: `${collectionName} - ${new Date().toLocaleDateString()}`,
-        report_type: 'collection',
-        report_data: {
-          summary: sum,
-          steps: steps.map((s) => ({
-            name: s.name,
-            method: s.method,
-            url: s.url,
-            status: s.status,
-            latencyMs: s.latencyMs,
-            statusCode: s.statusCode,
-            error: s.error,
-            assertionFailures: s.assertionFailures,
-            extractions: s.extractions,
-          })),
-        },
-      });
-      if (report) {
-        setReportUrl(`${window.location.origin}/reports/${report.share_token}`);
-        setShowReportModal(true);
-      } else {
-        toast.error('Failed to generate report');
-      }
-    } catch {
-      toast.error('Failed to generate report');
-    } finally {
-      setGeneratingReport(false);
-    }
-  }, [collectionName, steps, totalDuration]);
 
   const passedCount = steps.filter((s) => s.status === 'passed').length;
   const failedCount = steps.filter((s) => s.status === 'failed').length;
@@ -178,141 +128,84 @@ export function CollectionRunnerView({
   };
 
   return (
-    <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="w-[500px] max-w-full bg-background border-l border-border text-foreground p-0 flex flex-col">
-          <SheetHeader className="px-5 pt-5 pb-3 border-b border-border bg-background/90">
-            <div className="flex items-center justify-between">
-              <SheetTitle className="text-sm font-bold text-foreground">Collection Runner</SheetTitle>
-              <span className="text-[12px] text-muted-foreground font-mono">{collectionName}</span>
-            </div>
-          </SheetHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-[500px] max-w-full bg-background border-l border-border text-foreground p-0 flex flex-col">
+        <SheetHeader className="px-5 pt-5 pb-3 border-b border-border bg-background/90">
+          <div className="flex items-center justify-between">
+            <SheetTitle className="text-sm font-bold text-foreground">Collection Runner</SheetTitle>
+            <span className="text-[12px] text-muted-foreground font-mono">{collectionName}</span>
+          </div>
+        </SheetHeader>
 
-          {/* Summary bar */}
-          <div className="px-5 py-3 bg-card border-b border-border flex items-center justify-between">
-            <div>
-              <span className="text-xs text-muted-foreground">
-                {runStatus === 'idle' && 'Ready to run'}
-                {runStatus === 'running' && `Running step ${activeStepIndex + 1} of ${steps.length}...`}
-                {runStatus === 'completed' && `${summary.passed}/${summary.total} passed`}
-                {runStatus === 'cancelled' && 'Run cancelled'}
-                {runStatus === 'failed' && 'Run failed'}
+        {/* Summary bar */}
+        <div className="px-5 py-3 bg-card border-b border-border flex items-center justify-between">
+          <div>
+            <span className="text-xs text-muted-foreground">
+              {runStatus === 'idle' && 'Ready to run'}
+              {runStatus === 'running' && `Running step ${activeStepIndex + 1} of ${steps.length}...`}
+              {runStatus === 'completed' && `${summary.passed}/${summary.total} passed`}
+              {runStatus === 'cancelled' && 'Run cancelled'}
+              {runStatus === 'failed' && 'Run failed'}
+            </span>
+            {runStatus === 'completed' && (
+              <span className="text-[12px] text-muted-foreground ml-3">
+                {Math.round(summary.duration / 1000)}s total
               </span>
-              {runStatus === 'completed' && (
-                <span className="text-[12px] text-muted-foreground ml-3">
-                  {Math.round(summary.duration / 1000)}s total
-                </span>
-              )}
-            </div>
-            <div className="flex gap-2">
-              {runStatus === 'idle' && (
-                <Button
-                  onClick={handleStart}
-                  className="h-7 px-3 text-[12px] bg-primary hover:bg-primary/90 text-white"
-                >
-                  <span className="material-symbols-outlined text-[12px] mr-1">play_arrow</span>
-                  Start Run
-                </Button>
-              )}
-              {runStatus === 'running' && (
-                <Button
-                  onClick={handleCancel}
-                  className="h-7 px-3 text-[12px] bg-[#EF4444] hover:bg-[#DC2626] text-white"
-                >
-                  <span className="material-symbols-outlined text-[12px] mr-1">stop</span>
-                  Cancel
-                </Button>
-              )}
-              {runStatus === 'completed' && (
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleGenerateReport}
-                    disabled={generatingReport}
-                    className="h-7 px-3 text-[12px] bg-[#10B981] hover:bg-[#059669] text-white"
-                  >
-                    {generatingReport ? (
-                      <><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-1" />Generating...</>
-                    ) : (
-                      <><span className="material-symbols-outlined text-[12px] mr-1">description</span>Generate Report</>
-                    )}
-                  </Button>
-                  <Button
-                    onClick={handleReset}
-                    className="h-7 px-3 text-[12px] bg-primary hover:bg-primary/90 text-white"
-                  >
-                    <span className="material-symbols-outlined text-[12px] mr-1">refresh</span>
-                    Run Again
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Steps list */}
-          <ScrollArea className="flex-1 px-5 py-4">
-            <div className="space-y-3">
-              {steps.map((step, index) => (
-                <StepCard
-                  key={step.requestId}
-                  step={step}
-                  isActive={index === activeStepIndex}
-                  runStatus={runStatus}
-                  index={index}
-                />
-              ))}
-            </div>
-
-            {steps.length === 0 && (
-              <div className="flex items-center justify-center h-40">
-                <p className="text-xs text-muted-foreground">No requests in this collection</p>
-              </div>
             )}
-          </ScrollArea>
-        </SheetContent>
-      </Sheet>
-
-      {/* Report generated dialog */}
-      <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
-        <DialogContent className="bg-card border-border text-foreground max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-sm font-bold flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px] text-[#10B981]">check_circle</span>
-              Report Generated
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              Your report has been created and is ready to share.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <label className="text-[12px] text-muted-foreground font-bold uppercase tracking-wider">Share Link</label>
-            <div className="flex gap-2">
-              <Input
-                value={reportUrl || ''}
-                readOnly
-                className="h-8 bg-background border-border text-[12px] font-mono text-foreground"
-              />
-              <Button
-                size="sm"
-                onClick={() => {
-                  if (reportUrl) {
-                    navigator.clipboard.writeText(reportUrl);
-                    toast.success('Link copied');
-                  }
-                }}
-                className="h-8 px-3 text-[12px] bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
-              >
-                <span className="material-symbols-outlined text-[14px]">content_copy</span>
-              </Button>
-            </div>
           </div>
-          <DialogFooter>
-            <Button onClick={() => setShowReportModal(false)} className="text-xs">
-              Done
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+          <div className="flex gap-2">
+            {runStatus === 'idle' && (
+              <Button
+                onClick={handleStart}
+                className="h-7 px-3 text-[12px] bg-primary hover:bg-primary/90 text-white"
+              >
+                <span className="material-symbols-outlined text-[12px] mr-1">play_arrow</span>
+                Start Run
+              </Button>
+            )}
+            {runStatus === 'running' && (
+              <Button
+                onClick={handleCancel}
+                className="h-7 px-3 text-[12px] bg-[#EF4444] hover:bg-[#DC2626] text-white"
+              >
+                <span className="material-symbols-outlined text-[12px] mr-1">stop</span>
+                Cancel
+              </Button>
+            )}
+            {runStatus === 'completed' && (
+              <Button
+                onClick={handleReset}
+                className="h-7 px-3 text-[12px] bg-primary hover:bg-primary/90 text-white"
+              >
+                <span className="material-symbols-outlined text-[12px] mr-1">refresh</span>
+                Run Again
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Steps list */}
+        <ScrollArea className="flex-1 px-5 py-4">
+          <div className="space-y-3">
+            {steps.map((step, index) => (
+              <StepCard
+                key={step.requestId}
+                step={step}
+                isActive={index === activeStepIndex}
+                runStatus={runStatus}
+                index={index}
+              />
+            ))}
+          </div>
+
+          {steps.length === 0 && (
+            <div className="flex items-center justify-center h-40">
+              <p className="text-xs text-muted-foreground">No requests in this collection</p>
+            </div>
+          )}
+        </ScrollArea>
+      </SheetContent>
+    </Sheet>
   );
 }
 
