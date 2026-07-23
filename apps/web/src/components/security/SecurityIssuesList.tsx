@@ -57,7 +57,7 @@ export function SecurityIssuesList({ findings }: SecurityIssuesListProps) {
   return (
     <div className="space-y-4">
       {/* Filters Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-card border border-border rounded-xl p-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-card border border-border/80 rounded-xl p-3 shadow-sm">
         <div className="flex items-center gap-1.5 overflow-x-auto">
           {(['all', 'fail', 'warn', 'pass'] as const).map((st) => (
             <button
@@ -96,7 +96,7 @@ export function SecurityIssuesList({ findings }: SecurityIssuesListProps) {
 
       {/* Findings List */}
       {filteredFindings.length === 0 ? (
-        <div className="text-center p-8 border border-border rounded-xl bg-card">
+        <div className="text-center p-8 border border-border/80 rounded-xl bg-white dark:bg-card shadow-sm">
           <span className="material-symbols-outlined text-3xl text-muted-foreground mb-2">shield_moon</span>
           <p className="text-sm font-semibold text-foreground">No matching security findings</p>
           <p className="text-xs text-muted-foreground">Adjust filters to see other checks.</p>
@@ -110,8 +110,8 @@ export function SecurityIssuesList({ findings }: SecurityIssuesListProps) {
               <div
                 key={finding.id}
                 className={cn(
-                  'border rounded-xl bg-card transition-all duration-200 overflow-hidden',
-                  finding.status === 'fail' ? 'border-red-500/30' : finding.status === 'warn' ? 'border-amber-500/30' : 'border-border'
+                  'border rounded-xl bg-white dark:bg-card shadow-sm transition-all duration-150 overflow-hidden',
+                  finding.status === 'fail' ? 'border-red-500/30' : finding.status === 'warn' ? 'border-amber-500/30' : 'border-border/80'
                 )}
               >
                 {/* Header Row */}

@@ -18,30 +18,30 @@ export function Scorecard({ label, score, size = 'lg', delay = 0 }: ScorecardPro
         text: 'text-muted-foreground',
         glow: '',
         stroke: '#64748B',
-        bg: 'bg-slate-900/60 border-white/10',
+        bg: 'bg-white dark:bg-slate-900/60 border-slate-200 dark:border-white/10 shadow-sm',
       };
     }
     if (s >= 90) {
       return {
-        text: 'text-emerald-400',
-        glow: 'shadow-[0_0_25px_-5px_rgba(16,185,129,0.35)] border-emerald-500/30',
+        text: 'text-emerald-600 dark:text-emerald-400',
+        glow: 'shadow-sm dark:shadow-[0_0_25px_-5px_rgba(16,185,129,0.35)] border-emerald-500/40',
         stroke: '#10B981',
-        bg: 'bg-emerald-950/20',
+        bg: 'bg-white dark:bg-emerald-950/20',
       };
     }
     if (s >= 50) {
       return {
-        text: 'text-amber-400',
-        glow: 'shadow-[0_0_25px_-5px_rgba(245,158,11,0.35)] border-amber-500/30',
+        text: 'text-amber-600 dark:text-amber-400',
+        glow: 'shadow-sm dark:shadow-[0_0_25px_-5px_rgba(245,158,11,0.35)] border-amber-500/40',
         stroke: '#F59E0B',
-        bg: 'bg-amber-950/20',
+        bg: 'bg-white dark:bg-amber-950/20',
       };
     }
     return {
-      text: 'text-red-400',
-      glow: 'shadow-[0_0_25px_-5px_rgba(239,68,68,0.35)] border-red-500/30',
+      text: 'text-red-600 dark:text-red-400',
+      glow: 'shadow-sm dark:shadow-[0_0_25px_-5px_rgba(239,68,68,0.35)] border-red-500/40',
       stroke: '#EF4444',
-      bg: 'bg-red-950/20',
+      bg: 'bg-white dark:bg-red-950/20',
     };
   };
 

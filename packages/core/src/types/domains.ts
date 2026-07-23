@@ -35,6 +35,10 @@ export interface TestingDomain {
   };
   /** Search placeholder text */
   searchPlaceholder: string;
+  /** Domain-specific light mode background color tint */
+  lightBg?: string;
+  /** Primary orb glow color for mesh background */
+  orbColor?: string;
 }
 
 /** Roadmap-only domains shown as disabled tiles */

@@ -12,12 +12,12 @@ import { cn } from '@/lib/utils';
 import type { AuditStrategy } from '@axiom/core/types';
 
 function getGrade(score: number | null) {
-  if (score === null) return { letter: '?', color: 'text-muted-foreground bg-muted border-border' };
-  if (score >= 90) return { letter: 'A', color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' };
-  if (score >= 80) return { letter: 'B', color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20' };
-  if (score >= 70) return { letter: 'C', color: 'text-amber-400 bg-amber-400/10 border-amber-400/20' };
-  if (score >= 60) return { letter: 'D', color: 'text-amber-500 bg-amber-500/10 border-amber-500/20' };
-  return { letter: 'F', color: 'text-red-500 bg-red-500/10 border-red-500/20' };
+  if (score === null) return { letter: '?', color: 'text-muted-foreground bg-white dark:bg-muted border-border shadow-sm' };
+  if (score >= 90) return { letter: 'A', color: 'text-emerald-600 dark:text-emerald-500 bg-white dark:bg-emerald-500/10 border-emerald-500/30 shadow-sm' };
+  if (score >= 80) return { letter: 'B', color: 'text-emerald-600 dark:text-emerald-400 bg-white dark:bg-emerald-400/10 border-emerald-400/30 shadow-sm' };
+  if (score >= 70) return { letter: 'C', color: 'text-amber-600 dark:text-amber-400 bg-white dark:bg-amber-400/10 border-amber-400/30 shadow-sm' };
+  if (score >= 60) return { letter: 'D', color: 'text-amber-600 dark:text-amber-500 bg-white dark:bg-amber-500/10 border-amber-500/30 shadow-sm' };
+  return { letter: 'F', color: 'text-red-600 dark:text-red-500 bg-white dark:bg-red-500/10 border-red-500/30 shadow-sm' };
 }
 
 export function AccessibilityAuditEngine() {

@@ -26,6 +26,8 @@ export const DOMAINS: Record<TestingDomainId, TestingDomain> = {
       href: '/client',
     },
     searchPlaceholder: 'Search requests...',
+    lightBg: '#F8FAFC',
+    orbColor: 'rgba(99, 102, 241, 0.08)',
   },
 
   performance: {
@@ -48,6 +50,8 @@ export const DOMAINS: Record<TestingDomainId, TestingDomain> = {
       href: '/performance',
     },
     searchPlaceholder: 'Search audits...',
+    lightBg: '#FFF7ED',
+    orbColor: 'rgba(245, 158, 11, 0.14)',
   },
 
   accessibility: {
@@ -70,6 +74,8 @@ export const DOMAINS: Record<TestingDomainId, TestingDomain> = {
       href: '/accessibility',
     },
     searchPlaceholder: 'Search scans...',
+    lightBg: '#F0FDF4',
+    orbColor: 'rgba(16, 185, 129, 0.14)',
   },
 
   security: {
@@ -92,6 +98,8 @@ export const DOMAINS: Record<TestingDomainId, TestingDomain> = {
       href: '/security-web',
     },
     searchPlaceholder: 'Search scans...',
+    lightBg: '#FEF2F2',
+    orbColor: 'rgba(239, 68, 68, 0.14)',
   },
 
   visual: {
@@ -115,6 +123,8 @@ export const DOMAINS: Record<TestingDomainId, TestingDomain> = {
       href: '/visual',
     },
     searchPlaceholder: 'Search captures...',
+    lightBg: '#F5F3FF',
+    orbColor: 'rgba(139, 92, 246, 0.14)',
   },
 };
 

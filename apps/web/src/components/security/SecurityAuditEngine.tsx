@@ -21,15 +21,15 @@ export function SecurityAuditEngine() {
     switch (grade) {
       case 'A+':
       case 'A':
-        return 'text-emerald-400 bg-emerald-950/40 border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.25)]';
+        return 'text-emerald-600 dark:text-emerald-400 bg-white dark:bg-emerald-950/40 border-emerald-500/40 shadow-sm';
       case 'B':
-        return 'text-blue-400 bg-blue-950/40 border-blue-500/40 shadow-[0_0_20px_rgba(59,130,246,0.25)]';
+        return 'text-blue-600 dark:text-blue-400 bg-white dark:bg-blue-950/40 border-blue-500/40 shadow-sm';
       case 'C':
-        return 'text-amber-400 bg-amber-950/40 border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.25)]';
+        return 'text-amber-600 dark:text-amber-400 bg-white dark:bg-amber-950/40 border-amber-500/40 shadow-sm';
       case 'D':
-        return 'text-orange-400 bg-orange-950/40 border-orange-500/40 shadow-[0_0_20px_rgba(249,115,22,0.25)]';
+        return 'text-orange-600 dark:text-orange-400 bg-white dark:bg-orange-950/40 border-orange-500/40 shadow-sm';
       default:
-        return 'text-red-400 bg-red-950/40 border-red-500/40 shadow-[0_0_20px_rgba(239,68,68,0.25)]';
+        return 'text-red-600 dark:text-red-400 bg-white dark:bg-red-950/40 border-red-500/40 shadow-sm';
     }
   };
 
@@ -62,7 +62,7 @@ export function SecurityAuditEngine() {
               value={inputUrl}
               onChange={(e) => setInputUrl(e.target.value)}
               placeholder="https://example.com or domain..."
-              className="w-full h-11 pl-11 pr-4 rounded-xl border border-white/10 bg-slate-900/60 backdrop-blur-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-red-500/50 shadow-inner"
+              className="w-full h-11 pl-11 pr-4 rounded-xl border border-border/80 bg-white dark:bg-slate-900/60 backdrop-blur-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-red-500/50 shadow-sm"
             />
           </div>
           <button
@@ -103,7 +103,7 @@ export function SecurityAuditEngine() {
           {/* Summary Cards Row */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Security Grade */}
-            <div className="bg-slate-900/70 backdrop-blur-xl border border-white/10 rounded-2xl p-5 flex items-center justify-between shadow-xl">
+            <div className="bg-white dark:bg-slate-900/70 backdrop-blur-xl border border-border/80 rounded-2xl p-5 flex items-center justify-between shadow-sm">
               <div>
                 <p className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground">Security Grade</p>
                 <p className="text-xs text-muted-foreground/80 mt-1">Based on headers & exposure</p>
@@ -114,39 +114,39 @@ export function SecurityAuditEngine() {
             </div>
 
             {/* Security Score */}
-            <div className="bg-slate-900/70 backdrop-blur-xl border border-white/10 rounded-2xl p-5 flex items-center justify-between shadow-xl">
+            <div className="bg-white dark:bg-slate-900/70 backdrop-blur-xl border border-border/80 rounded-2xl p-5 flex items-center justify-between shadow-sm">
               <div>
                 <p className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground">Overall Score</p>
                 <p className="text-3xl font-black text-foreground mt-1">{activeAudit.score} <span className="text-sm font-semibold opacity-60">/ 100</span></p>
               </div>
-              <div className="w-11 h-11 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-400 font-extrabold text-sm border border-red-500/25 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+              <div className="w-11 h-11 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-600 dark:text-red-400 font-extrabold text-sm border border-red-500/25 shadow-sm">
                 {activeAudit.score}%
               </div>
             </div>
 
             {/* Critical & High Findings */}
-            <div className="bg-slate-900/70 backdrop-blur-xl border border-white/10 rounded-2xl p-5 flex items-center justify-between shadow-xl">
+            <div className="bg-white dark:bg-slate-900/70 backdrop-blur-xl border border-border/80 rounded-2xl p-5 flex items-center justify-between shadow-sm">
               <div>
                 <p className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground">Action Needed</p>
-                <p className="text-3xl font-black text-red-400 mt-1">
+                <p className="text-3xl font-black text-red-600 dark:text-red-400 mt-1">
                   {activeAudit.summary.criticalCount + activeAudit.summary.highCount} <span className="text-xs font-semibold text-muted-foreground">Issues</span>
                 </p>
               </div>
-              <span className="material-symbols-outlined text-red-400 text-3xl">warning</span>
+              <span className="material-symbols-outlined text-red-500 text-3xl">warning</span>
             </div>
 
             {/* Checks Passed */}
-            <div className="bg-slate-900/70 backdrop-blur-xl border border-white/10 rounded-2xl p-5 flex items-center justify-between shadow-xl">
+            <div className="bg-white dark:bg-slate-900/70 backdrop-blur-xl border border-border/80 rounded-2xl p-5 flex items-center justify-between shadow-sm">
               <div>
                 <p className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground">Passed Checks</p>
-                <p className="text-3xl font-black text-emerald-400 mt-1">{activeAudit.summary.passedCount}</p>
+                <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-1">{activeAudit.summary.passedCount}</p>
               </div>
-              <span className="material-symbols-outlined text-emerald-400 text-3xl">verified</span>
+              <span className="material-symbols-outlined text-emerald-500 text-3xl">verified</span>
             </div>
           </div>
 
           {/* Security Headers Breakdown */}
-          <div className="bg-slate-900/70 backdrop-blur-xl border border-white/10 rounded-2xl p-6 space-y-4 shadow-xl">
+          <div className="bg-white dark:bg-slate-900/70 backdrop-blur-xl border border-border/80 rounded-2xl p-6 space-y-4 shadow-sm">
             <h3 className="text-sm font-extrabold tracking-wide text-foreground flex items-center gap-2">
               <span className="material-symbols-outlined text-red-400 text-[20px]">policy</span>
               HTTP Security Headers Breakdown

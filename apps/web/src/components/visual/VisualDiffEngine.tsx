@@ -33,7 +33,7 @@ export function VisualDiffEngine() {
           </div>
 
           {/* View Mode Switcher */}
-          <div className="flex items-center gap-1 bg-slate-900/80 border border-white/10 rounded-xl p-1 shadow-lg">
+          <div className="flex items-center gap-1 bg-white dark:bg-slate-900/80 border border-border/80 rounded-xl p-1 shadow-sm">
             <button
               onClick={() => setViewMode('slider')}
               className={cn(
@@ -58,7 +58,7 @@ export function VisualDiffEngine() {
         </div>
 
         {/* Viewport Selectors */}
-        <div className="flex items-center gap-2 bg-slate-900/70 backdrop-blur-xl border border-white/10 rounded-2xl p-3 shadow-xl">
+        <div className="flex items-center gap-2 bg-white dark:bg-slate-900/70 backdrop-blur-xl border border-border/80 rounded-2xl p-3 shadow-sm">
           <span className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground mr-2">Viewport:</span>
           {DEFAULT_VIEWPORTS.map((vp) => (
             <button
@@ -67,8 +67,8 @@ export function VisualDiffEngine() {
               className={cn(
                 'px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 border transition-all duration-150',
                 activeViewport === vp.id
-                  ? 'bg-purple-500/20 border-purple-500/40 text-purple-300 shadow-[0_0_15px_rgba(139,92,246,0.25)]'
-                  : 'bg-white/5 border-white/10 text-muted-foreground hover:bg-white/10'
+                  ? 'bg-purple-500/20 border-purple-500/40 text-purple-600 dark:text-purple-300 shadow-sm'
+                  : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-muted-foreground hover:bg-slate-200 dark:hover:bg-white/10'
               )}
             >
               <span className="material-symbols-outlined text-[16px]">{vp.icon}</span>
@@ -79,33 +79,33 @@ export function VisualDiffEngine() {
 
         {/* Match Metric Gauge */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-slate-900/70 backdrop-blur-xl border border-white/10 rounded-2xl p-5 flex items-center justify-between shadow-xl">
+          <div className="bg-white dark:bg-slate-900/70 backdrop-blur-xl border border-border/80 rounded-2xl p-5 flex items-center justify-between shadow-sm">
             <div>
               <p className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground">Match Score</p>
-              <p className="text-3xl font-black text-emerald-400 mt-1">99.2%</p>
+              <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-1">99.2%</p>
             </div>
-            <span className="material-symbols-outlined text-emerald-400 text-3xl">check_circle</span>
+            <span className="material-symbols-outlined text-emerald-500 text-3xl">check_circle</span>
           </div>
 
-          <div className="bg-slate-900/70 backdrop-blur-xl border border-white/10 rounded-2xl p-5 flex items-center justify-between shadow-xl">
+          <div className="bg-white dark:bg-slate-900/70 backdrop-blur-xl border border-border/80 rounded-2xl p-5 flex items-center justify-between shadow-sm">
             <div>
               <p className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground">Pixel Mismatch</p>
-              <p className="text-3xl font-black text-purple-400 mt-1">0.8%</p>
+              <p className="text-3xl font-black text-purple-600 dark:text-purple-400 mt-1">0.8%</p>
             </div>
-            <span className="material-symbols-outlined text-purple-400 text-3xl">grain</span>
+            <span className="material-symbols-outlined text-purple-500 text-3xl">grain</span>
           </div>
 
-          <div className="bg-slate-900/70 backdrop-blur-xl border border-white/10 rounded-2xl p-5 flex items-center justify-between shadow-xl">
+          <div className="bg-white dark:bg-slate-900/70 backdrop-blur-xl border border-border/80 rounded-2xl p-5 flex items-center justify-between shadow-sm">
             <div>
               <p className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground">Status</p>
-              <p className="text-base font-extrabold text-emerald-400 mt-1">PASS (In Tolerance)</p>
+              <p className="text-base font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">PASS (In Tolerance)</p>
             </div>
-            <span className="material-symbols-outlined text-emerald-400 text-3xl">verified</span>
+            <span className="material-symbols-outlined text-emerald-500 text-3xl">verified</span>
           </div>
         </div>
 
         {/* Diff Canvas / Comparison Workspace */}
-        <div className="border border-white/10 rounded-2xl bg-slate-900/70 backdrop-blur-xl p-6 space-y-4 shadow-xl">
+        <div className="border border-border/80 rounded-2xl bg-white dark:bg-slate-900/70 backdrop-blur-xl p-6 space-y-4 shadow-sm">
           <h3 className="text-sm font-extrabold tracking-wide text-foreground flex items-center gap-2">
             <span className="material-symbols-outlined text-purple-400">compare</span>
             Visual Diff Workspace ({currentVp.width}px × {currentVp.height}px)

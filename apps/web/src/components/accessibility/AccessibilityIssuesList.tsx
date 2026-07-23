@@ -90,7 +90,7 @@ export function AccessibilityIssuesList({ lighthouseResult }: AccessibilityIssue
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
-            className="border border-border rounded-xl bg-card overflow-hidden"
+            className="border border-border/80 rounded-xl bg-white dark:bg-card shadow-sm overflow-hidden"
           >
             <button
               onClick={() => setExpandedId(isExpanded ? null : audit.id)}

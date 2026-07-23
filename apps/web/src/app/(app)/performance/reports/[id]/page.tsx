@@ -93,7 +93,7 @@ export default function ReportDetailPage() {
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-5xl mx-auto space-y-8 pb-12">
           
-          {/* Top Level Summary (GTmetrix style) */}
+          {/* Top Level Summary (Grade & Scores) */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-5 gap-4">
             <div className={cn("col-span-1 rounded-2xl flex flex-col items-center justify-center p-6 border shadow-sm", grade.color)}>
               <span className="text-6xl font-black">{grade.letter}</span>

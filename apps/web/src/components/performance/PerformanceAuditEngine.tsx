@@ -178,7 +178,7 @@ export function PerformanceAuditEngine() {
               >
                 <div>
                   <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">
-                    GTmetrix Grade & Scores
+                    Grade & Scores
                   </h2>
                   <div className="grid grid-cols-5 gap-4">
                     {(() => {
@@ -271,17 +271,17 @@ function MetricCard({ label, value, unit, thresholds }: MetricCardProps) {
   const isGood = value <= thresholds.good;
   const isPoor = value >= thresholds.poor;
   
-  let color = 'text-amber-500';
-  let bg = 'bg-amber-500/10 border-amber-500/20';
+  let color = 'text-amber-600 dark:text-amber-400';
+  let bg = 'bg-white dark:bg-amber-500/10 border-amber-500/30 shadow-sm';
   let icon = 'warning';
 
   if (isGood) {
-    color = 'text-emerald-500';
-    bg = 'bg-emerald-500/10 border-emerald-500/20';
+    color = 'text-emerald-600 dark:text-emerald-400';
+    bg = 'bg-white dark:bg-emerald-500/10 border-emerald-500/30 shadow-sm';
     icon = 'check_circle';
   } else if (isPoor) {
-    color = 'text-red-500';
-    bg = 'bg-red-500/10 border-red-500/20';
+    color = 'text-red-600 dark:text-red-400';
+    bg = 'bg-white dark:bg-red-500/10 border-red-500/30 shadow-sm';
     icon = 'error';
   }
 
