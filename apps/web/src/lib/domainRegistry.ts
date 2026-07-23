@@ -150,19 +150,83 @@ export const DOMAINS: Record<TestingDomainId, TestingDomain> = {
     lightBg: '#ECFEFF',
     orbColor: 'rgba(6, 182, 212, 0.14)',
   },
+
+  seo: {
+    id: 'seo',
+    label: 'SEO Audit',
+    tagline: 'Meta tags, social previews & crawlability',
+    icon: 'travel_explore',
+    gradient: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)',
+    accentColor: '#06B6D4',
+    description: 'Meta tags, heading hierarchy, Open Graph previews, broken links, and search engine optimization scoring.',
+    navItems: [
+      { href: '/seo', label: 'Engine', icon: 'travel_explore' },
+      { href: '/seo/history', label: 'History', icon: 'history' },
+      { href: '/seo/reports', label: 'Reports', icon: 'description' },
+    ],
+    status: 'active',
+    primaryAction: {
+      label: 'New SEO Audit',
+      icon: 'search',
+      href: '/seo',
+    },
+    searchPlaceholder: 'Search SEO audits...',
+    lightBg: '#ECFEFF',
+    orbColor: 'rgba(6, 182, 212, 0.14)',
+  },
+
+  load: {
+    id: 'load',
+    label: 'Load & Stress Testing',
+    tagline: 'Concurrency, throughput & RPS limits',
+    icon: 'dataset_linked',
+    gradient: 'linear-gradient(135deg, #7C3AED 0%, #E11D48 100%)',
+    accentColor: '#7C3AED',
+    description: 'Simulate virtual users (VU), ramp-up load, and measure throughput limits and latency percentiles (p50/p95/p99).',
+    navItems: [
+      { href: '/load', label: 'Engine', icon: 'dataset_linked' },
+      { href: '/load/history', label: 'History', icon: 'history' },
+      { href: '/load/reports', label: 'Reports', icon: 'description' },
+    ],
+    status: 'active',
+    primaryAction: {
+      label: 'New Load Test',
+      icon: 'speed',
+      href: '/load',
+    },
+    searchPlaceholder: 'Search load tests...',
+    lightBg: '#F5F3FF',
+    orbColor: 'rgba(124, 58, 237, 0.14)',
+  },
+
+  'code-analysis': {
+    id: 'code-analysis',
+    label: 'Static Code Analysis',
+    tagline: 'White-box inspection & code quality metrics',
+    icon: 'code_blocks',
+    gradient: 'linear-gradient(135deg, #475569 0%, #334155 100%)',
+    accentColor: '#475569',
+    description: 'White-box code inspection: AST static analysis, security smells, bug risks, maintainability, and code quality scoring.',
+    navItems: [
+      { href: '/code-analysis', label: 'Engine', icon: 'code_blocks' },
+      { href: '/code-analysis/history', label: 'History', icon: 'history' },
+      { href: '/code-analysis/reports', label: 'Reports', icon: 'description' },
+    ],
+    status: 'active',
+    primaryAction: {
+      label: 'Analyze Code',
+      icon: 'code',
+      href: '/code-analysis',
+    },
+    searchPlaceholder: 'Search code audits...',
+    lightBg: '#F8FAFC',
+    orbColor: 'rgba(71, 85, 105, 0.14)',
+  },
 };
 
 // ─── Roadmap Domains ───────────────────────────────────────
 
 export const ROADMAP_DOMAINS: RoadmapDomain[] = [
-  {
-    id: 'seo',
-    label: 'SEO Audit',
-    icon: 'travel_explore',
-    description: 'Meta tags, headings, broken links, and search engine optimization scoring.',
-    gradient: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)',
-    accentColor: '#06B6D4',
-  },
   {
     id: 'compliance',
     label: 'Compliance',

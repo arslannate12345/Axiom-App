@@ -40,6 +40,16 @@ export async function runVisualCapture(url: string, selectedViewports: ViewportC
     diff_results.reduce((acc, d) => acc + d.matchScore, 0) / diff_results.length
   );
 
+  let hciDiagnostic = undefined;
+  try {
+    const hciRes = await fetch(`/api/visual-hci?url=${encodeURIComponent(formattedUrl)}`, { cache: 'no-store' });
+    if (hciRes.ok) {
+      hciDiagnostic = await hciRes.json();
+    }
+  } catch (hciErr) {
+    console.warn('[visual-service] Failed to fetch HCI diagnostic', hciErr);
+  }
+
   const session: VisualCaptureSession = {
     id: `vis_${Date.now()}`,
     url: formattedUrl,
@@ -47,6 +57,7 @@ export async function runVisualCapture(url: string, selectedViewports: ViewportC
     snapshots,
     diff_results,
     overallMatchScore: avgMatchScore,
+    hciDiagnostic,
     status: avgMatchScore >= 98 ? 'passed' : avgMatchScore >= 90 ? 'warning' : 'failed',
     created_at: new Date().toISOString(),
   };

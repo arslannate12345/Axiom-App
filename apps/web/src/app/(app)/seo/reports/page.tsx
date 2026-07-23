@@ -2,18 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { getDatabaseHistory } from '@/lib/database-service';
-import type { DatabaseAudit } from '@axiom/core/types';
+import { getSeoHistory } from '@/lib/seo-service';
+import type { SeoAudit } from '@axiom/core/types';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 
-export default function DatabaseReportsPage() {
-  const [reports, setReports] = useState<DatabaseAudit[]>([]);
+export default function SeoReportsPage() {
+  const [reports, setReports] = useState<SeoAudit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getDatabaseHistory().then((data) => {
+    getSeoHistory().then((data) => {
       setReports(data);
       setIsLoading(false);
     });
@@ -24,9 +24,9 @@ export default function DatabaseReportsPage() {
       <div className="max-w-5xl mx-auto w-full space-y-6">
         <header className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black text-foreground mb-1">Database Health Reports</h1>
+            <h1 className="text-2xl font-black text-foreground mb-1">SEO Audit Reports</h1>
             <p className="text-sm text-muted-foreground">
-              Detailed breakdown of database connectivity, endpoint readiness, and latency metrics.
+              Detailed reports on search engine optimization, Open Graph previews, and crawlability metrics.
             </p>
           </div>
         </header>
@@ -38,8 +38,8 @@ export default function DatabaseReportsPage() {
         ) : reports.length === 0 ? (
           <div className="text-center p-12 border border-border/80 rounded-2xl bg-white dark:bg-card shadow-sm">
             <span className="material-symbols-outlined text-4xl mb-3 text-muted-foreground">description</span>
-            <p className="font-semibold text-foreground">No Database Reports Available</p>
-            <p className="text-sm text-muted-foreground mt-1">Run a database audit to generate your first health report.</p>
+            <p className="font-semibold text-foreground">No SEO Reports Available</p>
+            <p className="text-sm text-muted-foreground mt-1">Run an SEO audit to generate your first search report.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -64,12 +64,12 @@ export default function DatabaseReportsPage() {
 
                 <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/60 text-center">
                   <div className="bg-muted/40 p-2 rounded-lg">
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase block">Score</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase block">SEO Score</span>
                     <span className="text-sm font-black text-foreground">{report.score} / 100</span>
                   </div>
                   <div className="bg-muted/40 p-2 rounded-lg">
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase block">Avg Latency</span>
-                    <span className="text-sm font-black text-cyan-600 dark:text-cyan-400">{report.summary.avgLatencyMs}ms</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase block">Meta Tags</span>
+                    <span className="text-sm font-black text-cyan-600 dark:text-cyan-400">{report.meta_checks.length} Verified</span>
                   </div>
                   <div className="bg-muted/40 p-2 rounded-lg">
                     <span className="text-[10px] font-bold text-muted-foreground uppercase block">Passed</span>
@@ -78,7 +78,7 @@ export default function DatabaseReportsPage() {
                 </div>
 
                 <Link
-                  href={`/database/reports/${report.id}`}
+                  href={`/seo/reports/${report.id}`}
                   className="w-full h-9 rounded-xl border border-border/80 text-xs font-bold text-foreground hover:bg-muted transition-colors flex items-center justify-center gap-1.5"
                 >
                   <span className="material-symbols-outlined text-[16px]">visibility</span>

@@ -28,6 +28,47 @@ export interface VisualDiffResult {
   diffImageUrl?: string;
 }
 
+export type HciCategory =
+  | 'latency_delay'
+  | 'visual_hierarchy'
+  | 'feedback_status'
+  | 'touch_target'
+  | 'cognitive_load';
+
+export type HciSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+
+export interface HciFinding {
+  id: string;
+  category: HciCategory;
+  title: string;
+  severity: HciSeverity;
+  status: 'pass' | 'fail' | 'warn';
+  description: string;
+  impact: string;
+  recommendation: string;
+  elementSelector?: string;
+}
+
+export interface HciDiagnosticResult {
+  hciScore: number; // 0-100
+  grade: 'A+' | 'A' | 'B' | 'C' | 'D' | 'F';
+  findings: HciFinding[];
+  cardMetrics: {
+    totalCardsDetected: number;
+    avgTransitionDelayMs: number;
+    hasExcessiveDelays: boolean;
+    touchTargetIssuesCount: number;
+    hasHorizontalOverflow: boolean;
+  };
+  summary: {
+    criticalCount: number;
+    highCount: number;
+    mediumCount: number;
+    lowCount: number;
+    passedCount: number;
+  };
+}
+
 export interface VisualCaptureSession {
   id: string;
   user_id?: string;
@@ -37,7 +78,9 @@ export interface VisualCaptureSession {
   snapshots: VisualSnapshot[];
   diff_results: VisualDiffResult[];
   overallMatchScore: number;
+  hciDiagnostic?: HciDiagnosticResult;
   status: 'passed' | 'warning' | 'failed';
   created_at: string;
   updated_at?: string;
 }
+

@@ -7,6 +7,7 @@ import { DEFAULT_VIEWPORTS } from '@/lib/visual-service';
 import type { ViewportDevice } from '@axiom/core/types';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { HciEvaluationResults } from './HciEvaluationResults';
 
 export function VisualCaptureEngine() {
   const {
@@ -175,36 +176,49 @@ export function VisualCaptureEngine() {
           </div>
         </div>
 
-        {/* Capture Results Stats */}
+        {/* Capture Results Stats & HCI Diagnostic */}
         {activeSession && (
-          <div className="bg-slate-900/70 backdrop-blur-xl border border-white/10 rounded-2xl p-6 space-y-4 shadow-xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-extrabold text-foreground">Visual Session Summary</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Overall Layout Match: <span className="text-emerald-400 font-extrabold">{activeSession.overallMatchScore}%</span></p>
+          <div className="space-y-6">
+            <div className="bg-slate-900/70 backdrop-blur-xl border border-white/10 rounded-2xl p-6 space-y-4 shadow-xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-extrabold text-foreground">Visual Session Summary</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Overall Layout Match: <span className="text-emerald-400 font-extrabold">{activeSession.overallMatchScore}%</span></p>
+                </div>
+                <Link
+                  href="/visual/diffs"
+                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-lg shadow-purple-500/25 transition-all"
+                >
+                  <span className="material-symbols-outlined text-[16px]">compare</span>
+                  <span>Open Visual Diffs</span>
+                </Link>
               </div>
-              <Link
-                href="/visual/diffs"
-                className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-lg shadow-purple-500/25 transition-all"
-              >
-                <span className="material-symbols-outlined text-[16px]">compare</span>
-                <span>Open Visual Diffs</span>
-              </Link>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                {activeSession.snapshots.map((snap) => (
+                  <div key={snap.id} className="border border-white/10 rounded-xl p-3.5 bg-slate-950/40 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-foreground truncate">{snap.viewport.label}</span>
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                        CAPTURED
+                      </span>
+                    </div>
+                    <p className="text-[11px] font-mono text-muted-foreground">{snap.viewport.width} × {snap.viewport.height}px</p>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-              {activeSession.snapshots.map((snap) => (
-                <div key={snap.id} className="border border-white/10 rounded-xl p-3.5 bg-slate-950/40 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-foreground truncate">{snap.viewport.label}</span>
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                      CAPTURED
-                    </span>
-                  </div>
-                  <p className="text-[11px] font-mono text-muted-foreground">{snap.viewport.width} × {snap.viewport.height}px</p>
+            {/* HCI & UX Evaluation Section */}
+            {activeSession.hciDiagnostic && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-purple-400">psychology</span>
+                  <h3 className="text-lg font-black text-foreground">Human-Computer Interaction (HCI) & UX Diagnostic</h3>
                 </div>
-              ))}
-            </div>
+                <HciEvaluationResults diagnostic={activeSession.hciDiagnostic} />
+              </div>
+            )}
           </div>
         )}
       </div>

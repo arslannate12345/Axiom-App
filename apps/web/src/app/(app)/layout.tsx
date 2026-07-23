@@ -80,13 +80,15 @@ export default function AppLayout({
         <div className={`flex items-center border-b border-sidebar-border/60 min-h-[56px] ${collapsed ? 'justify-center px-0' : 'justify-between px-4'} py-3`}>
           {!collapsed ? (
             <>
-              <div className="flex items-center gap-3 overflow-hidden">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/30">
-                  <span className="material-symbols-outlined text-white text-lg font-black" style={{fontVariationSettings: "'FILL' 1"}}>shield</span>
-                </div>
+              <div className="flex items-center gap-2.5 overflow-hidden">
+                <img
+                  src="/axiom-icon.png"
+                  alt="Axiom Icon"
+                  className="w-8 h-8 object-contain shrink-0 drop-shadow-[0_0_12px_rgba(139,92,246,0.6)]"
+                />
                 <div className="whitespace-nowrap">
                   <h1 className="text-sm font-black tracking-tight text-sidebar-foreground">Axiom</h1>
-                  <p className="text-[10px] uppercase tracking-widest text-indigo-400 font-bold">Workbench</p>
+                  <p className="text-[10px] uppercase tracking-widest text-purple-400 font-bold">Workbench</p>
                 </div>
               </div>
               <button
@@ -100,10 +102,14 @@ export default function AppLayout({
           ) : (
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/30"
+              className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 hover:scale-110 transition-transform"
               title="Expand sidebar"
             >
-              <span className="material-symbols-outlined text-white text-lg font-black" style={{fontVariationSettings: "'FILL' 1"}}>shield</span>
+              <img
+                src="/axiom-icon.png"
+                alt="Axiom Icon"
+                className="w-7 h-7 object-contain drop-shadow-[0_0_10px_rgba(139,92,246,0.6)]"
+              />
             </button>
           )}
         </div>
@@ -366,9 +372,16 @@ export default function AppLayout({
         <header className="flex justify-between items-center h-12 px-6 bg-card/80 backdrop-blur-xl border-b border-border/60 shrink-0">
           <div className="flex items-center gap-2.5 flex-1">
             {collapsed && (
-              <span className="text-sm font-black text-primary uppercase tracking-tighter hidden sm:inline">
-                Axiom
-              </span>
+              <div className="flex items-center gap-2">
+                <img
+                  src="/axiom-icon.png"
+                  alt="Axiom Icon"
+                  className="w-5 h-5 object-contain hidden sm:inline drop-shadow-[0_0_8px_rgba(139,92,246,0.5)]"
+                />
+                <span className="text-xs font-black tracking-tight text-foreground hidden sm:inline">
+                  Axiom
+                </span>
+              </div>
             )}
             {/* Active domain breadcrumb */}
             <div className="flex items-center gap-1.5">
